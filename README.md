@@ -2,6 +2,10 @@
 
 A Chrome extension to open one or more user-configured websites side-by-side in the browser's side panel.
 
+<p align="center">
+  <img src="src/icons/icon128.png" alt="Quick Launch Icon">
+</p>
+
 ## Features
 
 -   Open multiple websites simultaneously in the side panel.
