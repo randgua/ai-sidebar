@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+description: Project general specifications and basic information
+
+# Project General Specifications
+
+## Technology Stack
+- Python 3.10
+- Poetry for dependency management
+- GitHub Actions for automated build and release
+- Use GitHub as the code hosting platform
+- Use Bash scripts
+
+## Code Style
+- Keep code concise and readable
+- Use meaningful variable and function names
+- Add appropriate comments to explain complex logic
+- Follow the official style guide for each language
+
+## Project Structure
+- Maintain a clear project structure, adhering to modular principles
+- Related functionalities should be placed in the same directory
+- Use appropriate directory naming that reflects its content
+
+## General Development Principles
+- Write testable code
+- Avoid repetitive code (DRY principle - Don't Repeat Yourself)
+- Prioritize using existing libraries and tools; avoid reinventing the wheel
+- Consider code maintainability and scalability
+
+## Response Language
+- Always reply to the user in English

@@ -1,0 +1,36 @@
+---
+description: 
+globs: **/*.md
+alwaysApply: false
+---
+description: Documentation standards and update guidelines
+globs: ["*.md", "CHANGELOG.md", "README.md"]
+alwaysApply: false
+
+# Documentation Standards
+
+## README.md Standards
+- Maintain a clear document structure, using appropriate Markdown syntax.
+- **Important**: During each modification, preserve the "Cursor Historical Download Links" section (a level 2 heading) in README.md; do not delete it.
+- Ensure the README includes the following sections:
+    - Project Introduction
+    - Installation Instructions
+    - Usage Guide
+    - Contribution Guidelines (if applicable)
+    - License Information
+    - Cursor Historical Download Links (must be preserved)
+
+## CHANGELOG.md Standards
+When requested to update CHANGELOG.md, please follow this format:
+"""
+## v1.0.0
+- New Feature: Reset Device ID
+- Bug Fix: Fixed the issue where device ID reset was not working
+...
+"""
+
+## Document Update Principles
+- Keep documentation synchronized with code updates.
+- Use concise and clear language.
+- Provide sufficient examples and explanations.
+- Ensure consistent document formatting.

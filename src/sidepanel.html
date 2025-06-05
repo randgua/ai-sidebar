@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar</title>
+    <link rel="stylesheet" href="sidepanel.css">
+    <!-- Link to Google Material Symbols font for icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body>
+    <div id="controls-bar">
+        <!-- Refresh Button - Top Left -->
+        <div id="refresh-button-container" class="control-icon-container">
+            <span id="refresh-icon" class="material-symbols-outlined" title="Refresh Panel">refresh</span>
+        </div>
+
+        <!-- Settings Button & Popup - Top Right -->
+        <div id="settings-container" class="control-icon-container">
+            <span id="settings-icon" class="material-symbols-outlined" title="Settings">settings</span>
+            <div id="settings-popup" class="popup">
+                <!-- URL list will be dynamically generated here -->
+                <div id="url-list-management">
+                </div>
+                <!-- Section for adding new URLs -->
+                <div class="add-url-section">
+                    <input type="text" id="new-url-input" placeholder="Enter new URL...">
+                    <button id="add-url-button">Add URL</button>
+                </div>
+                <!-- Section for action buttons -->
+                <div class="popup-actions-section">
+                    <button id="invert-selection-button">Invert Selection</button>
+                    <button id="select-all-button">Select All</button>
+                    <button id="clear-selection-button">Clear All Selections</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Iframes will be dynamically loaded here -->
+    <div id="iframe-container">
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+</html>

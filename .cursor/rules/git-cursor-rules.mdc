@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: Git commit and version control standards
+globs: [".git/*", "*.git"]
+alwaysApply: false
+
+# Git Standards
+
+## Commit Standards
+Git commit message example: [type]: [description]. A specific example, docs: Update README file.
+The following are the enumerated values for type:
+- feat: Add a new feature
+- fix: Fix a bug
+- docs: Documentation comments
+- style: Code formatting (changes that do not affect code execution)
+- refactor: Refactoring, optimization (neither adds new features nor fixes bugs)
+- perf: Performance optimization
+- test: Add tests
+- chore: Changes to the build process or auxiliary tools
+- revert: Revert a commit
+- build: Packaging
+
+## Branch Management
+- main/master: Main branch, kept in a stable, releasable state
+- develop: Development branch, contains the latest development features
+- feature/*: Feature branch, used for developing new features
+- bugfix/*: Bugfix branch, used for fixing bugs
+- release/*: Release branch, used for preparing a release
+## Important Principles
+- **Important**: Do not automatically commit git code unless explicitly instructed.
+- Ensure code passes all tests before committing.
+- Keep commit messages concise and clear, accurately describing the changes.
+- Avoid large commits; try to break down changes into small, related commits.

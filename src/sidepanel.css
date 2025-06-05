@@ -1,0 +1,270 @@
+/* ai-sidebar/src/sidepanel.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* Establishes a positioning context for children */
+}
+
+#controls-bar {
+    height: 0; /* This bar itself does not occupy vertical space */
+}
+
+/* Icon containers are absolutely positioned for overlay */
+#refresh-button-container {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    z-index: 1000; /* Ensures it's above iframe content */
+}
+
+#settings-container {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    z-index: 1000; /* Ensures it's above iframe content */
+}
+
+.control-icon-container {
+    display: flex;
+    align-items: center;
+}
+
+/* Styles for Material Symbols icons */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 16px; /* Icon visual size */
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+
+    width: 24px;  /* Container width for the icon */
+    height: 24px; /* Container height for the icon */
+    padding: 0;
+    cursor: pointer;
+    color: #8EA8F9;
+    background-color: transparent;
+    box-shadow: none;
+    border-radius: 4px;
+    user-select: none; /* Prevents text selection during interaction */
+    opacity: 0.7; /* Initial opacity for a subtle appearance */
+    transition: opacity 0.2s ease, color 0.2s ease, transform 0.1s ease, background-color 0.2s ease;
+}
+
+.material-symbols-outlined:hover {
+    background-color: transparent;
+    opacity: 1; /* Make icon fully opaque on hover */
+}
+
+/* Style for icon when clicked or active */
+.material-symbols-outlined:active,
+.material-symbols-outlined.clicked {
+    transform: scale(1.2); /* Enlarge the icon slightly for click feedback */
+    opacity: 1;
+    color: #5472D3;
+}
+
+#iframe-container {
+    flex-grow: 1; /* Fills remaining vertical space of the body */
+    width: 100%;
+    display: flex;
+    flex-direction: row; /* Arranges iframes horizontally */
+    overflow: hidden; /* Prevents scrollbars on the container itself */
+}
+
+#iframe-container iframe {
+    flex-grow: 1; /* Each iframe should grow equally to share space */
+    flex-basis: 0; /* Start from a zero basis for equal distribution with flex-grow */
+    min-width: 0; /* Allows iframe to shrink below its content's intrinsic min-width */
+    border: none;
+    height: 100%; /* Each iframe takes full height of the container */
+}
+
+.popup {
+    display: none; /* Hidden by default, shown on hover */
+    position: absolute;
+    top: -1px; /* Position relative to the settings icon container */
+    right: -1px;
+    background-color: white;
+    border: 1px solid #ced4da;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1001; /* Ensures popup is above other content, including icons */
+    min-width: 350px;
+    border-radius: 4px;
+    padding: 10px 5px;
+    max-height: 800px;
+    overflow-y: auto;  /* Enable vertical scroll if content exceeds max-height */
+}
+
+/* Show popup on hover of its parent container (settings-container) */
+#settings-container:hover .popup {
+    display: block;
+}
+
+#url-list-management {
+    margin-bottom: 10px;
+}
+
+.url-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee; /* Separator for URL items */
+    cursor: grab; /* Indicate draggable items */
+    transition: background-color 0.1s ease-out; /* Smooth transition for drag-over */
+}
+.url-item:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+/* Visual feedback for when an item is being dragged over another */
+.url-item.drag-over {
+    background-color: #e9ecef;
+}
+
+.url-item:active {
+    cursor: grabbing; /* Style for the item being actively dragged */
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 0 8px 0 4px;
+    font-size: 18px;
+    color: #6c757d;
+    user-select: none; /* Prevent text selection of the handle */
+}
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+
+.url-item input[type="checkbox"] {
+    margin-right: 8px;
+    height: 16px;
+    width: 16px;
+}
+
+.url-item input[type="text"] {
+    flex-grow: 1;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-right: 8px;
+    font-size: 13px;
+}
+
+/* Generic button styling in URL item */
+.url-item button {
+    padding: 6px 10px;
+    margin-left: 5px;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    white-space: nowrap; /* Prevent button text from wrapping */
+    border: 1px solid transparent;
+}
+
+.url-item .open-url-button {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+.url-item .open-url-button:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.url-item .remove-url-button {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+.url-item .remove-url-button:hover {
+    background-color: #c82333;
+}
+
+.popup-actions-section {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: flex-start; /* Aligns the group of buttons to the start */
+}
+
+.popup-actions-section button {
+    flex: 1; /* Distribute space equally among buttons */
+    padding: 8px 12px;
+    background-color: #e0efff;
+    color: #0056b3;
+    border: 1px solid #b3d7ff;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap; /* Keeps text on a single line */
+    text-align: center; /* Center text within the button */
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; /* Smooth transition for hover effects */
+}
+
+/* Add margin to all buttons in the section except the last one for spacing */
+.popup-actions-section button:not(:last-child) {
+    margin-right: 5px;
+}
+
+.popup-actions-section button:hover {
+    /* Darkened colors for hover state */
+    background-color: #b3d1ff; /* Adjusted to a darker shade */
+    border-color: #8cbaff; /* Adjusted for consistency */
+    color: #003366; /* Adjusted for consistency */
+}
+
+.add-url-section {
+    display: flex;
+    margin-bottom: 15px; /* Space below this section */
+}
+
+.add-url-section input[type="text"] {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.add-url-section button {
+    padding: 8px 15px;
+    border: 1px solid #28a745;
+    background-color: #28a745;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+.add-url-section button:hover {
+    background-color: #218838;
+}
+
+#iframe-container .empty-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    color: #6c757d;
+    font-size: 16px;
+}
