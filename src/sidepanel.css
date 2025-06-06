@@ -135,7 +135,7 @@ body, html {
 
 /* Visual feedback for when an item is being dragged over another */
 .url-item.drag-over {
-    background-color: #e9ecef;
+    background-color: #cccccc; /* Darker background for drag-over indication */
 }
 
 .url-item:active {
@@ -226,9 +226,9 @@ body, html {
 
 .popup-actions-section button:hover {
     /* Darkened colors for hover state */
-    background-color: #b3d1ff; /* Adjusted to a darker shade */
-    border-color: #8cbaff; /* Adjusted for consistency */
-    color: #003366; /* Adjusted for consistency */
+    background-color: #b3d1ff;
+    border-color: #8cbaff;
+    color: #003366;
 }
 
 .add-url-section {
