@@ -52,10 +52,8 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmationMessageElement.style.transition = 'opacity 0.3s ease-in-out';
             document.body.appendChild(confirmationMessageElement);
         }
-
         confirmationMessageElement.textContent = message;
         confirmationMessageElement.style.opacity = '1';
-
         setTimeout(() => {
             confirmationMessageElement.style.opacity = '0';
         }, duration);
@@ -67,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Settings popup element not found.');
             return;
         }
-
         let messageElement = settingsPopup.querySelector('.popup-message-area');
         if (!messageElement) {
             messageElement = document.createElement('div');
@@ -83,14 +80,9 @@ document.addEventListener('DOMContentLoaded', function () {
             messageElement.style.display = 'none';
             settingsPopup.appendChild(messageElement);
         }
-
         messageElement.textContent = messageText;
         messageElement.style.display = 'block';
-
-        if (popupNotificationTimeout) {
-            clearTimeout(popupNotificationTimeout);
-        }
-
+        if (popupNotificationTimeout) clearTimeout(popupNotificationTimeout);
         popupNotificationTimeout = setTimeout(() => {
             messageElement.style.display = 'none';
             messageElement.textContent = '';
@@ -130,74 +122,61 @@ document.addEventListener('DOMContentLoaded', function () {
             const urlInput = document.createElement('input');
             urlInput.type = 'text';
             urlInput.value = urlEntry.url;
-
             let originalUrlOnFocus = urlEntry.url;
 
             urlInput.addEventListener('focus', () => {
                 originalUrlOnFocus = urlInput.value;
-                itemDiv.draggable = false; // Disable dragging on the parent item when input is focused
+                itemDiv.draggable = false; // Disable dragging on parent when input is focused
             });
 
             urlInput.addEventListener('blur', () => {
                 const newUrlValue = urlInput.value.trim();
+                itemDiv.draggable = true; // Re-enable dragging once focus is lost
 
-                if (newUrlValue === originalUrlOnFocus) {
-                    itemDiv.draggable = true; // Re-enable dragging.
-                    return;
-                }
+                if (newUrlValue === originalUrlOnFocus) return;
 
                 if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
                     showPopupMessage('Invalid URL. Must start with http:// or https://');
                     urlInput.value = originalUrlOnFocus;
-                    itemDiv.draggable = true;
                     return;
                 }
                 if (managedUrls.some(u => u.url === newUrlValue && u.id !== urlEntry.id)) {
                     showPopupMessage('This URL already exists in the list.');
                     urlInput.value = originalUrlOnFocus;
-                    itemDiv.draggable = true;
                     return;
                 }
 
-                const oldUrlForCache = urlEntry.url;
-                urlEntry.url = newUrlValue;
+                const oldUrlKeyInCache = urlEntry.url; // The key used in iframeCache before URL change
+                urlEntry.url = newUrlValue; // Update the URL in our data structure
 
-                // Update iframe cache if the URL changed
-                if (iframeCache[oldUrlForCache]) {
-                    iframeCache[newUrlValue] = iframeCache[oldUrlForCache];
-                    delete iframeCache[oldUrlForCache];
-                    // If the iframe was selected and displayed, update its src
-                    if (iframeCache[newUrlValue].src !== newUrlValue && urlEntry.selected) {
-                       iframeCache[newUrlValue].src = newUrlValue;
+                if (iframeCache[oldUrlKeyInCache]) {
+                    const cachedIframe = iframeCache[oldUrlKeyInCache];
+                    delete iframeCache[oldUrlKeyInCache]; // Remove old entry
+                    iframeCache[newUrlValue] = cachedIframe; // Add new entry with the same iframe element
+
+                    // If this iframe is selected, its src must be updated to the new URL.
+                    // This will cause this specific iframe to reload.
+                    if (urlEntry.selected && cachedIframe.src !== newUrlValue) {
+                        cachedIframe.src = newUrlValue;
                     }
                 }
-
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
-                renderUrlList(); // Refresh the list to reflect changes.
-                updateIframes(); // Update iframes, potentially reloading the changed one
+                renderUrlList(); // Re-render the list as URL text has changed
+                updateIframes(); // Update display
             });
 
             urlInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.target.blur(); // Trigger blur to save.
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    urlInput.value = originalUrlOnFocus; // Revert to original value.
-                    e.target.blur();
-                }
+                if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); }
             });
 
             const openButton = document.createElement('button');
             openButton.textContent = 'Open';
             openButton.className = 'open-url-button';
             openButton.addEventListener('click', () => {
-                if (chrome && chrome.tabs && chrome.tabs.create) {
-                    chrome.tabs.create({ url: urlEntry.url });
-                } else {
-                    window.open(urlEntry.url, '_blank');
-                }
+                if (chrome && chrome.tabs && chrome.tabs.create) chrome.tabs.create({ url: urlEntry.url });
+                else window.open(urlEntry.url, '_blank');
             });
 
             const removeButton = document.createElement('button');
@@ -205,20 +184,13 @@ document.addEventListener('DOMContentLoaded', function () {
             removeButton.className = 'remove-url-button';
             removeButton.addEventListener('click', () => {
                 if (window.confirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`)) {
-                    // Remove from iframe cache and DOM if present
                     if (iframeCache[urlEntry.url]) {
-                        if (iframeCache[urlEntry.url].parentNode) {
-                            iframeContainer.removeChild(iframeCache[urlEntry.url]);
-                        }
+                        if (iframeCache[urlEntry.url].parentNode) iframeContainer.removeChild(iframeCache[urlEntry.url]);
                         delete iframeCache[urlEntry.url];
                     }
                     const wasSelected = urlEntry.selected;
                     managedUrls = managedUrls.filter(u => u.id.toString() !== urlEntry.id.toString());
-
-                    // If the deleted URL was selected and no other URL is selected, select the first one.
-                    if (managedUrls.length > 0 && wasSelected && !managedUrls.some(u => u.selected)) {
-                        managedUrls[0].selected = true;
-                    }
+                    if (managedUrls.length > 0 && wasSelected && !managedUrls.some(u => u.selected)) managedUrls[0].selected = true;
                     saveUrls();
                     renderUrlList();
                     updateIframes();
@@ -226,100 +198,54 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            itemDiv.appendChild(checkbox);
-            itemDiv.appendChild(urlInput);
-            itemDiv.appendChild(openButton);
-            itemDiv.appendChild(removeButton);
+            itemDiv.appendChild(checkbox); itemDiv.appendChild(urlInput); itemDiv.appendChild(openButton); itemDiv.appendChild(removeButton);
             urlListManagementDiv.appendChild(itemDiv);
 
-            // Drag and drop event listeners for reordering
+            // Drag and drop event listeners
             itemDiv.addEventListener('dragstart', (e) => {
-                // Disable pointer events on the iframe container to prevent interference during drag
-                if (managedUrls.some(u => u.selected)) {
-                    iframeContainer.style.pointerEvents = 'none';
-                    iframeContainer.style.opacity = '0.7'; // Optional: visual cue
+                if (managedUrls.some(u => u.selected)) { // If iframes are visible
+                    iframeContainer.style.pointerEvents = 'none'; // Prevent iframe interaction during drag
+                    iframeContainer.style.opacity = '0.7'; // Visual cue
                 }
-
                 draggedDOMElement = itemDiv;
                 e.dataTransfer.setData('text/plain', itemDiv.dataset.id);
                 e.dataTransfer.effectAllowed = 'move';
-                setTimeout(() => { // Allow browser to render drag image before changing opacity
-                    if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5';
-                }, 0);
+                setTimeout(() => { if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5'; }, 0);
             });
-
             itemDiv.addEventListener('dragend', () => {
-                // Restore pointer events and opacity for the iframe container
-                iframeContainer.style.pointerEvents = 'auto';
+                iframeContainer.style.pointerEvents = 'auto'; // Restore iframe interaction
                 iframeContainer.style.opacity = '1';
-
-                if (draggedDOMElement) {
-                    draggedDOMElement.style.opacity = '1';
-                } else {
-                    itemDiv.style.opacity = '1'; // Fallback
-                }
+                if (draggedDOMElement) draggedDOMElement.style.opacity = '1'; else itemDiv.style.opacity = '1'; // Fallback
                 draggedDOMElement = null;
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
             });
-
             itemDiv.addEventListener('dragover', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
+                e.preventDefault(); e.dataTransfer.dropEffect = 'move';
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
                 itemDiv.classList.add('drag-over');
             });
-
-            itemDiv.addEventListener('dragleave', () => {
-                itemDiv.classList.remove('drag-over');
-            });
-
+            itemDiv.addEventListener('dragleave', () => itemDiv.classList.remove('drag-over'));
             itemDiv.addEventListener('drop', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
-                e.preventDefault();
-                itemDiv.classList.remove('drag-over');
-
+                e.preventDefault(); itemDiv.classList.remove('drag-over');
                 const draggedId = e.dataTransfer.getData('text/plain');
                 const targetId = itemDiv.dataset.id;
-
-                let draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
-                if (draggedItemIndex === -1) {
-                    console.error("Dragged item not found in managedUrls:", draggedId);
-                    renderUrlList(); // Refresh UI
-                    updateIframes(); // Sync iframes
-                    return;
-                }
-
+                const draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
+                if (draggedItemIndex === -1) return; // Should not happen
                 const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
-
-                if (targetItemIndex === -1) {
-                    console.error("Target item not found in managedUrls:", targetId);
-                    managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry); // Put back
-                    renderUrlList();
-                    updateIframes();
-                    return;
-                }
-
+                if (targetItemIndex === -1) { managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry); return; } // Should not happen, put item back
                 const rect = itemDiv.getBoundingClientRect();
                 const isAfter = e.clientY > rect.top + rect.height / 2;
-
-                if (isAfter) {
-                    managedUrls.splice(targetItemIndex + 1, 0, draggedUrlEntry);
-                } else {
-                    managedUrls.splice(targetItemIndex, 0, draggedUrlEntry);
-                }
-
-                saveUrls();
-                renderUrlList(); // Update the settings panel list
-                updateIframes(); // Update the actual iframes based on new order and selections
-                showPopupMessage('List reordered successfully.');
+                managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
+                saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('List reordered successfully.');
             });
         });
     }
 
     // Updates iframe visibility and content based on selections and order.
-    // Prevents reload if the displayed iframes and their order haven't changed.
+    // Aims to re-order existing iframe DOM elements without reloading their content if src hasn't changed.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
@@ -334,76 +260,87 @@ document.addEventListener('DOMContentLoaded', function () {
                 'No websites available. Add some in Settings or reload for defaults.' :
                 'No websites selected. Please select from Settings.';
             iframeContainer.appendChild(emptyMessage);
-
-            Object.values(iframeCache).forEach(iframe => {
+            Object.values(iframeCache).forEach(iframe => { // Hide all cached iframes
                 if (iframe && iframe.style) iframe.style.display = 'none';
             });
             return;
         }
 
-        // Determine the new desired state of iframes
-        const newDesiredIframes = []; // Array of iframe DOM elements
-        const newDesiredUrls = [];   // Array of corresponding iframe src URLs
-
+        // Build the list of iframe DOM elements that should be currently displayed.
+        const newDesiredIframeElements = [];
         selectedUrlEntries.forEach(urlEntry => {
             let iframe = iframeCache[urlEntry.url];
-            if (!iframe) {
+            if (!iframe) { // If iframe not in cache, create it
                 iframe = document.createElement('iframe');
-                iframe.src = urlEntry.url;
-                iframe.style.flexGrow = '1';
-                iframe.style.flexBasis = '0';
-                iframe.style.minWidth = '0';
-                iframe.style.border = 'none';
-                iframe.style.height = '100%';
+                iframe.src = urlEntry.url; // This will load the content
+                iframe.style.flexGrow = '1'; iframe.style.flexBasis = '0'; iframe.style.minWidth = '0';
+                iframe.style.border = 'none'; iframe.style.height = '100%';
                 iframeCache[urlEntry.url] = iframe;
-            } else if (iframe.src !== urlEntry.url) {
-                // This can happen if a URL was edited
-                iframe.src = urlEntry.url;
+            } else {
+                // If the URL for this entry was edited (e.g. in the input field),
+                // the iframe.src might be different from urlEntry.url.
+                // The blur handler for urlInput should have already updated iframe.src if necessary.
+                // This check ensures src is correct if it changed through other means or as a safeguard.
+                if (iframe.src !== urlEntry.url) {
+                    iframe.src = urlEntry.url; // This will trigger a reload for this specific iframe
+                }
             }
             iframe.style.display = 'block'; // Ensure it's visible
-            newDesiredIframes.push(iframe);
-            newDesiredUrls.push(iframe.src); // Use iframe.src as it's the definitive source
+            newDesiredIframeElements.push(iframe);
         });
 
-        // Get the current state of iframes from the DOM
+        // Get current iframes from DOM.
         const currentDomIframes = Array.from(iframeContainer.children).filter(el => el.tagName === 'IFRAME');
-        const currentDomUrls = currentDomIframes.map(iframe => iframe.src);
 
-        // Compare current DOM state with the new desired state
-        let domNeedsUpdate = false;
-        if (currentDomUrls.length !== newDesiredUrls.length) {
-            domNeedsUpdate = true;
+        // Remove iframes from DOM that are no longer in the desired set.
+        currentDomIframes.forEach(domIframe => {
+            if (!newDesiredIframeElements.includes(domIframe)) {
+                iframeContainer.removeChild(domIframe);
+                // Optionally, hide it in cache too, though visibility is primary
+                // domIframe.style.display = 'none';
+            }
+        });
+
+        // Add/Reorder iframes in the container to match newDesiredIframeElements.
+        // Appending an existing child moves it. This loop ensures correct order.
+        // We check if the current DOM order already matches the desired order.
+        let domOrderMatchesDesired = true;
+        if (iframeContainer.children.length !== newDesiredIframeElements.length) {
+            domOrderMatchesDesired = false;
         } else {
-            for (let i = 0; i < newDesiredUrls.length; i++) {
-                // Check if URLs or the iframe instances themselves are different
-                if (currentDomUrls[i] !== newDesiredUrls[i] || currentDomIframes[i] !== newDesiredIframes[i]) {
-                    domNeedsUpdate = true;
+            for (let i = 0; i < newDesiredIframeElements.length; i++) {
+                if (iframeContainer.children[i] !== newDesiredIframeElements[i]) {
+                    domOrderMatchesDesired = false;
                     break;
                 }
             }
         }
 
-        if (domNeedsUpdate) {
-            iframeContainer.innerHTML = ''; // Clear previous content
-            newDesiredIframes.forEach(iframe => {
-                iframeContainer.appendChild(iframe); // Append in the new order
+        if (!domOrderMatchesDesired) {
+            // If order is not correct, re-append all desired iframes in the correct order.
+            // Appending an existing child to the same parent moves it without reloading (if src is same).
+            newDesiredIframeElements.forEach(iframe => {
+                iframeContainer.appendChild(iframe);
             });
         }
-        // If domNeedsUpdate is false, the DOM already reflects the correct state, so no re-append/reload occurs.
 
-        // Hide iframes that are in cache but no longer selected
+        // Hide iframes in cache that are not selected (their elements might still be in cache but not in DOM).
         Object.keys(iframeCache).forEach(urlInCache => {
             const isSelected = selectedUrlEntries.some(entry => entry.url === urlInCache);
             if (!isSelected) {
                 const iframeToHide = iframeCache[urlInCache];
-                if (iframeToHide) iframeToHide.style.display = 'none';
+                if (iframeToHide && iframeToHide.style.display !== 'none') {
+                    iframeToHide.style.display = 'none';
+                }
             }
         });
 
-        // Clean up iframeCache for URLs no longer in managedUrls (e.g., deleted URLs)
+        // Clean up iframeCache for URLs no longer in managedUrls (e.g., deleted URLs).
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
             if (!currentManagedUrlsSet.has(urlInCache)) {
+                // The iframe should have already been removed from DOM if it was displayed and then deleted.
+                // This just cleans the cache entry.
                 delete iframeCache[urlInCache];
             }
         }
@@ -413,16 +350,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadUrls() {
         chrome.storage.local.get(['managedUrls'], function(result) {
             if (result.managedUrls && Array.isArray(result.managedUrls) && result.managedUrls.length > 0) {
-                managedUrls = result.managedUrls.map(url => ({
-                    ...url,
-                    id: url.id || Date.now() + Math.random() // Ensure unique ID for backward compatibility
-                }));
+                managedUrls = result.managedUrls.map(url => ({ ...url, id: url.id || Date.now() + Math.random() }));
             } else {
                 managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || Date.now() + Math.random() }));
             }
-            saveUrls(); // Save to ensure IDs are stored if newly generated
-            renderUrlList();
-            updateIframes();
+            saveUrls(); renderUrlList(); updateIframes();
         });
     }
 
@@ -430,120 +362,51 @@ document.addEventListener('DOMContentLoaded', function () {
         const newUrlValue = newUrlInput.value.trim();
         if (newUrlValue) {
             if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
-                showPopupMessage('Please enter a valid URL (e.g., https://example.com)');
-                return;
+                showPopupMessage('Please enter a valid URL (e.g., https://example.com)'); return;
             }
             if (managedUrls.some(entry => entry.url === newUrlValue)) {
-                showPopupMessage('This URL already exists in the list.');
-                return;
+                showPopupMessage('This URL already exists in the list.'); return;
             }
             managedUrls.push({ id: Date.now() + Math.random(), url: newUrlValue, selected: false });
-            saveUrls();
-            renderUrlList();
-            updateIframes(); // Update iframes, though this new one isn't selected by default
-            newUrlInput.value = '';
+            saveUrls(); renderUrlList(); updateIframes(); newUrlInput.value = '';
             showPopupMessage('URL added successfully!');
         }
     });
-
-    newUrlInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            addUrlButton.click();
-        }
-    });
+    newUrlInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addUrlButton.click(); });
 
     refreshIcon.addEventListener('click', function () {
-        refreshIcon.classList.add('clicked');
-
-        let refreshedCount = 0;
+        refreshIcon.classList.add('clicked'); let refreshedCount = 0;
         managedUrls.forEach(urlEntry => {
-            if (urlEntry.selected) { // Only refresh selected iframes.
+            if (urlEntry.selected) {
                 const iframe = iframeCache[urlEntry.url];
                 if (iframe) {
-                    try {
-                        const originalSrc = iframe.src;
-                        iframe.src = 'about:blank'; // Force reload
-                        setTimeout(() => { iframe.src = originalSrc; }, 50);
-                        refreshedCount++;
-                    } catch (e) {
-                        iframe.src = iframe.src; // Fallback reload attempt
-                    }
+                    try { const originalSrc = iframe.src; iframe.src = 'about:blank'; setTimeout(() => { iframe.src = originalSrc; }, 50); refreshedCount++; }
+                    catch (e) { iframe.src = iframe.src; } // Fallback reload
                 }
             }
         });
-
-        if (refreshedCount > 0) {
-            showGlobalConfirmationMessage(`Refreshed ${refreshedCount} panel(s).`);
-        } else {
-            showGlobalConfirmationMessage('No active panels to refresh.');
-        }
-
-        setTimeout(() => {
-            refreshIcon.classList.remove('clicked');
-        }, 200); // Duration of the click visual feedback
+        showGlobalConfirmationMessage(refreshedCount > 0 ? `Refreshed ${refreshedCount} panel(s).` : 'No active panels to refresh.');
+        setTimeout(() => refreshIcon.classList.remove('clicked'), 200);
     });
 
-    if (invertSelectionButton) {
-        invertSelectionButton.addEventListener('click', () => {
-            if (managedUrls.length === 0) {
-                showPopupMessage('No URLs available to invert selection.');
-                return;
-            }
-            managedUrls.forEach(urlEntry => {
-                urlEntry.selected = !urlEntry.selected;
-            });
-            saveUrls();
-            renderUrlList();
-            updateIframes();
-            showPopupMessage('Selection inverted.');
-        });
-    }
-
-    if (selectAllButton) {
-        selectAllButton.addEventListener('click', () => {
-            if (managedUrls.length === 0) {
-                showPopupMessage('No URLs available to select.');
-                return;
-            }
-            let newlySelectedCount = 0;
-            managedUrls.forEach(urlEntry => {
-                if (!urlEntry.selected) {
-                    urlEntry.selected = true;
-                    newlySelectedCount++;
-                }
-            });
-
-            if (newlySelectedCount > 0) {
-                saveUrls();
-                renderUrlList();
-                updateIframes();
-                showPopupMessage('All URLs selected.');
-            } else {
-                showPopupMessage('All URLs were already selected.');
-            }
-        });
-    }
-
-    if (clearSelectionButton) {
-        clearSelectionButton.addEventListener('click', () => {
-            let deselectedCount = 0;
-            managedUrls.forEach(urlEntry => {
-                if (urlEntry.selected) {
-                    urlEntry.selected = false;
-                    deselectedCount++;
-                }
-            });
-
-            if (deselectedCount > 0) {
-                saveUrls();
-                renderUrlList();
-                updateIframes();
-                showPopupMessage('All selections cleared.');
-            } else {
-                showPopupMessage('No URLs were selected to clear.');
-            }
-        });
-    }
+    if (invertSelectionButton) invertSelectionButton.addEventListener('click', () => {
+        if (managedUrls.length === 0) { showPopupMessage('No URLs available to invert selection.'); return; }
+        managedUrls.forEach(urlEntry => urlEntry.selected = !urlEntry.selected);
+        saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('Selection inverted.');
+    });
+    if (selectAllButton) selectAllButton.addEventListener('click', () => {
+        if (managedUrls.length === 0) { showPopupMessage('No URLs available to select.'); return; }
+        let newlySelectedCount = 0;
+        managedUrls.forEach(urlEntry => { if (!urlEntry.selected) { urlEntry.selected = true; newlySelectedCount++; } });
+        if (newlySelectedCount > 0) { saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All URLs selected.'); }
+        else showPopupMessage('All URLs were already selected.');
+    });
+    if (clearSelectionButton) clearSelectionButton.addEventListener('click', () => {
+        let deselectedCount = 0;
+        managedUrls.forEach(urlEntry => { if (urlEntry.selected) { urlEntry.selected = false; deselectedCount++; } });
+        if (deselectedCount > 0) { saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All selections cleared.'); }
+        else showPopupMessage('No URLs were selected to clear.');
+    });
 
     loadUrls(); // Initial load of URLs
 });
