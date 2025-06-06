@@ -1,8 +1,6 @@
-// Tracks the DOM element currently being dragged
+// Global variables for drag and drop functionality
 let draggedDOMElement = null;
-// Stores the DOM element for the global confirmation message
 let confirmationMessageElement = null;
-// Timeout ID for the popup notification
 let popupNotificationTimeout = null;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -16,11 +14,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
 
-    // Stores URL objects: { id: number, url: string, selected: boolean }
+    // URL management data structure: { id: number, url: string, selected: boolean }
     let managedUrls = [];
-    // Caches iframe DOM elements, keyed by URL string, for performance.
+    // Cache for iframe elements to improve performance
     const iframeCache = {};
 
+    // Default AI service URLs
     const defaultUrls = [
         { id: Date.now() + 1, url: "https://aistudio.google.com/", selected: true },
         { id: Date.now() + 2, url: "https://gemini.google.com/", selected: false },
@@ -36,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: Date.now() + 12, url: "https://www.wenxiaobai.com", selected: false }
     ];
 
-    // Displays a temporary global confirmation message at the bottom center of the screen.
+    // Display temporary confirmation message at bottom center of screen
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -48,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmationMessageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
             confirmationMessageElement.style.color = 'white';
             confirmationMessageElement.style.borderRadius = '5px';
-            confirmationMessageElement.style.zIndex = '2000'; // Ensure it's above most content.
+            confirmationMessageElement.style.zIndex = '2000';
             confirmationMessageElement.style.opacity = '0';
             confirmationMessageElement.style.transition = 'opacity 0.3s ease-in-out';
             document.body.appendChild(confirmationMessageElement);
@@ -60,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
-    // Displays a temporary message at the bottom of the settings popup.
+    // Display temporary message in settings popup
     function showPopupMessage(messageText, duration = 3000) {
         if (!settingsPopup) {
             console.error('Settings popup element not found.');
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!messageElement) {
             messageElement = document.createElement('div');
             messageElement.className = 'popup-message-area';
-            // Basic styling for the message area.
             messageElement.style.padding = '10px';
             messageElement.style.marginTop = '10px';
             messageElement.style.backgroundColor = '#e9f5fe';
@@ -79,26 +77,26 @@ document.addEventListener('DOMContentLoaded', function () {
             messageElement.style.borderRadius = '4px';
             messageElement.style.textAlign = 'center';
             messageElement.style.fontSize = '13px';
-            messageElement.style.display = 'none'; // Initially hidden.
+            messageElement.style.display = 'none';
             settingsPopup.appendChild(messageElement);
         }
         messageElement.textContent = messageText;
         messageElement.style.display = 'block';
-        if (popupNotificationTimeout) clearTimeout(popupNotificationTimeout); // Clear existing timeout.
+        if (popupNotificationTimeout) clearTimeout(popupNotificationTimeout);
         popupNotificationTimeout = setTimeout(() => {
             messageElement.style.display = 'none';
             messageElement.textContent = '';
         }, duration);
     }
 
-    // Saves the current list of managed URLs to local storage.
+    // Save URL list to local storage
     function saveUrls() {
         chrome.storage.local.set({ managedUrls: managedUrls });
     }
 
-    // Renders the list of manageable URLs in the settings popup.
+    // Render URL list in settings popup
     function renderUrlList() {
-        urlListManagementDiv.innerHTML = ''; // Clear existing list items before re-rendering.
+        urlListManagementDiv.innerHTML = '';
 
         managedUrls.forEach(urlEntry => {
             const itemDiv = document.createElement('div');
@@ -108,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
-            dragHandle.innerHTML = '☰'; // Unicode character U+2630 (TRIGRAM FOR HEAVEN) used as drag handle.
+            dragHandle.innerHTML = '☰';
             dragHandle.title = 'Drag to reorder';
             itemDiv.appendChild(dragHandle);
 
@@ -128,12 +126,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             urlInput.addEventListener('focus', () => {
                 originalUrlOnFocus = urlInput.value;
-                itemDiv.draggable = false; // Disable dragging on the item when its URL input is focused.
+                itemDiv.draggable = false;
             });
 
             urlInput.addEventListener('blur', () => {
                 const newUrlValue = urlInput.value.trim();
-                itemDiv.draggable = true; // Re-enable dragging when input loses focus.
+                itemDiv.draggable = true;
 
                 if (newUrlValue === originalUrlOnFocus) return;
 
@@ -148,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                const oldUrlKeyInCache = urlEntry.url; // Store the old URL to update the iframe cache key.
+                const oldUrlKeyInCache = urlEntry.url;
                 urlEntry.url = newUrlValue;
 
                 if (iframeCache[oldUrlKeyInCache]) {
@@ -156,8 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     delete iframeCache[oldUrlKeyInCache];
                     iframeCache[newUrlValue] = cachedIframe;
 
-                    // If this iframe is selected, its src must be updated to the new URL.
-                    // This will cause this specific iframe to reload.
                     if (urlEntry.selected && cachedIframe.src !== newUrlValue) {
                         cachedIframe.src = newUrlValue;
                     }
@@ -180,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (chrome && chrome.tabs && chrome.tabs.create) {
                     chrome.tabs.create({ url: urlEntry.url });
                 } else {
-                    window.open(urlEntry.url, '_blank'); // Fallback for environments without chrome.tabs.
+                    window.open(urlEntry.url, '_blank');
                 }
             });
 
@@ -189,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function () {
             removeButton.className = 'remove-url-button';
             removeButton.addEventListener('click', () => {
                 if (window.confirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`)) {
-                    // Remove from iframe cache and DOM if it exists.
                     if (iframeCache[urlEntry.url]) {
                         if (iframeCache[urlEntry.url].parentNode) {
                             iframeContainer.removeChild(iframeCache[urlEntry.url]);
@@ -198,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     const wasSelected = urlEntry.selected;
                     managedUrls = managedUrls.filter(u => u.id.toString() !== urlEntry.id.toString());
-                    // If the deleted URL was selected and no other URL is selected, select the first URL.
                     if (managedUrls.length > 0 && wasSelected && !managedUrls.some(u => u.selected)) {
                         managedUrls[0].selected = true;
                     }
@@ -215,9 +209,8 @@ document.addEventListener('DOMContentLoaded', function () {
             itemDiv.appendChild(removeButton);
             urlListManagementDiv.appendChild(itemDiv);
 
-            // Drag and drop event listeners for reordering.
+            // Drag and drop event handlers
             itemDiv.addEventListener('dragstart', (e) => {
-                // If iframes are visible, make them non-interactive during drag for better UX.
                 if (managedUrls.some(u => u.selected)) {
                     iframeContainer.style.pointerEvents = 'none';
                     iframeContainer.style.opacity = '0.7';
@@ -225,25 +218,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 draggedDOMElement = itemDiv;
                 e.dataTransfer.setData('text/plain', itemDiv.dataset.id);
                 e.dataTransfer.effectAllowed = 'move';
-                // Briefly set opacity for visual feedback of drag start.
                 setTimeout(() => { if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5'; }, 0);
             });
+
             itemDiv.addEventListener('dragend', () => {
-                iframeContainer.style.pointerEvents = 'auto'; // Restore iframe interactivity.
+                iframeContainer.style.pointerEvents = 'auto';
                 iframeContainer.style.opacity = '1';
-                if (draggedDOMElement) draggedDOMElement.style.opacity = '1'; // Reset opacity.
-                else itemDiv.style.opacity = '1'; // Fallback if draggedDOMElement is null.
+                if (draggedDOMElement) draggedDOMElement.style.opacity = '1';
+                else itemDiv.style.opacity = '1';
                 draggedDOMElement = null;
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
             });
+
             itemDiv.addEventListener('dragover', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over')); // Clear previous drag-over states.
-                itemDiv.classList.add('drag-over'); // Highlight the potential drop target.
+                document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                itemDiv.classList.add('drag-over');
             });
+
             itemDiv.addEventListener('dragleave', () => itemDiv.classList.remove('drag-over'));
+
             itemDiv.addEventListener('drop', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
                 e.preventDefault();
@@ -252,17 +248,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetId = itemDiv.dataset.id;
 
                 const draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
-                if (draggedItemIndex === -1) return; // Should not happen if IDs are consistent.
+                if (draggedItemIndex === -1) return;
 
                 const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
 
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
-                if (targetItemIndex === -1) { // Should not happen, put item back if target not found.
+                if (targetItemIndex === -1) {
                     managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry);
                     return;
                 }
 
-                // Determine if dropping before or after the target item.
                 const rect = itemDiv.getBoundingClientRect();
                 const isAfter = e.clientY > rect.top + rect.height / 2;
                 managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
