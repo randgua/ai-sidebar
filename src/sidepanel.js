@@ -1,5 +1,3 @@
-// ai-sidebar/src/sidepanel.js
-
 // Tracks the DOM element currently being dragged
 let draggedDOMElement = null;
 // Stores the DOM element for the global confirmation message
@@ -18,10 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
 
-    let managedUrls = []; // Stores URL objects: { id: number, url: string, selected: boolean }
-    const iframeCache = {}; // Caches iframe DOM elements, keyed by URL string
-    // Tracks state for drag operations
-    let dragState = { originalSelectedIds: null, modifiedForDrag: false };
+    // Stores URL objects: { id: number, url: string, selected: boolean }
+    let managedUrls = [];
+    // Caches iframe DOM elements, keyed by URL string
+    const iframeCache = {};
 
     const defaultUrls = [
         { id: Date.now() + 1, url: "https://aistudio.google.com/", selected: true },
@@ -42,14 +40,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
             confirmationMessageElement.style.position = 'fixed';
-            confirmationMessageElement.style.bottom = '10px'; // Positioned at the bottom-center
+            confirmationMessageElement.style.bottom = '10px';
             confirmationMessageElement.style.left = '50%';
             confirmationMessageElement.style.transform = 'translateX(-50%)';
             confirmationMessageElement.style.padding = '10px 20px';
             confirmationMessageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
             confirmationMessageElement.style.color = 'white';
             confirmationMessageElement.style.borderRadius = '5px';
-            confirmationMessageElement.style.zIndex = '2000'; // Ensure it's above other elements
+            confirmationMessageElement.style.zIndex = '2000';
             confirmationMessageElement.style.opacity = '0';
             confirmationMessageElement.style.transition = 'opacity 0.3s ease-in-out';
             document.body.appendChild(confirmationMessageElement);
@@ -116,8 +114,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
-            dragHandle.innerHTML = '☰'; // Symbol for drag handle.
-            dragHandle.title = 'Drag to reorder'; // Tooltip for usability.
+            dragHandle.innerHTML = '☰';
+            dragHandle.title = 'Drag to reorder';
             itemDiv.appendChild(dragHandle);
 
             const checkbox = document.createElement('input');
@@ -174,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
-                renderUrlList(); // Refresh the list to reflect changes.
+                renderUrlList();
                 updateIframes();
             });
 
@@ -218,8 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         managedUrls[0].selected = true; // Select the first URL if the deleted one was selected and no others are.
                     }
                     saveUrls();
-                    renderUrlList(); // Refresh the list.
-                    updateIframes(); // Update iframes.
+                    renderUrlList();
+                    updateIframes();
                     showPopupMessage('URL removed.');
                 }
             });
@@ -232,19 +230,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Drag and drop event listeners for reordering
             itemDiv.addEventListener('dragstart', (e) => {
-                dragState.originalSelectedIds = managedUrls.filter(u => u.selected).map(u => u.id);
-                dragState.modifiedForDrag = false;
-
-                // Temporarily deselect all items to simplify drag logic.
-                if (dragState.originalSelectedIds.length > 0) {
-                    managedUrls.forEach(urlEntryItem => {
-                        if (urlEntryItem.selected) {
-                            urlEntryItem.selected = false;
-                        }
-                    });
-                    saveUrls();
-                    updateIframes();
-                    dragState.modifiedForDrag = true; // Mark that selections were modified.
+                // Disable pointer events on the iframe container to prevent interference
+                // Only do this if there's a chance iframes are visible (i.e., some URL is selected)
+                if (managedUrls.some(u => u.selected)) {
+                    iframeContainer.style.pointerEvents = 'none';
+                    iframeContainer.style.opacity = '0.7'; // Optional: visual cue of disabled state
                 }
 
                 draggedDOMElement = itemDiv;
@@ -257,23 +247,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             itemDiv.addEventListener('dragend', () => {
-                itemDiv.style.opacity = '1';
-                if (draggedDOMElement === itemDiv) {
-                    draggedDOMElement = null;
-                }
-                document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                // Always restore pointer events and opacity for the iframe container
+                iframeContainer.style.pointerEvents = 'auto';
+                iframeContainer.style.opacity = '1';
 
-                // Restore original selections if they were modified
-                if (dragState.modifiedForDrag) {
-                    managedUrls.forEach(u => {
-                        u.selected = dragState.originalSelectedIds.includes(u.id);
-                    });
-                    saveUrls();
-                    renderUrlList();
-                    updateIframes();
+                // Restore opacity of the dragged item itself
+                if (draggedDOMElement) { // Check if draggedDOMElement is the itemDiv or another element
+                    draggedDOMElement.style.opacity = '1';
+                } else { // Fallback if draggedDOMElement was cleared or not set to itemDiv
+                    itemDiv.style.opacity = '1';
                 }
-                dragState.originalSelectedIds = null;
-                dragState.modifiedForDrag = false;
+
+
+                draggedDOMElement = null; // Clear the global reference
+
+                document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
             });
 
             itemDiv.addEventListener('dragover', (e) => {
@@ -292,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             itemDiv.addEventListener('drop', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) {
-                    itemDiv.classList.remove('drag-over');
                     return; // Prevent dropping on itself or if no drag operation.
                 }
                 e.preventDefault();
@@ -302,29 +289,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetId = itemDiv.dataset.id;
 
                 let draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
-                if (draggedItemIndex === -1) { // Item not found, possibly an error or edge case.
-                    if (dragState.modifiedForDrag) {
-                        managedUrls.forEach(u => { u.selected = dragState.originalSelectedIds.includes(u.id); });
-                    }
-                    renderUrlList();
-                    if (dragState.modifiedForDrag) { updateIframes(); }
-                    dragState.originalSelectedIds = null;
-                    dragState.modifiedForDrag = false;
+                if (draggedItemIndex === -1) { // Item not found
+                    console.error("Dragged item not found in managedUrls:", draggedId);
+                    renderUrlList(); // Refresh UI to be safe
+                    updateIframes(); // Sync iframes
                     return;
                 }
 
                 const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
 
-                if (targetItemIndex === -1) { // Target not found, should not happen if dragover worked. Put back.
+                if (targetItemIndex === -1) { // Target not found
+                    console.error("Target item not found in managedUrls:", targetId);
+                    // Put the dragged item back where it was to maintain data integrity
                     managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry);
-                    if (dragState.modifiedForDrag) {
-                        managedUrls.forEach(u => { u.selected = dragState.originalSelectedIds.includes(u.id); });
-                    }
                     renderUrlList();
-                    if (dragState.modifiedForDrag) { updateIframes(); }
-                    dragState.originalSelectedIds = null;
-                    dragState.modifiedForDrag = false;
+                    updateIframes();
                     return;
                 }
 
@@ -338,8 +318,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 saveUrls();
-                renderUrlList();
-                updateIframes(); // updateIframes is called here, after reordering and saving.
+                renderUrlList(); // Update the settings panel list
+                updateIframes(); // Update the actual iframes based on new order and selections
                 showPopupMessage('List reordered successfully.');
             });
         });
@@ -376,7 +356,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.src = urlEntry.url;
-                // Basic styling for iframes, assuming CSS handles flex distribution
                 iframe.style.flexGrow = '1';
                 iframe.style.flexBasis = '0';
                 iframe.style.minWidth = '0';
@@ -448,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
             saveUrls();
             renderUrlList();
             updateIframes();
-            newUrlInput.value = ''; // Clear input after adding.
+            newUrlInput.value = '';
             showPopupMessage('URL added successfully!');
         }
     });
