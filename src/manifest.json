@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Sidebar",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Opens selected sites in a sidebar with refresh and site selection options.",
   "permissions": [
       "sidePanel",
