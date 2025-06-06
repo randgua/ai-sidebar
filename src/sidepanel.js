@@ -134,26 +134,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 const newUrlValue = urlInput.value.trim();
                 itemDiv.draggable = true; // Re-enable dragging when input loses focus.
 
-                if (newUrlValue === originalUrlOnFocus) return; // No change.
+                if (newUrlValue === originalUrlOnFocus) return;
 
                 if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
                     showPopupMessage('Invalid URL. Must start with http:// or https://');
-                    urlInput.value = originalUrlOnFocus; // Revert to original URL.
+                    urlInput.value = originalUrlOnFocus;
                     return;
                 }
                 if (managedUrls.some(u => u.url === newUrlValue && u.id !== urlEntry.id)) {
                     showPopupMessage('This URL already exists in the list.');
-                    urlInput.value = originalUrlOnFocus; // Revert.
+                    urlInput.value = originalUrlOnFocus;
                     return;
                 }
 
                 const oldUrlKeyInCache = urlEntry.url; // Store the old URL to update the iframe cache key.
-                urlEntry.url = newUrlValue; // Update the URL in the managedUrls array.
+                urlEntry.url = newUrlValue;
 
                 if (iframeCache[oldUrlKeyInCache]) {
                     const cachedIframe = iframeCache[oldUrlKeyInCache];
-                    delete iframeCache[oldUrlKeyInCache]; // Remove old entry from iframe cache.
-                    iframeCache[newUrlValue] = cachedIframe; // Add new entry with the updated URL, reusing the iframe element.
+                    delete iframeCache[oldUrlKeyInCache];
+                    iframeCache[newUrlValue] = cachedIframe;
 
                     // If this iframe is selected, its src must be updated to the new URL.
                     // This will cause this specific iframe to reload.
@@ -163,13 +163,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
-                renderUrlList(); // Re-render the list to reflect the changed URL text.
-                updateIframes(); // Update iframe display.
+                renderUrlList();
+                updateIframes();
             });
 
             urlInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } // Save on Enter.
-                else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); } // Revert on Escape.
+                if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); }
             });
 
             const openButton = document.createElement('button');
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
                 if (draggedItemIndex === -1) return; // Should not happen if IDs are consistent.
 
-                const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1); // Remove dragged item.
+                const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
 
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
                 if (targetItemIndex === -1) { // Should not happen, put item back if target not found.
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Determine if dropping before or after the target item.
                 const rect = itemDiv.getBoundingClientRect();
                 const isAfter = e.clientY > rect.top + rect.height / 2;
-                managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry); // Insert at new position.
+                managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
 
                 saveUrls();
                 renderUrlList();
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (existingEmptyMessage) iframeContainer.removeChild(existingEmptyMessage);
 
         if (selectedUrlEntries.length === 0) {
-            iframeContainer.innerHTML = ''; // Clear any existing iframes if no URLs are selected.
+            iframeContainer.innerHTML = '';
             const emptyMessage = document.createElement('div');
             emptyMessage.className = 'empty-message';
             emptyMessage.textContent = managedUrls.length === 0 ?
@@ -315,14 +315,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     iframe.src = urlEntry.url; // This will trigger a reload for this specific iframe if src changed.
                 }
             }
-            iframe.style.display = 'block'; // Ensure the iframe is visible.
+            iframe.style.display = 'block';
             newDesiredIframeElements.push(iframe);
         });
 
-        // Get current iframes from DOM.
         const currentDomIframes = Array.from(iframeContainer.children).filter(el => el.tagName === 'IFRAME');
 
-        // Remove iframes from DOM that are no longer in the desired set.
         currentDomIframes.forEach(domIframe => {
             if (!newDesiredIframeElements.includes(domIframe)) {
                 iframeContainer.removeChild(domIframe);
@@ -407,14 +405,14 @@ document.addEventListener('DOMContentLoaded', function () {
             saveUrls();
             renderUrlList();
             updateIframes();
-            newUrlInput.value = ''; // Clear input field.
+            newUrlInput.value = '';
             showPopupMessage('URL added successfully!');
         }
     });
     newUrlInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addUrlButton.click(); });
 
     refreshIcon.addEventListener('click', function () {
-        refreshIcon.classList.add('clicked'); // Visual feedback for click.
+        refreshIcon.classList.add('clicked');
         let refreshedCount = 0;
         managedUrls.forEach(urlEntry => {
             if (urlEntry.selected) {
@@ -424,19 +422,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Force reload by briefly setting src to 'about:blank' then back to original.
                         const originalSrc = iframe.src;
                         iframe.src = 'about:blank';
-                        setTimeout(() => { iframe.src = originalSrc; }, 50); // Small delay before restoring src.
+                        setTimeout(() => { iframe.src = originalSrc; }, 50);
                         refreshedCount++;
                     }
                     catch (e) {
                         // Fallback reload method if the about:blank trick fails (e.g., due to security policies).
                         iframe.src = iframe.src;
-                        refreshedCount++; // Still count as refreshed attempt.
+                        refreshedCount++;
                     }
                 }
             }
         });
         showGlobalConfirmationMessage(refreshedCount > 0 ? `Refreshed ${refreshedCount} panel(s).` : 'No active panels to refresh.');
-        setTimeout(() => refreshIcon.classList.remove('clicked'), 200); // Remove click feedback style.
+        setTimeout(() => refreshIcon.classList.remove('clicked'), 200);
     });
 
     if (invertSelectionButton) invertSelectionButton.addEventListener('click', () => {
@@ -464,5 +462,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    loadUrls(); // Initial load of URLs when the side panel DOM is ready.
+    loadUrls();
 });
