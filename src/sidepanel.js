@@ -27,12 +27,13 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: Date.now() + 3, url: "https://chatgpt.com/", selected: false },
         { id: Date.now() + 4, url: "https://claude.ai/", selected: false },
         { id: Date.now() + 5, url: "https://x.ai/", selected: false },
-        { id: Date.now() + 6, url: "https://chat.deepseek.com/", selected: false },
-        { id: Date.now() + 7, url: "https://chat.qwen.ai/", selected: false },
-        { id: Date.now() + 8, url: "https://www.tongyi.com/qianwen/", selected: false },
-        { id: Date.now() + 9, url: "https://chatglm.cn/", selected: false },
-        { id: Date.now() + 10, url: "https://www.doubao.com/chat/", selected: false },
-        { id: Date.now() + 11, url: "https://www.wenxiaobai.com", selected: false }
+        { id: Date.now() + 6, url: "https://www.perplexity.ai/", selected: false },
+        { id: Date.now() + 7, url: "https://chat.deepseek.com/", selected: false },
+        { id: Date.now() + 8, url: "https://chat.qwen.ai/", selected: false },
+        { id: Date.now() + 9, url: "https://www.tongyi.com/qianwen/", selected: false },
+        { id: Date.now() + 10, url: "https://chatglm.cn/", selected: false },
+        { id: Date.now() + 11, url: "https://www.doubao.com/chat/", selected: false },
+        { id: Date.now() + 12, url: "https://www.wenxiaobai.com", selected: false }
     ];
 
     // Displays a temporary global confirmation message at the bottom center of the screen.
