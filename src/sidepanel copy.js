@@ -1,3 +1,5 @@
+// ai-sidebar/src/sidepanel.js
+
 // Tracks the DOM element currently being dragged
 let draggedDOMElement = null;
 // Stores the DOM element for the global confirmation message
@@ -16,10 +18,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
 
-    // Stores URL objects: { id: number, url: string, selected: boolean }
-    let managedUrls = [];
-    // Caches iframe DOM elements, keyed by URL string
-    const iframeCache = {};
+    let managedUrls = []; // Stores URL objects: { id: number, url: string, selected: boolean }
+    const iframeCache = {}; // Caches iframe DOM elements, keyed by URL string
+    // Tracks state for drag operations
+    let dragState = { originalSelectedIds: null, modifiedForDrag: false };
 
     const defaultUrls = [
         { id: Date.now() + 1, url: "https://aistudio.google.com/", selected: true },
@@ -40,14 +42,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
             confirmationMessageElement.style.position = 'fixed';
-            confirmationMessageElement.style.bottom = '10px';
+            confirmationMessageElement.style.bottom = '10px'; // Positioned at the bottom-center
             confirmationMessageElement.style.left = '50%';
             confirmationMessageElement.style.transform = 'translateX(-50%)';
             confirmationMessageElement.style.padding = '10px 20px';
             confirmationMessageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
             confirmationMessageElement.style.color = 'white';
             confirmationMessageElement.style.borderRadius = '5px';
-            confirmationMessageElement.style.zIndex = '2000';
+            confirmationMessageElement.style.zIndex = '2000'; // Ensure it's above other elements
             confirmationMessageElement.style.opacity = '0';
             confirmationMessageElement.style.transition = 'opacity 0.3s ease-in-out';
             document.body.appendChild(confirmationMessageElement);
@@ -114,8 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
-            dragHandle.innerHTML = '☰';
-            dragHandle.title = 'Drag to reorder';
+            dragHandle.innerHTML = '☰'; // Symbol for drag handle.
+            dragHandle.title = 'Drag to reorder'; // Tooltip for usability.
             itemDiv.appendChild(dragHandle);
 
             const checkbox = document.createElement('input');
@@ -149,24 +151,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
                     showPopupMessage('Invalid URL. Must start with http:// or https://');
                     urlInput.value = originalUrlOnFocus;
-                    itemDiv.draggable = true;
+                    itemDiv.draggable = true; // Re-enable dragging.
                     return;
                 }
                 if (managedUrls.some(u => u.url === newUrlValue && u.id !== urlEntry.id)) {
                     showPopupMessage('This URL already exists in the list.');
                     urlInput.value = originalUrlOnFocus;
-                    itemDiv.draggable = true;
+                    itemDiv.draggable = true; // Re-enable dragging.
                     return;
                 }
 
                 const oldUrlForCache = urlEntry.url;
                 urlEntry.url = newUrlValue;
 
-                // Update iframe cache if the URL changed
                 if (iframeCache[oldUrlForCache]) {
                     iframeCache[newUrlValue] = iframeCache[oldUrlForCache];
                     delete iframeCache[oldUrlForCache];
-                    // If the iframe was selected and displayed, update its src
                     if (iframeCache[newUrlValue].src !== newUrlValue && urlEntry.selected) {
                        iframeCache[newUrlValue].src = newUrlValue;
                     }
@@ -175,13 +175,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
                 renderUrlList(); // Refresh the list to reflect changes.
-                updateIframes(); // Update iframes, potentially reloading the changed one
+                updateIframes();
             });
 
             urlInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.target.blur(); // Trigger blur to save.
+                    e.preventDefault(); // Prevent default form submission or line break.
+                    e.target.blur();    // Trigger blur to save.
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     urlInput.value = originalUrlOnFocus; // Revert to original value.
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (chrome && chrome.tabs && chrome.tabs.create) {
                     chrome.tabs.create({ url: urlEntry.url });
                 } else {
-                    window.open(urlEntry.url, '_blank');
+                    window.open(urlEntry.url, '_blank'); // Fallback for environments where chrome.tabs is not available.
                 }
             });
 
@@ -205,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
             removeButton.className = 'remove-url-button';
             removeButton.addEventListener('click', () => {
                 if (window.confirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`)) {
-                    // Remove from iframe cache and DOM if present
                     if (iframeCache[urlEntry.url]) {
                         if (iframeCache[urlEntry.url].parentNode) {
                             iframeContainer.removeChild(iframeCache[urlEntry.url]);
@@ -215,13 +214,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     const wasSelected = urlEntry.selected;
                     managedUrls = managedUrls.filter(u => u.id.toString() !== urlEntry.id.toString());
 
-                    // If the deleted URL was selected and no other URL is selected, select the first one.
                     if (managedUrls.length > 0 && wasSelected && !managedUrls.some(u => u.selected)) {
-                        managedUrls[0].selected = true;
+                        managedUrls[0].selected = true; // Select the first URL if the deleted one was selected and no others are.
                     }
                     saveUrls();
-                    renderUrlList();
-                    updateIframes();
+                    renderUrlList(); // Refresh the list.
+                    updateIframes(); // Update iframes.
                     showPopupMessage('URL removed.');
                 }
             });
@@ -234,37 +232,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Drag and drop event listeners for reordering
             itemDiv.addEventListener('dragstart', (e) => {
-                // Disable pointer events on the iframe container to prevent interference during drag
-                if (managedUrls.some(u => u.selected)) {
-                    iframeContainer.style.pointerEvents = 'none';
-                    iframeContainer.style.opacity = '0.7'; // Optional: visual cue
+                dragState.originalSelectedIds = managedUrls.filter(u => u.selected).map(u => u.id);
+                dragState.modifiedForDrag = false;
+
+                // Temporarily deselect all items to simplify drag logic.
+                if (dragState.originalSelectedIds.length > 0) {
+                    managedUrls.forEach(urlEntryItem => {
+                        if (urlEntryItem.selected) {
+                            urlEntryItem.selected = false;
+                        }
+                    });
+                    saveUrls();
+                    updateIframes();
+                    dragState.modifiedForDrag = true; // Mark that selections were modified.
                 }
 
                 draggedDOMElement = itemDiv;
                 e.dataTransfer.setData('text/plain', itemDiv.dataset.id);
                 e.dataTransfer.effectAllowed = 'move';
-                setTimeout(() => { // Allow browser to render drag image before changing opacity
+                // Use setTimeout to allow the browser to render the drag image before changing opacity.
+                setTimeout(() => {
                     if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5';
                 }, 0);
             });
 
             itemDiv.addEventListener('dragend', () => {
-                // Restore pointer events and opacity for the iframe container
-                iframeContainer.style.pointerEvents = 'auto';
-                iframeContainer.style.opacity = '1';
-
-                if (draggedDOMElement) {
-                    draggedDOMElement.style.opacity = '1';
-                } else {
-                    itemDiv.style.opacity = '1'; // Fallback
+                itemDiv.style.opacity = '1';
+                if (draggedDOMElement === itemDiv) {
+                    draggedDOMElement = null;
                 }
-                draggedDOMElement = null;
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+                // Restore original selections if they were modified
+                if (dragState.modifiedForDrag) {
+                    managedUrls.forEach(u => {
+                        u.selected = dragState.originalSelectedIds.includes(u.id);
+                    });
+                    saveUrls();
+                    renderUrlList();
+                    updateIframes();
+                }
+                dragState.originalSelectedIds = null;
+                dragState.modifiedForDrag = false;
             });
 
             itemDiv.addEventListener('dragover', (e) => {
-                if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
-                e.preventDefault();
+                if (!draggedDOMElement || draggedDOMElement === itemDiv) {
+                    return; // Don't allow dropping on itself or if nothing is dragged.
+                }
+                e.preventDefault(); // Necessary to allow dropping.
                 e.dataTransfer.dropEffect = 'move';
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
                 itemDiv.classList.add('drag-over');
@@ -275,7 +291,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             itemDiv.addEventListener('drop', (e) => {
-                if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
+                if (!draggedDOMElement || draggedDOMElement === itemDiv) {
+                    itemDiv.classList.remove('drag-over');
+                    return; // Prevent dropping on itself or if no drag operation.
+                }
                 e.preventDefault();
                 itemDiv.classList.remove('drag-over');
 
@@ -283,21 +302,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 const targetId = itemDiv.dataset.id;
 
                 let draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
-                if (draggedItemIndex === -1) {
-                    console.error("Dragged item not found in managedUrls:", draggedId);
-                    renderUrlList(); // Refresh UI
-                    updateIframes(); // Sync iframes
+                if (draggedItemIndex === -1) { // Item not found, possibly an error or edge case.
+                    if (dragState.modifiedForDrag) {
+                        managedUrls.forEach(u => { u.selected = dragState.originalSelectedIds.includes(u.id); });
+                    }
+                    renderUrlList();
+                    if (dragState.modifiedForDrag) { updateIframes(); }
+                    dragState.originalSelectedIds = null;
+                    dragState.modifiedForDrag = false;
                     return;
                 }
 
                 const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
 
-                if (targetItemIndex === -1) {
-                    console.error("Target item not found in managedUrls:", targetId);
-                    managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry); // Put back
+                if (targetItemIndex === -1) { // Target not found, should not happen if dragover worked. Put back.
+                    managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry);
+                    if (dragState.modifiedForDrag) {
+                        managedUrls.forEach(u => { u.selected = dragState.originalSelectedIds.includes(u.id); });
+                    }
                     renderUrlList();
-                    updateIframes();
+                    if (dragState.modifiedForDrag) { updateIframes(); }
+                    dragState.originalSelectedIds = null;
+                    dragState.modifiedForDrag = false;
                     return;
                 }
 
@@ -311,20 +338,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 saveUrls();
-                renderUrlList(); // Update the settings panel list
-                updateIframes(); // Update the actual iframes based on new order and selections
+                renderUrlList();
+                updateIframes(); // updateIframes is called here, after reordering and saving.
                 showPopupMessage('List reordered successfully.');
             });
         });
     }
 
     // Updates iframe visibility and content based on selections and order.
-    // Prevents reload if the displayed iframes and their order haven't changed.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
         const existingEmptyMessage = iframeContainer.querySelector('.empty-message');
-        if (existingEmptyMessage) iframeContainer.removeChild(existingEmptyMessage);
+        if (existingEmptyMessage) {
+            iframeContainer.removeChild(existingEmptyMessage);
+        }
 
         if (selectedUrlEntries.length === 0) {
             iframeContainer.innerHTML = ''; // Clear any existing iframes.
@@ -335,21 +363,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 'No websites selected. Please select from Settings.';
             iframeContainer.appendChild(emptyMessage);
 
+            // Hide all cached iframes
             Object.values(iframeCache).forEach(iframe => {
                 if (iframe && iframe.style) iframe.style.display = 'none';
             });
             return;
         }
 
-        // Determine the new desired state of iframes
-        const newDesiredIframes = []; // Array of iframe DOM elements
-        const newDesiredUrls = [];   // Array of corresponding iframe src URLs
-
+        const iframesToDisplayOrdered = [];
         selectedUrlEntries.forEach(urlEntry => {
             let iframe = iframeCache[urlEntry.url];
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.src = urlEntry.url;
+                // Basic styling for iframes, assuming CSS handles flex distribution
                 iframe.style.flexGrow = '1';
                 iframe.style.flexBasis = '0';
                 iframe.style.minWidth = '0';
@@ -357,50 +384,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 iframe.style.height = '100%';
                 iframeCache[urlEntry.url] = iframe;
             } else if (iframe.src !== urlEntry.url) {
-                // This can happen if a URL was edited
-                iframe.src = urlEntry.url;
+                iframe.src = urlEntry.url; // Update src if URL of cached iframe changed
             }
             iframe.style.display = 'block'; // Ensure it's visible
-            newDesiredIframes.push(iframe);
-            newDesiredUrls.push(iframe.src); // Use iframe.src as it's the definitive source
+            iframesToDisplayOrdered.push(iframe);
         });
-
-        // Get the current state of iframes from the DOM
-        const currentDomIframes = Array.from(iframeContainer.children).filter(el => el.tagName === 'IFRAME');
-        const currentDomUrls = currentDomIframes.map(iframe => iframe.src);
-
-        // Compare current DOM state with the new desired state
-        let domNeedsUpdate = false;
-        if (currentDomUrls.length !== newDesiredUrls.length) {
-            domNeedsUpdate = true;
-        } else {
-            for (let i = 0; i < newDesiredUrls.length; i++) {
-                // Check if URLs or the iframe instances themselves are different
-                if (currentDomUrls[i] !== newDesiredUrls[i] || currentDomIframes[i] !== newDesiredIframes[i]) {
-                    domNeedsUpdate = true;
-                    break;
-                }
-            }
-        }
-
-        if (domNeedsUpdate) {
-            iframeContainer.innerHTML = ''; // Clear previous content
-            newDesiredIframes.forEach(iframe => {
-                iframeContainer.appendChild(iframe); // Append in the new order
-            });
-        }
-        // If domNeedsUpdate is false, the DOM already reflects the correct state, so no re-append/reload occurs.
 
         // Hide iframes that are in cache but no longer selected
         Object.keys(iframeCache).forEach(urlInCache => {
             const isSelected = selectedUrlEntries.some(entry => entry.url === urlInCache);
             if (!isSelected) {
                 const iframeToHide = iframeCache[urlInCache];
-                if (iframeToHide) iframeToHide.style.display = 'none';
+                if (iframeToHide) {
+                    iframeToHide.style.display = 'none';
+                }
             }
         });
 
-        // Clean up iframeCache for URLs no longer in managedUrls (e.g., deleted URLs)
+        // Re-populate the iframe container in the correct order
+        iframeContainer.innerHTML = ''; // Clear previous content.
+        iframesToDisplayOrdered.forEach(iframe => {
+            iframeContainer.appendChild(iframe);
+        });
+
+        // Clean up iframeCache for URLs no longer in managedUrls
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
             if (!currentManagedUrlsSet.has(urlInCache)) {
@@ -440,20 +447,20 @@ document.addEventListener('DOMContentLoaded', function () {
             managedUrls.push({ id: Date.now() + Math.random(), url: newUrlValue, selected: false });
             saveUrls();
             renderUrlList();
-            updateIframes(); // Update iframes, though this new one isn't selected by default
-            newUrlInput.value = '';
+            updateIframes();
+            newUrlInput.value = ''; // Clear input after adding.
             showPopupMessage('URL added successfully!');
         }
     });
 
     newUrlInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-            addUrlButton.click();
+            addUrlButton.click(); // Trigger click on Enter key.
         }
     });
 
     refreshIcon.addEventListener('click', function () {
-        refreshIcon.classList.add('clicked');
+        refreshIcon.classList.add('clicked'); // Visual feedback for click.
 
         let refreshedCount = 0;
         managedUrls.forEach(urlEntry => {
@@ -462,11 +469,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (iframe) {
                     try {
                         const originalSrc = iframe.src;
-                        iframe.src = 'about:blank'; // Force reload
+                        iframe.src = 'about:blank'; // Force reload by changing src temporarily
                         setTimeout(() => { iframe.src = originalSrc; }, 50);
                         refreshedCount++;
                     } catch (e) {
-                        iframe.src = iframe.src; // Fallback reload attempt
+                        // Fallback reload attempt if the above fails (e.g., due to security restrictions)
+                        iframe.src = iframe.src;
                     }
                 }
             }
@@ -478,9 +486,10 @@ document.addEventListener('DOMContentLoaded', function () {
             showGlobalConfirmationMessage('No active panels to refresh.');
         }
 
+        // Duration of the click visual feedback
         setTimeout(() => {
             refreshIcon.classList.remove('clicked');
-        }, 200); // Duration of the click visual feedback
+        }, 200);
     });
 
     if (invertSelectionButton) {
