@@ -1,5 +1,3 @@
-// src/background.js
-
 // Allows users to open the side panel by clicking the extension's action toolbar icon.
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
@@ -7,9 +5,9 @@ chrome.sidePanel
 
 chrome.runtime.onInstalled.addListener(function () {
     // These rules modify response headers to allow iframing of sites
-    // that might otherwise block it using X-Frame-Options, Content-Security-Policy, or frame-ancestors.
+    // that might otherwise block it using X-Frame-Options or Content-Security-Policy.
     chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: [1], // Remove existing rule with ID 1 if present to avoid conflicts.
+        removeRuleIds: [1], // Remove existing rule with ID 1 to avoid conflicts.
         addRules: [{
                 id: 1, // Unique ID for the rule.
                 priority: 1,
@@ -19,7 +17,7 @@ chrome.runtime.onInstalled.addListener(function () {
                         // Remove headers that prevent embedding.
                         { header: "x-frame-options", operation: "remove" },
                         { header: "content-security-policy", operation: "remove" },
-                        { header: "frame-options", operation: "remove" }
+                        { header: "frame-options", operation: "remove" } // Some sites might use this less common header.
                     ]
                 },
                 condition: {
@@ -28,7 +26,7 @@ chrome.runtime.onInstalled.addListener(function () {
                         "main_frame",
                         "sub_frame"
                     ]
-                    // This rule applies to all URLs due to "<all_urls>" in host_permissions.
+                    // This rule applies to all URLs due to "<all_urls>" in host_permissions in manifest.json.
                 }
             }]
     }).then(() => {
@@ -38,10 +36,11 @@ chrome.runtime.onInstalled.addListener(function () {
     });
 });
 
-// Listener for updating keyboard shortcuts.
+// Unified listener for runtime messages (e.g., from sidepanel.js or other extension parts).
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'updateShortcut') {
-    // '_execute_action' should match a command defined in manifest.json.
+    // '_execute_action' should match a command name defined in manifest.json.
+    // This command typically refers to the browser action click.
     chrome.commands.update({
       name: '_execute_action',
       shortcut: request.shortcut
@@ -53,21 +52,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     });
     return true; // Indicates that the response will be sent asynchronously.
-  }
-});
-
-// Listener for getting the current keyboard shortcut.
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'getShortcut') {
+  } else if (request.action === 'getShortcut') {
     chrome.commands.getAll((commands) => {
-      const command = commands.find(cmd => cmd.name === '_execute_action');
       if (chrome.runtime.lastError) {
         sendResponse({ shortcut: '', error: chrome.runtime.lastError.message });
-      } else {
-        // Return the current shortcut or an empty string if not found.
-        sendResponse({ shortcut: command ? command.shortcut : '' });
+        return;
       }
+      const command = commands.find(cmd => cmd.name === '_execute_action');
+      // Return the current shortcut or an empty string if not found.
+      sendResponse({ shortcut: command ? command.shortcut : '' });
     });
     return true; // Indicates that the response will be sent asynchronously.
   }
+  // If the action is not handled by this listener,
+  // returning false or undefined allows other listeners (if any) to handle it.
+  // For this extension, we expect all messages to be handled here.
+  return false;
 });
