@@ -3,7 +3,7 @@
 A Chrome extension to open one or more user-configured websites side-by-side in the browser's side panel.
 
 <p align="center">
-  <img src="src/icons/icon128.png" alt="Quick Launch Icon">
+  <img src="src/icons/icon128.png" alt="AI Sidebar Icon">
 </p>
 
 ## Features
@@ -13,7 +13,7 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
     -   Add new URLs to the list.
     -   Select/deselect URLs from your list to be displayed in the side panel.
     -   Edit existing URLs directly in the list.
-    -   Seamlessly reorder URLs using drag-and-drop, maintaining visibility of active panels during the reordering process.
+    -   Seamlessly reorder URLs using drag-and-drop. During the drag operation, the active panels' opacity is slightly reduced and interaction is disabled to optimize the drag experience and prevent accidental clicks.
     -   Delete URLs from the list.
     -   Conveniently open any configured URL in a new tab directly from the settings.
     -   Bulk selection options: Invert selection, Select All, Clear All Selections.
@@ -47,6 +47,6 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
 
 ## How it Works
 
-The extension utilizes Chrome's Side Panel API to display web content. It employs an optimized rendering strategy for iframes, efficiently managing their lifecycle and minimizing DOM updates for smoother performance when switching between selected URLs. The settings popup dynamically renders the URL list, employing optimized DOM manipulation techniques (e.g., using DocumentFragments) to ensure smooth performance even with a large number of URLs. It uses the `declarativeNetRequest` API to dynamically modify HTTP response headers. This action removes `x-frame-options` and `content-security-policy` headers from websites, allowing them to be embedded within an iframe in the side panel. It also sets `access-control-allow-origin` to `*`.
+The extension utilizes Chrome's Side Panel API to display web content. It employs an optimized rendering strategy for iframes, efficiently managing their lifecycle and minimizing DOM updates for smoother performance when switching between selected URLs. The settings popup dynamically renders the URL list; list item updates are handled efficiently to avoid unnecessary repaints and reflows. It uses the `declarativeNetRequest` API to dynamically modify HTTP response headers. This action removes `x-frame-options` and `content-security-policy` headers from websites, allowing them to be embedded within an iframe in the side panel. It also sets `access-control-allow-origin` to `*`.
 
 User preferences, including the list of custom URLs, their selection state, and their order, are stored using `chrome.storage.local`. On first installation, the extension populates the list with several default AI service URLs. If the URL list becomes empty (e.g., if all URLs are deleted and the panel is reloaded), it will be repopulated with these defaults upon next load.

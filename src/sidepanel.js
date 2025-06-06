@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
-            dragHandle.innerHTML = '☰'; // Unicode character for drag handle.
+            dragHandle.innerHTML = '☰'; // Unicode character U+2630 (TRIGRAM FOR HEAVEN) used as drag handle.
             dragHandle.title = 'Drag to reorder';
             itemDiv.appendChild(dragHandle);
 
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveUrls();
                 renderUrlList();
                 updateIframes();
-                showPopupMessage('List reordered successfully.');
+                showPopupMessage('List order updated successfully.');
             });
         });
     }
@@ -287,8 +287,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const emptyMessage = document.createElement('div');
             emptyMessage.className = 'empty-message';
             emptyMessage.textContent = managedUrls.length === 0 ?
-                'No websites available. Add some in Settings or reload for defaults.' :
-                'No websites selected. Please select from Settings.';
+                'No websites available. Add some in Settings, or reload to load the default list.' :
+                'No websites selected. Please select websites to display from Settings.';
             iframeContainer.appendChild(emptyMessage);
             // Ensure all cached iframes are hidden if no URLs are selected.
             Object.values(iframeCache).forEach(iframe => {
@@ -438,18 +438,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (invertSelectionButton) invertSelectionButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage('No URLs available to invert selection.'); return; }
+        if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to invert selection.'); return; }
         managedUrls.forEach(urlEntry => urlEntry.selected = !urlEntry.selected);
         saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('Selection inverted.');
     });
     if (selectAllButton) selectAllButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage('No URLs available to select.'); return; }
+        if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to select.'); return; }
         let newlySelectedCount = 0;
         managedUrls.forEach(urlEntry => { if (!urlEntry.selected) { urlEntry.selected = true; newlySelectedCount++; } });
         if (newlySelectedCount > 0) {
             saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All URLs selected.');
         } else {
-            showPopupMessage('All URLs were already selected.');
+            showPopupMessage('All URLs were already selected; no changes made.');
         }
     });
     if (clearSelectionButton) clearSelectionButton.addEventListener('click', () => {
@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (deselectedCount > 0) {
             saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All selections cleared.');
         } else {
-            showPopupMessage('No URLs were selected to clear.');
+            showPopupMessage('No URLs were selected to clear; no changes made.');
         }
     });
 
