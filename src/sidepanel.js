@@ -1,4 +1,3 @@
-// Global variables for drag and drop functionality
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
 let popupNotificationTimeout = null;
@@ -13,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearSelectionButton = document.getElementById('clear-selection-button');
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
+    const settingsIcon = document.getElementById('settings-icon');
 
     // URL management data structure: { id: number, url: string, selected: boolean }
     let managedUrls = [];
@@ -271,7 +271,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Updates iframe visibility and content based on selections and order.
-    // Aims to re-order existing iframe DOM elements without reloading their content if src hasn't changed.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
@@ -304,9 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 iframe.style.border = 'none'; iframe.style.height = '100%';
                 iframeCache[urlEntry.url] = iframe;
             } else {
-                // If the URL for this entry was edited, the iframe.src might be different from urlEntry.url.
-                // The blur handler for urlInput should have already updated iframe.src if necessary.
-                // This check ensures src is correct as a safeguard.
+                // Ensure src is correct as a safeguard.
                 if (iframe.src !== urlEntry.url) {
                     iframe.src = urlEntry.url; // This will trigger a reload for this specific iframe if src changed.
                 }
@@ -324,8 +321,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Add/Reorder iframes in the container to match newDesiredIframeElements.
-        // Appending an existing child moves it. This loop ensures correct order.
-        // We check if the current DOM order already matches the desired order.
         let domOrderMatchesDesired = true;
         if (iframeContainer.children.length !== newDesiredIframeElements.length) {
             domOrderMatchesDesired = false;
@@ -339,14 +334,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!domOrderMatchesDesired) {
-            // If order is not correct, re-append all desired iframes in the correct order.
             // Appending an existing child to the same parent moves it without reloading (if src is same).
             newDesiredIframeElements.forEach(iframe => {
                 iframeContainer.appendChild(iframe);
             });
         }
 
-        // Hide iframes in cache that are not selected (their elements might still be in cache but not in DOM).
+        // Hide iframes in cache that are not selected.
         Object.keys(iframeCache).forEach(urlInCache => {
             const isSelected = selectedUrlEntries.some(entry => entry.url === urlInCache);
             if (!isSelected) {
@@ -357,12 +351,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Clean up iframeCache for URLs no longer in managedUrls (e.g., deleted URLs).
+        // Clean up iframeCache for URLs no longer in managedUrls.
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
             if (!currentManagedUrlsSet.has(urlInCache)) {
-                // The iframe should have already been removed from DOM if it was displayed and then deleted.
-                // This just cleans the cache entry.
                 delete iframeCache[urlInCache];
             }
         }
@@ -376,13 +368,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Fallback to default URLs if loading fails
                 managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || Date.now() + Math.random() }));
             } else if (result.managedUrls && Array.isArray(result.managedUrls) && result.managedUrls.length > 0) {
-                // Ensure each URL has an ID, generating one if missing (for backward compatibility or manual edits)
+                // Ensure each URL has an ID.
                 managedUrls = result.managedUrls.map(url => ({ ...url, id: url.id || Date.now() + Math.random() }));
             } else {
                 // If no URLs in storage or the list is empty, initialize with defaults.
                 managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || Date.now() + Math.random() }));
             }
-            saveUrls(); // Save (potentially defaults or augmented existing) URLs back to storage.
+            saveUrls();
             renderUrlList();
             updateIframes();
         });
@@ -422,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         refreshedCount++;
                     }
                     catch (e) {
-                        // Fallback reload method if the about:blank trick fails (e.g., due to security policies).
+                        // Fallback reload method.
                         iframe.src = iframe.src;
                         refreshedCount++;
                     }
