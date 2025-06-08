@@ -1,10 +1,11 @@
-// Enable side panel opening via extension icon click
+// Open the side panel when the extension's action icon is clicked.
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error('Failed to set panel behavior:', error));
 
 chrome.runtime.onInstalled.addListener(function () {
-    // Configure response header modification rules for iframe embedding
+    // Add rules to modify response headers, allowing more sites to be embedded in iframes.
+    // This removes x-frame-options and content-security-policy headers that prevent embedding.
     chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: [1],
         addRules: [{
@@ -14,8 +15,7 @@ chrome.runtime.onInstalled.addListener(function () {
                     type: "modifyHeaders",
                     responseHeaders: [
                         { header: "x-frame-options", operation: "remove" },
-                        { header: "content-security-policy", operation: "remove" },
-                        { header: "frame-options", operation: "remove" }
+                        { header: "content-security-policy", operation: "remove" }
                     ]
                 },
                 condition: {
@@ -30,32 +30,4 @@ chrome.runtime.onInstalled.addListener(function () {
     }).catch((error) => {
         console.error("Error updating DeclarativeNetRequest rules:", error);
     });
-});
-
-// Handle runtime messages from extension components
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'updateShortcut') {
-    chrome.commands.update({
-      name: '_execute_action',
-      shortcut: request.shortcut
-    }, () => {
-      if (chrome.runtime.lastError) {
-        sendResponse({ success: false, error: chrome.runtime.lastError.message });
-      } else {
-        sendResponse({ success: true });
-      }
-    });
-    return true;
-  } else if (request.action === 'getShortcut') {
-    chrome.commands.getAll((commands) => {
-      if (chrome.runtime.lastError) {
-        sendResponse({ shortcut: '', error: chrome.runtime.lastError.message });
-        return;
-      }
-      const command = commands.find(cmd => cmd.name === '_execute_action');
-      sendResponse({ shortcut: command ? command.shortcut : '' });
-    });
-    return true;
-  }
-  return false;
 });

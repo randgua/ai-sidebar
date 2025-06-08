@@ -1,10 +1,13 @@
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
 let popupNotificationTimeout = null;
+// Flag to prevent the settings popup from closing while a modal is active.
+let isModalActive = false;
 
 document.addEventListener('DOMContentLoaded', function () {
     const iframeContainer = document.getElementById('iframe-container');
     const refreshIcon = document.getElementById('refresh-icon');
+    const settingsContainer = document.getElementById('settings-container');
     const urlListManagementDiv = document.getElementById('url-list-management');
     const newUrlInput = document.getElementById('new-url-input');
     const addUrlButton = document.getElementById('add-url-button');
@@ -12,30 +15,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearSelectionButton = document.getElementById('clear-selection-button');
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
-    const settingsIcon = document.getElementById('settings-icon');
 
-    // URL management data structure: { id: number, url: string, selected: boolean }
     let managedUrls = [];
-    // Cache for iframe elements to improve performance
+    // Cache for iframe elements to avoid re-creating them on re-render, improving performance.
     const iframeCache = {};
 
-    // Default AI service URLs
     const defaultUrls = [
-        { id: Date.now() + 1, url: "https://aistudio.google.com/", selected: true },
-        { id: Date.now() + 2, url: "https://gemini.google.com/", selected: false },
-        { id: Date.now() + 3, url: "https://chatgpt.com/", selected: false },
-        { id: Date.now() + 4, url: "https://claude.ai/", selected: false },
-        { id: Date.now() + 5, url: "https://x.ai/", selected: false },
-        { id: Date.now() + 6, url: "https://www.perplexity.ai/", selected: false },
-        { id: Date.now() + 7, url: "https://chat.deepseek.com/", selected: false },
-        { id: Date.now() + 8, url: "https://chat.qwen.ai/", selected: false },
-        { id: Date.now() + 9, url: "https://www.tongyi.com/qianwen/", selected: false },
-        { id: Date.now() + 10, url: "https://chatglm.cn/", selected: false },
-        { id: Date.now() + 11, url: "https://www.doubao.com/chat/", selected: false },
-        { id: Date.now() + 12, url: "https://www.wenxiaobai.com", selected: false }
+        { id: crypto.randomUUID(), url: "https://aistudio.google.com/", selected: true },
+        { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
+        { id: crypto.randomUUID(), url: "https://chatgpt.com/", selected: false },
+        { id: crypto.randomUUID(), url: "https://claude.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://x.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://www.perplexity.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://chat.deepseek.com/", selected: false },
+        { id: crypto.randomUUID(), url: "https://chat.qwen.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://www.tongyi.com/qianwen/", selected: false },
+        { id: crypto.randomUUID(), url: "https://chatglm.cn/", selected: false },
+        { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
-    // Display temporary confirmation message at bottom center of screen
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -50,16 +48,27 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmationMessageElement.style.zIndex = '2000';
             confirmationMessageElement.style.opacity = '0';
             confirmationMessageElement.style.transition = 'opacity 0.3s ease-in-out';
+            confirmationMessageElement.addEventListener('transitionend', () => {
+                if (confirmationMessageElement.style.opacity === '0') {
+                    confirmationMessageElement.style.visibility = 'hidden';
+                }
+            });
             document.body.appendChild(confirmationMessageElement);
         }
+
+        if (confirmationMessageElement.timeoutId) {
+            clearTimeout(confirmationMessageElement.timeoutId);
+        }
+
         confirmationMessageElement.textContent = message;
+        confirmationMessageElement.style.visibility = 'visible';
         confirmationMessageElement.style.opacity = '1';
-        setTimeout(() => {
+
+        confirmationMessageElement.timeoutId = setTimeout(() => {
             confirmationMessageElement.style.opacity = '0';
         }, duration);
     }
 
-    // Display temporary message in settings popup
     function showPopupMessage(messageText, duration = 3000) {
         if (!settingsPopup) {
             console.error('Settings popup element not found.');
@@ -89,12 +98,91 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
-    // Save URL list to local storage
+    function showCustomConfirm(message, onConfirm) {
+        isModalActive = true; // Lock the popup from closing
+        const modal = document.getElementById('custom-confirm-modal');
+        const messageP = document.getElementById('custom-confirm-message');
+        const yesButton = document.getElementById('confirm-yes-button');
+        const noButton = document.getElementById('confirm-no-button');
+
+        messageP.textContent = message;
+        modal.style.display = 'flex';
+        yesButton.focus();
+
+        const handleYes = () => {
+            modal.style.display = 'none';
+            onConfirm();
+            cleanup();
+        };
+
+        const handleNo = () => {
+            modal.style.display = 'none';
+            cleanup();
+        };
+
+        const handleEnterKey = (event) => {
+            if (event.key === 'Enter') {
+                if (document.activeElement === yesButton) {
+                    event.preventDefault();
+                    handleYes();
+                } else if (document.activeElement === noButton) {
+                    event.preventDefault();
+                    handleNo();
+                }
+            }
+        };
+
+        const cleanup = () => {
+            yesButton.removeEventListener('click', handleYes);
+            noButton.removeEventListener('click', handleNo);
+            window.removeEventListener('keydown', handleEnterKey, true);
+            // Use timeout to unlock after the current click event has propagated.
+            setTimeout(() => {
+                isModalActive = false;
+            }, 0);
+        };
+
+        yesButton.addEventListener('click', handleYes);
+        noButton.addEventListener('click', handleNo);
+        window.addEventListener('keydown', handleEnterKey, true);
+    }
+
     function saveUrls() {
         chrome.storage.local.set({ managedUrls: managedUrls });
     }
 
-    // Render URL list in settings popup
+    function formatAndValidateUrl(input) {
+        let urlString = input.trim();
+    
+        // Convert local file paths (e.g., "C:\Users\file.pdf" or "/home/user/file.html") to a file URL.
+        // This regex checks for a drive letter at the start or a leading slash.
+        if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
+            urlString = 'file:///' + urlString.replace(/\\/g, '/');
+        }
+    
+        // First, try to parse the URL as is. This will succeed for valid URLs with protocols (http, https, file).
+        try {
+            new URL(urlString);
+            return urlString;
+        } catch (error) {
+            // If parsing fails, check if it's because of a missing protocol.
+            // We test for any protocol-like structure (e.g., "mailto:", "ftp://") to avoid incorrectly prepending "https://".
+            if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
+                const assumedUrl = 'https://' + urlString;
+                try {
+                    // Retry parsing with "https://" prepended.
+                    new URL(assumedUrl);
+                    return assumedUrl;
+                } catch (assumeError) {
+                    // If it still fails, the input is considered invalid.
+                    return null;
+                }
+            }
+            // If the input had a protocol-like structure but still failed to parse, it's invalid.
+            return null;
+        }
+    }
+
     function renderUrlList() {
         urlListManagementDiv.innerHTML = '';
 
@@ -130,37 +218,35 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             urlInput.addEventListener('blur', () => {
-                const newUrlValue = urlInput.value.trim();
                 itemDiv.draggable = true;
+                const newUrlValue = urlInput.value.trim();
 
                 if (newUrlValue === originalUrlOnFocus) return;
 
-                if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
-                    showPopupMessage('Invalid URL. Must start with http:// or https://');
+                const formattedUrl = formatAndValidateUrl(newUrlValue);
+                if (!formattedUrl) {
+                    showPopupMessage('Invalid URL format.');
                     urlInput.value = originalUrlOnFocus;
                     return;
                 }
-                if (managedUrls.some(u => u.url === newUrlValue && u.id !== urlEntry.id)) {
+
+                if (managedUrls.some(u => u.url === formattedUrl && u.id !== urlEntry.id)) {
                     showPopupMessage('This URL already exists in the list.');
                     urlInput.value = originalUrlOnFocus;
                     return;
                 }
 
                 const oldUrlKeyInCache = urlEntry.url;
-                urlEntry.url = newUrlValue;
+                urlEntry.url = formattedUrl;
 
+                // Update the key in the iframe cache if it exists.
                 if (iframeCache[oldUrlKeyInCache]) {
                     const cachedIframe = iframeCache[oldUrlKeyInCache];
                     delete iframeCache[oldUrlKeyInCache];
-                    iframeCache[newUrlValue] = cachedIframe;
-
-                    if (urlEntry.selected && cachedIframe.src !== newUrlValue) {
-                        cachedIframe.src = newUrlValue;
-                    }
+                    iframeCache[formattedUrl] = cachedIframe;
                 }
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
-                renderUrlList();
                 updateIframes();
             });
 
@@ -173,18 +259,14 @@ document.addEventListener('DOMContentLoaded', function () {
             openButton.textContent = 'Open';
             openButton.className = 'open-url-button';
             openButton.addEventListener('click', () => {
-                if (chrome && chrome.tabs && chrome.tabs.create) {
-                    chrome.tabs.create({ url: urlEntry.url });
-                } else {
-                    window.open(urlEntry.url, '_blank');
-                }
+                chrome.tabs.create({ url: urlEntry.url });
             });
 
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Delete';
             removeButton.className = 'remove-url-button';
             removeButton.addEventListener('click', () => {
-                if (window.confirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`)) {
+                showCustomConfirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`, () => {
                     if (iframeCache[urlEntry.url]) {
                         if (iframeCache[urlEntry.url].parentNode) {
                             iframeContainer.removeChild(iframeCache[urlEntry.url]);
@@ -200,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     renderUrlList();
                     updateIframes();
                     showPopupMessage('URL removed.');
-                }
+                });
             });
 
             itemDiv.appendChild(checkbox);
@@ -209,7 +291,6 @@ document.addEventListener('DOMContentLoaded', function () {
             itemDiv.appendChild(removeButton);
             urlListManagementDiv.appendChild(itemDiv);
 
-            // Drag and drop event handlers
             itemDiv.addEventListener('dragstart', (e) => {
                 if (managedUrls.some(u => u.selected)) {
                     iframeContainer.style.pointerEvents = 'none';
@@ -263,14 +344,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
 
                 saveUrls();
-                renderUrlList();
+
+                // OPTIMIZATION: Move the DOM element directly instead of re-rendering the whole list.
+                const parent = urlListManagementDiv;
+                if (isAfter) {
+                    parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
+                } else {
+                    parent.insertBefore(draggedDOMElement, itemDiv);
+                }
+
                 updateIframes();
                 showPopupMessage('List order updated successfully.');
             });
         });
     }
 
-    // Updates iframe visibility and content based on selections and order.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
@@ -285,27 +373,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 'No websites available. Add some in Settings, or reload to load the default list.' :
                 'No websites selected. Please select websites to display from Settings.';
             iframeContainer.appendChild(emptyMessage);
-            // Ensure all cached iframes are hidden if no URLs are selected.
             Object.values(iframeCache).forEach(iframe => {
                 if (iframe && iframe.style) iframe.style.display = 'none';
             });
             return;
         }
 
-        // Build the list of iframe DOM elements that should be currently displayed, in the correct order.
         const newDesiredIframeElements = [];
         selectedUrlEntries.forEach(urlEntry => {
             let iframe = iframeCache[urlEntry.url];
-            if (!iframe) { // If iframe not in cache, create it.
+            if (!iframe) {
                 iframe = document.createElement('iframe');
-                iframe.src = urlEntry.url; // Setting src loads the content.
+                iframe.src = urlEntry.url;
                 iframe.style.flexGrow = '1'; iframe.style.flexBasis = '0'; iframe.style.minWidth = '0';
                 iframe.style.border = 'none'; iframe.style.height = '100%';
                 iframeCache[urlEntry.url] = iframe;
             } else {
-                // Ensure src is correct as a safeguard.
                 if (iframe.src !== urlEntry.url) {
-                    iframe.src = urlEntry.url; // This will trigger a reload for this specific iframe if src changed.
+                    iframe.src = urlEntry.url;
                 }
             }
             iframe.style.display = 'block';
@@ -320,7 +405,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Add/Reorder iframes in the container to match newDesiredIframeElements.
         let domOrderMatchesDesired = true;
         if (iframeContainer.children.length !== newDesiredIframeElements.length) {
             domOrderMatchesDesired = false;
@@ -334,13 +418,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!domOrderMatchesDesired) {
-            // Appending an existing child to the same parent moves it without reloading (if src is same).
+            // Re-append the desired iframes in the correct sequence.
+            // Appending an existing DOM element moves it, which is efficient and avoids reloading the iframe.
             newDesiredIframeElements.forEach(iframe => {
                 iframeContainer.appendChild(iframe);
             });
         }
 
-        // Hide iframes in cache that are not selected.
         Object.keys(iframeCache).forEach(urlInCache => {
             const isSelected = selectedUrlEntries.some(entry => entry.url === urlInCache);
             if (!isSelected) {
@@ -351,7 +435,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Clean up iframeCache for URLs no longer in managedUrls.
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
             if (!currentManagedUrlsSet.has(urlInCache)) {
@@ -360,19 +443,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Loads URLs from storage or uses defaults on initial load.
     function loadUrls() {
         chrome.storage.local.get(['managedUrls'], function(result) {
             if (chrome.runtime.lastError) {
                 console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
-                // Fallback to default URLs if loading fails
-                managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || Date.now() + Math.random() }));
+                managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
             } else if (result.managedUrls && Array.isArray(result.managedUrls) && result.managedUrls.length > 0) {
-                // Ensure each URL has an ID.
-                managedUrls = result.managedUrls.map(url => ({ ...url, id: url.id || Date.now() + Math.random() }));
+                managedUrls = result.managedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
             } else {
-                // If no URLs in storage or the list is empty, initialize with defaults.
-                managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || Date.now() + Math.random() }));
+                managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
             }
             saveUrls();
             renderUrlList();
@@ -380,16 +459,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function syncUrlListCheckboxes() {
+        const urlItems = urlListManagementDiv.querySelectorAll('.url-item');
+        urlItems.forEach(item => {
+            const urlId = item.dataset.id;
+            const urlEntry = managedUrls.find(u => u.id.toString() === urlId);
+            if (urlEntry) {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked !== urlEntry.selected) {
+                    checkbox.checked = urlEntry.selected;
+                }
+            }
+        });
+    }
+
     addUrlButton.addEventListener('click', () => {
         const newUrlValue = newUrlInput.value.trim();
         if (newUrlValue) {
-            if (!newUrlValue.startsWith('http://') && !newUrlValue.startsWith('https://')) {
-                showPopupMessage('Please enter a valid URL (e.g., https://example.com)'); return;
+            const formattedUrl = formatAndValidateUrl(newUrlValue);
+            if (!formattedUrl) {
+                showPopupMessage('Please enter a valid URL or local file path.');
+                return;
             }
-            if (managedUrls.some(entry => entry.url === newUrlValue)) {
-                showPopupMessage('This URL already exists in the list.'); return;
+            if (managedUrls.some(entry => entry.url === formattedUrl)) {
+                showPopupMessage('This URL already exists in the list.');
+                return;
             }
-            managedUrls.push({ id: Date.now() + Math.random(), url: newUrlValue, selected: false });
+            managedUrls.push({ id: crypto.randomUUID(), url: formattedUrl, selected: false });
             saveUrls();
             renderUrlList();
             updateIframes();
@@ -406,18 +502,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (urlEntry.selected) {
                 const iframe = iframeCache[urlEntry.url];
                 if (iframe) {
-                    try {
-                        // Force reload by briefly setting src to 'about:blank' then back to original.
-                        const originalSrc = iframe.src;
-                        iframe.src = 'about:blank';
-                        setTimeout(() => { iframe.src = originalSrc; }, 50);
-                        refreshedCount++;
-                    }
-                    catch (e) {
-                        // Fallback reload method.
-                        iframe.src = iframe.src;
-                        refreshedCount++;
-                    }
+                    iframe.src = iframe.src;
+                    refreshedCount++;
                 }
             }
         });
@@ -428,25 +514,46 @@ document.addEventListener('DOMContentLoaded', function () {
     if (invertSelectionButton) invertSelectionButton.addEventListener('click', () => {
         if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to invert selection.'); return; }
         managedUrls.forEach(urlEntry => urlEntry.selected = !urlEntry.selected);
-        saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('Selection inverted.');
+        saveUrls();
+        syncUrlListCheckboxes();
+        updateIframes();
+        showPopupMessage('Selection inverted.');
     });
+
     if (selectAllButton) selectAllButton.addEventListener('click', () => {
         if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to select.'); return; }
         let newlySelectedCount = 0;
         managedUrls.forEach(urlEntry => { if (!urlEntry.selected) { urlEntry.selected = true; newlySelectedCount++; } });
         if (newlySelectedCount > 0) {
-            saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All URLs selected.');
+            saveUrls();
+            syncUrlListCheckboxes();
+            updateIframes();
+            showPopupMessage('All URLs selected.');
         } else {
             showPopupMessage('All URLs were already selected; no changes made.');
         }
     });
+
     if (clearSelectionButton) clearSelectionButton.addEventListener('click', () => {
         let deselectedCount = 0;
         managedUrls.forEach(urlEntry => { if (urlEntry.selected) { urlEntry.selected = false; deselectedCount++; } });
         if (deselectedCount > 0) {
-            saveUrls(); renderUrlList(); updateIframes(); showPopupMessage('All selections cleared.');
+            saveUrls();
+            syncUrlListCheckboxes();
+            updateIframes();
+            showPopupMessage('All selections cleared.');
         } else {
             showPopupMessage('No URLs were selected to clear; no changes made.');
+        }
+    });
+
+    settingsContainer.addEventListener('mouseenter', () => {
+        settingsPopup.classList.add('show');
+    });
+
+    settingsContainer.addEventListener('mouseleave', () => {
+        if (!isModalActive) {
+            settingsPopup.classList.remove('show');
         }
     });
 

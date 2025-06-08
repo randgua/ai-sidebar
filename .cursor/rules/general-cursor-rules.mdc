@@ -8,8 +8,10 @@ description: Project general specifications and basic information
 # Project General Specifications
 
 ## Technology Stack
-- Python 3.10
-- Poetry for dependency management
+- JavaScript (ES6+)
+- HTML5
+- CSS3
+- Chrome Extension APIs (Manifest V3)
 - GitHub Actions for automated build and release
 - Use GitHub as the code hosting platform
 - Use Bash scripts
