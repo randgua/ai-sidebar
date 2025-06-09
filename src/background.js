@@ -17,6 +17,7 @@ chrome.runtime.onInstalled.addListener(function () {
                         // { header: 'Sec-Fetch-Site', operation: 'remove' },
                         // { header: 'Sec-Fetch-Mode', operation: 'remove' },
                         { header: 'Sec-Fetch-Dest', operation: 'remove' },
+                        // { header: 'Sec-Fetch-User', operation: 'remove' }
                       ],
                     responseHeaders: [
                         // Remove headers that prevent embedding.
