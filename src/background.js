@@ -13,9 +13,22 @@ chrome.runtime.onInstalled.addListener(function () {
                 priority: 1,
                 action: {
                     type: "modifyHeaders",
+                    requestHeaders: [
+                        // { header: 'Sec-Fetch-Site', operation: 'remove' },
+                        // { header: 'Sec-Fetch-Mode', operation: 'remove' },
+                        { header: 'Sec-Fetch-Dest', operation: 'remove' }
+                      ],
                     responseHeaders: [
+                        // Remove headers that prevent embedding.
                         { header: "x-frame-options", operation: "remove" },
-                        { header: "content-security-policy", operation: "remove" }
+                        { header: "content-security-policy", operation: "remove" },
+                        // Remove headers that prevent embedding.
+                        // { header: "frame-options", operation: "remove" },
+                        // { header: "frame-ancestors", operation: "remove" },
+                        // { header: "X-Content-Type-Options", operation: "remove"},
+                        // Set Access-Control-Allow-Origin to allow cross-origin requests,
+                        // which can sometimes help with iframe embedding issues.
+                        // { header: "access-control-allow-origin", operation: "set", value: "*" }
                     ]
                 },
                 condition: {
