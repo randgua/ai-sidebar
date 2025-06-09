@@ -2,8 +2,6 @@
 
 name: Create Release
 
-# This workflow runs automatically whenever you push a tag that starts with 'v'
-# For example: v1.3.0, v1.4.0-beta, etc.
 on:
   push:
     tags:
@@ -11,41 +9,26 @@ on:
 
 jobs:
   build-and-release:
-    # Use the latest version of Ubuntu as the operating system for our job
     runs-on: ubuntu-latest
-    
+
+    # ADD THIS PERMISSIONS BLOCK
+    permissions:
+      contents: write
+
     steps:
-      # Step 1: Check out the repository's code
-      # This downloads your code into the runner environment so we can work with it.
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Package the Chrome extension
-      # This step creates the .zip file that users will download.
       - name: Package extension
         run: |
-          # Navigate into the 'src' directory
           cd src
-          # Create a zip file containing all files and folders inside 'src'.
-          # The zip file will be named based on the tag (e.g., ai-sidebar-v1.3.0.zip)
-          # and placed in the root directory.
           zip -r ../ai-sidebar-${{ github.ref_name }}.zip .
 
-      # Step 3: Create a new GitHub Release
-      # This uses a popular, pre-made action to handle the release creation.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          # The name of the release will be "Release v1.3.0", etc.
           name: "Release ${{ github.ref_name }}"
-          
-          # This is the magic part: it automatically generates the release notes
-          # by looking at your commit history since the last tag.
           generate_release_notes: true
-          
-          # Attach the .zip file we created in the previous step to the release.
           files: ai-sidebar-${{ github.ref_name }}.zip
         env:
-          # The GITHUB_TOKEN is a secret, secure token automatically provided by GitHub
-          # to allow this action to create a release on your behalf.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
