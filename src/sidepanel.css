@@ -342,3 +342,29 @@ body, html {
 #confirm-no-button:hover {
     background-color: #e0e0e0;
 }
+
+/* Styles for the new prompt input area */
+#prompt-container {
+    flex-shrink: 0; /* Prevent this container from shrinking */
+    padding: 8px;
+    background-color: #f0f2f5;
+    border-top: 1px solid #ccc;
+}
+
+#prompt-input {
+    width: 100%;
+    height: 60px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    resize: none; /* Disable manual resizing */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    outline: none;
+}
+
+#prompt-input:focus {
+    border-color: #8ab4f7;
+    box-shadow: 0 0 0 2px rgba(138, 180, 247, 0.3);
+}

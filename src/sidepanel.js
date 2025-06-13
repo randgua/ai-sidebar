@@ -155,30 +155,24 @@ document.addEventListener('DOMContentLoaded', function () {
         let urlString = input.trim();
     
         // Convert local file paths (e.g., "C:\Users\file.pdf" or "/home/user/file.html") to a file URL.
-        // This regex checks for a drive letter at the start or a leading slash.
         if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
             urlString = 'file:///' + urlString.replace(/\\/g, '/');
         }
     
-        // First, try to parse the URL as is. This will succeed for valid URLs with protocols (http, https, file).
         try {
             new URL(urlString);
             return urlString;
         } catch (error) {
             // If parsing fails, check if it's because of a missing protocol.
-            // We test for any protocol-like structure (e.g., "mailto:", "ftp://") to avoid incorrectly prepending "https://".
             if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
                 const assumedUrl = 'https://' + urlString;
                 try {
-                    // Retry parsing with "https://" prepended.
                     new URL(assumedUrl);
                     return assumedUrl;
                 } catch (assumeError) {
-                    // If it still fails, the input is considered invalid.
                     return null;
                 }
             }
-            // If the input had a protocol-like structure but still failed to parse, it's invalid.
             return null;
         }
     }
@@ -345,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 saveUrls();
 
-                // OPTIMIZATION: Move the DOM element directly instead of re-rendering the whole list.
+                // Move the DOM element directly instead of re-rendering the whole list for performance.
                 const parent = urlListManagementDiv;
                 if (isAfter) {
                     parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
@@ -554,6 +548,46 @@ document.addEventListener('DOMContentLoaded', function () {
     settingsContainer.addEventListener('mouseleave', () => {
         if (!isModalActive) {
             settingsPopup.classList.remove('show');
+        }
+    });
+
+    const promptInput = document.getElementById('prompt-input');
+
+    /**
+     * Sends a message containing the prompt to all active iframes.
+     * @param {string} prompt - The text to send.
+     */
+    function sendMessageToIframes(prompt) {
+        const activeIframes = iframeContainer.querySelectorAll('iframe');
+        if (activeIframes.length === 0) {
+            showGlobalConfirmationMessage('No active panels to send prompt to.');
+            return;
+        }
+
+        let sentCount = 0;
+        activeIframes.forEach(iframe => {
+            if (iframe.contentWindow) {
+                // Post the message to the iframe's content window.
+                iframe.contentWindow.postMessage({
+                    action: 'injectPrompt',
+                    prompt: prompt
+                }, '*'); // Use '*' as the target origin since iframes host external sites.
+                sentCount++;
+            }
+        });
+        showGlobalConfirmationMessage(`Prompt sent to ${sentCount} panel(s).`);
+    }
+
+    promptInput.addEventListener('keydown', (event) => {
+        // Send on Enter key press, but allow new lines with Shift+Enter.
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Prevent adding a new line in the textarea.
+            const promptText = promptInput.value.trim();
+            if (promptText) {
+                sendMessageToIframes(promptText);
+                promptInput.value = ''; // Clear the input after sending.
+                promptInput.focus(); // Explicitly set focus back to the input area.
+            }
         }
     });
 
