@@ -2,7 +2,6 @@
 
 /**
  * Routes the prompt to a site-specific handler based on the current website's hostname.
- * This allows for precise targeting of elements on different web apps.
  * @param {string} prompt The text to be injected.
  */
 function handlePromptInjection(prompt) {
@@ -12,10 +11,9 @@ function handlePromptInjection(prompt) {
     const siteHandlers = {
         'chatgpt.com': handleChatGPT,
         'aistudio.google.com': handleAiStudio
-        // Add other specific handlers here, e.g., 'claude.ai': handleClaude
     };
 
-    // Find a handler that matches the end of the hostname for broader compatibility (e.g., www.chatgpt.com).
+    // Find a handler that matches the end of the hostname for broader compatibility.
     const handlerKey = Object.keys(siteHandlers).find(key => hostname.endsWith(key));
     const handler = handlerKey ? siteHandlers[handlerKey] : handleGeneric;
 
@@ -50,26 +48,34 @@ function handleChatGPT(prompt) {
  * @param {string} prompt The text to be injected.
  */
 function handleAiStudio(prompt) {
-    // AI Studio also uses a content-editable div.
-    const inputArea = document.querySelector('div.input-area div[contenteditable="true"]');
+    // Use a specific selector for the textarea.
+    const inputArea = document.querySelector('textarea[aria-label="Start typing a prompt"]');
+    
     if (!inputArea) {
         console.warn('AI-Sidebar: AI Studio input area not found. The selector might be outdated.');
         return;
     }
-    inputArea.textContent = prompt;
+
+    // For <textarea> elements, set the .value property.
+    inputArea.value = prompt;
+    // Dispatch an 'input' event to ensure the website's framework recognizes the change.
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    setTimeout(() => {
-        const sendButton = document.querySelector('button[aria-label="Send message"]');
-        if (sendButton) {
-            sendButton.click();
-        }
-    }, 100);
+    // AI Studio requires Ctrl+Enter or Cmd+Enter to submit.
+    // We simulate this by dispatching a 'keydown' event for the 'Enter' key
+    // with the 'ctrlKey' flag set to true for cross-platform compatibility.
+    const enterEvent = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: true 
+    });
+    inputArea.dispatchEvent(enterEvent);
 }
 
 /**
  * Generic handler for other websites using a heuristic-based approach.
- * This will be used for sites like DeepSeek or any other not specifically handled.
  * @param {string} prompt The text to be injected.
  */
 function handleGeneric(prompt) {
@@ -88,7 +94,8 @@ function handleGeneric(prompt) {
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
     setTimeout(() => {
-        let sendButton = document.querySelector('button[data-testid*="send"], button[aria-label*="Send"], button[aria-label*="Submit"], button > span.material-symbols-outlined:contains("send")');
+        // Find a send button using common attributes.
+        let sendButton = document.querySelector('button[data-testid*="send"], button[aria-label*="Send"], button[aria-label*="Submit"]');
         
         if (sendButton) {
             sendButton.disabled = false;
