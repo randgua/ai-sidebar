@@ -21,7 +21,8 @@ function handlePromptInjection(prompt) {
 }
 
 /**
- * Site-specific handler for chatgpt.com
+ * Site-specific handler for chatgpt.com.
+ * This implementation handles the contenteditable div used as an input field.
  * @param {string} prompt The text to be injected.
  */
 function handleChatGPT(prompt) {
@@ -30,16 +31,23 @@ function handleChatGPT(prompt) {
         console.warn('AI-Sidebar: ChatGPT input area not found. The selector might be outdated.');
         return;
     }
-    inputArea.value = prompt;
-    inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
+    // For a contenteditable div, setting innerText is the correct way to change its content.
+    inputArea.innerText = prompt;
+
+    // Dispatch an 'input' event to notify the React framework that the input has changed.
+    const inputEvent = new Event('input', { bubbles: true, composed: true });
+    inputArea.dispatchEvent(inputEvent);
+
+    // A short delay allows the page to process the input and enable the send button.
     setTimeout(() => {
         const sendButton = document.querySelector('button[data-testid="send-button"]');
-        if (sendButton) {
-            sendButton.disabled = false;
+        if (sendButton && !sendButton.disabled) {
             sendButton.click();
+        } else {
+            console.warn('AI-Sidebar: Send button not found or was disabled. The selector might be outdated.');
         }
-    }, 100);
+    }, 200);
 }
 
 
