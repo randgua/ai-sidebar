@@ -48,7 +48,6 @@ function handleChatGPT(prompt) {
  * @param {string} prompt The text to be injected.
  */
 function handleAiStudio(prompt) {
-    // Use a specific selector for the textarea.
     const inputArea = document.querySelector('textarea[aria-label="Start typing a prompt"]');
     
     if (!inputArea) {
@@ -56,20 +55,20 @@ function handleAiStudio(prompt) {
         return;
     }
 
-    // For <textarea> elements, set the .value property.
     inputArea.value = prompt;
     // Dispatch an 'input' event to ensure the website's framework recognizes the change.
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // AI Studio requires Ctrl+Enter or Cmd+Enter to submit.
-    // We simulate this by dispatching a 'keydown' event for the 'Enter' key
-    // with the 'ctrlKey' flag set to true for cross-platform compatibility.
+    // AI Studio requires Ctrl+Enter or Cmd+Enter. Detect the OS to send the correct key combination.
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
     const enterEvent = new KeyboardEvent('keydown', {
         key: 'Enter',
         code: 'Enter',
         bubbles: true,
         cancelable: true,
-        ctrlKey: true 
+        ctrlKey: !isMac, // Use CtrlKey if not on a Mac.
+        metaKey: isMac   // Use MetaKey (Command key) if on a Mac.
     });
     inputArea.dispatchEvent(enterEvent);
 }
@@ -85,7 +84,6 @@ function handleGeneric(prompt) {
         return;
     }
 
-    // Set value for both textarea and content-editable divs.
     if (inputArea.isContentEditable) {
         inputArea.textContent = prompt;
     } else {
