@@ -7,6 +7,7 @@ body, html {
     display: flex;
     flex-direction: column;
     position: relative; /* Establishes a positioning context for children */
+    background-color: #1e1f2b; /* Set a consistent dark background */
 }
 
 #controls-bar {
@@ -348,7 +349,7 @@ body, html {
     flex-shrink: 0;
     padding: 8px;
     background-color: #1e1f2b;
-    border-top: 1px solid #5f6368;
+    border-top: none; /* Remove the top border line */
     position: relative;
     transition: all 0.3s ease-in-out;
 }
