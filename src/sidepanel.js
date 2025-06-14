@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAllButton = document.getElementById('select-all-button');
 
     let managedUrls = [];
-    // Cache for iframe elements to avoid re-creating them on re-render, improving performance.
+    // Cache for iframe elements to avoid re-creating them on re-render.
     const iframeCache = {};
 
     const defaultUrls = [
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
     
-        // Convert local file paths (e.g., "C:\Users\file.pdf" or "/home/user/file.html") to a file URL.
+        // Convert local file paths to a file URL.
         if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
             urlString = 'file:///' + urlString.replace(/\\/g, '/');
         }
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
             new URL(urlString);
             return urlString;
         } catch (error) {
-            // If parsing fails, check if it's because of a missing protocol.
+            // If parsing fails, try adding a protocol.
             if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
                 const assumedUrl = 'https://' + urlString;
                 try {
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 saveUrls();
 
-                // Move the DOM element directly instead of re-rendering the whole list for performance.
+                // Move the DOM element directly for performance.
                 const parent = urlListManagementDiv;
                 if (isAfter) {
                     parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
@@ -412,7 +412,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!domOrderMatchesDesired) {
-            // Re-append the desired iframes in the correct sequence.
             // Appending an existing DOM element moves it, which is efficient and avoids reloading the iframe.
             newDesiredIframeElements.forEach(iframe => {
                 iframeContainer.appendChild(iframe);
@@ -552,6 +551,44 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const promptInput = document.getElementById('prompt-input');
+    const promptContainer = document.getElementById('prompt-container');
+    const togglePromptButton = document.getElementById('toggle-prompt-button');
+    const sendPromptButton = document.getElementById('send-prompt-button');
+
+    if (togglePromptButton) {
+        togglePromptButton.addEventListener('click', () => {
+            promptContainer.classList.toggle('collapsed');
+            if (promptContainer.classList.contains('collapsed')) {
+                togglePromptButton.textContent = 'expand_less';
+                togglePromptButton.title = 'Expand prompt area';
+            } else {
+                togglePromptButton.textContent = 'expand_more';
+                togglePromptButton.title = 'Collapse prompt area';
+                autoResizeTextarea(promptInput);
+            }
+        });
+    }
+
+    /**
+     * Auto-resizes a textarea to fit its content, up to a maximum height.
+     * @param {HTMLTextAreaElement} textarea - The textarea element.
+     */
+    function autoResizeTextarea(textarea) {
+        if (!textarea || promptContainer.classList.contains('collapsed')) return;
+
+        const maxHeight = Math.floor(window.innerHeight / 3);
+        textarea.style.maxHeight = `${maxHeight}px`;
+
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+
+        if (sendPromptButton) {
+            sendPromptButton.disabled = textarea.value.trim() === '';
+        }
+    }
+
+    promptInput.addEventListener('input', () => autoResizeTextarea(promptInput));
+    window.addEventListener('resize', () => autoResizeTextarea(promptInput));
 
     /**
      * Sends a message containing the prompt to all active iframes.
@@ -567,29 +604,37 @@ document.addEventListener('DOMContentLoaded', function () {
         let sentCount = 0;
         activeIframes.forEach(iframe => {
             if (iframe.contentWindow) {
-                // Post the message to the iframe's content window.
                 iframe.contentWindow.postMessage({
                     action: 'injectPrompt',
                     prompt: prompt
-                }, '*'); // Use '*' as the target origin since iframes host external sites.
+                }, '*'); // Use '*' as the target origin for external sites.
                 sentCount++;
             }
         });
         showGlobalConfirmationMessage(`Prompt sent to ${sentCount} panel(s).`);
     }
 
+    function executeSend() {
+        const promptText = promptInput.value.trim();
+        if (promptText) {
+            sendMessageToIframes(promptText);
+            promptInput.value = '';
+            autoResizeTextarea(promptInput);
+            promptInput.focus();
+        }
+    }
+
+    if (sendPromptButton) {
+        sendPromptButton.addEventListener('click', executeSend);
+    }
+
     promptInput.addEventListener('keydown', (event) => {
-        // Send on Enter key press, but allow new lines with Shift+Enter.
         if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault(); // Prevent adding a new line in the textarea.
-            const promptText = promptInput.value.trim();
-            if (promptText) {
-                sendMessageToIframes(promptText);
-                promptInput.value = ''; // Clear the input after sending.
-                promptInput.focus(); // Explicitly set focus back to the input area.
-            }
+            event.preventDefault();
+            executeSend();
         }
     });
 
     loadUrls();
+    autoResizeTextarea(promptInput);
 });

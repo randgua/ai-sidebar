@@ -43,7 +43,13 @@
 
     <!-- Prompt Input Area -->
     <div id="prompt-container">
-        <textarea id="prompt-input" placeholder="Enter your prompt here and press Enter..."></textarea>
+        <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
+        <div class="prompt-input-wrapper">
+            <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
+            <button id="send-prompt-button" title="Send" disabled>
+                <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
     </div>
 
     <!-- Custom Confirmation Modal for non-blocking user interactions -->

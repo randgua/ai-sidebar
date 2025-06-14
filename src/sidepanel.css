@@ -345,26 +345,154 @@ body, html {
 
 /* Styles for the new prompt input area */
 #prompt-container {
-    flex-shrink: 0; /* Prevent this container from shrinking */
+    flex-shrink: 0;
     padding: 8px;
-    background-color: #f0f2f5;
-    border-top: 1px solid #ccc;
+    background-color: #1e1f2b;
+    border-top: 1px solid #5f6368;
+    position: relative;
+    transition: all 0.3s ease-in-out;
+}
+
+#toggle-prompt-button {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    background-color: #1e1f2b;
+    border: 1px solid #5f6368;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: 'Material Symbols Outlined';
+    font-size: 20px;
+    user-select: none;
+    transition: transform 0.2s ease;
+    color: #8ab4f8;
+    z-index: 1;
+}
+
+#toggle-prompt-button:hover {
+    background-color: #3c4043;
+}
+
+#toggle-prompt-button:active {
+    transform: translateX(-50%) scale(0.9);
+}
+
+.prompt-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    min-height: 44px;
+    background-color: #3c4043;
+    border: 1px solid #5f6368;
+    border-radius: 22px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.prompt-input-wrapper:focus-within {
+    border-color: #bdc1c6;
 }
 
 #prompt-input {
+    flex-grow: 1;
     width: 100%;
-    height: 60px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border: none;
     font-family: Arial, sans-serif;
     font-size: 14px;
-    resize: none; /* Disable manual resizing */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    line-height: 1.4;
+    resize: none;
+    box-sizing: border-box;
     outline: none;
+    overflow-y: auto;
+    background-color: transparent;
+    color: #e8eaed;
+    transition: none;
+}
+
+#prompt-input::placeholder {
+    color: #9aa0a6;
 }
 
 #prompt-input:focus {
-    border-color: #8ab4f7;
-    box-shadow: 0 0 0 2px rgba(138, 180, 247, 0.3);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Custom scrollbar for the prompt input */
+#prompt-input::-webkit-scrollbar {
+    width: 16px;
+    cursor: default;
+}
+
+#prompt-input::-webkit-scrollbar-track {
+    background: transparent;
+    cursor: default;
+}
+
+#prompt-input::-webkit-scrollbar-thumb {
+    background-color: #5f6368;
+    border-radius: 8px;
+    border: 4px solid #3c4043; /* Create padding around thumb */
+    cursor: default;
+}
+
+#prompt-input::-webkit-scrollbar-thumb:hover {
+    background-color: #9aa0a6;
+}
+
+#send-prompt-button {
+    flex-shrink: 0;
+    margin: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background-color: #4a4d5f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#send-prompt-button:hover:not(:disabled) {
+    background-color: #5f6368;
+}
+
+#send-prompt-button:disabled {
+    background-color: transparent;
+    cursor: not-allowed;
+}
+
+#send-prompt-button .material-symbols-outlined {
+    font-size: 20px;
+    font-weight: 300;
+    color: #e8eaed;
+    opacity: 1;
+}
+
+#send-prompt-button:disabled .material-symbols-outlined {
+    opacity: 0.5;
+}
+
+/* Collapsed state for the container */
+#prompt-container.collapsed {
+    padding-top: 0;
+    padding-bottom: 0;
+    height: 0;
+    border-top-width: 0;
+}
+
+/* Hide the wrapper when collapsed */
+#prompt-container.collapsed .prompt-input-wrapper {
+    opacity: 0;
+    visibility: hidden;
 }
