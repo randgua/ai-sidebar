@@ -8,6 +8,8 @@ body, html {
     flex-direction: column;
     position: relative; /* Establishes a positioning context for children */
     background-color: #1e1f2b; /* Set a consistent dark background */
+    overflow: hidden; /* Prevent the main document from scrolling */
+    overscroll-behavior-y: contain; /* Prevent vertical scroll chaining (bounce effect) */
 }
 
 #controls-bar {
@@ -86,6 +88,7 @@ body, html {
     display: flex;
     flex-direction: row; /* Arranges iframes horizontally */
     overflow: hidden; /* Prevents scrollbars on the container itself */
+    overscroll-behavior-y: contain; /* Prevent scroll chaining from iframes */
 }
 
 #iframe-container iframe {
@@ -351,7 +354,6 @@ body, html {
     background-color: #1e1f2b;
     border-top: none; /* Remove the top border line */
     position: relative;
-    transition: all 0.3s ease-in-out;
 }
 
 #toggle-prompt-button {
@@ -416,6 +418,7 @@ body, html {
     background-color: transparent;
     color: #e8eaed;
     transition: none;
+    overscroll-behavior: contain; /* Prevent scroll chaining to parent */
 }
 
 #prompt-input::placeholder {
