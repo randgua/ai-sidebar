@@ -3,6 +3,8 @@ let confirmationMessageElement = null;
 let popupNotificationTimeout = null;
 // Flag to prevent the settings popup from closing while a modal is active.
 let isModalActive = false;
+// Array to hold outputs from iframes.
+let collectedOutputs = [];
 
 document.addEventListener('DOMContentLoaded', function () {
     const iframeContainer = document.getElementById('iframe-container');
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearSelectionButton = document.getElementById('clear-selection-button');
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
+    const copyLastOutputButton = document.getElementById('copy-last-output-button');
 
     let managedUrls = [];
     // Cache for iframe elements to avoid re-creating them on re-render.
@@ -554,6 +557,44 @@ document.addEventListener('DOMContentLoaded', function () {
     const promptContainer = document.getElementById('prompt-container');
     const togglePromptButton = document.getElementById('toggle-prompt-button');
     const sendPromptButton = document.getElementById('send-prompt-button');
+
+    // Handle receiving the last output from an iframe.
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
+            collectedOutputs.push(event.data.output.trim());
+        }
+    });
+
+    if (copyLastOutputButton) {
+        copyLastOutputButton.addEventListener('click', () => {
+            collectedOutputs = []; // Reset for each new request.
+            const activeIframes = iframeContainer.querySelectorAll('iframe');
+    
+            if (activeIframes.length === 0) {
+                showGlobalConfirmationMessage('No active panels to copy from.');
+                return;
+            }
+    
+            // Request the last output from each active iframe.
+            activeIframes.forEach(iframe => {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+                }
+            });
+    
+            // Wait for iframes to respond.
+            setTimeout(() => {
+                if (collectedOutputs.length > 0) {
+                    promptInput.value = collectedOutputs.join('\n\n---\n\n');
+                    autoResizeTextarea(promptInput);
+                    promptInput.focus();
+                    showGlobalConfirmationMessage(`Copied output from ${collectedOutputs.length} panel(s).`);
+                } else {
+                    showGlobalConfirmationMessage('Could not find any output to copy.');
+                }
+            }, 1500); // Wait 1.5 seconds for responses.
+        });
+    }
 
     if (togglePromptButton) {
         togglePromptButton.addEventListener('click', () => {

@@ -449,9 +449,42 @@ body, html {
     background-color: #9aa0a6;
 }
 
+#copy-last-output-button {
+    flex-shrink: 0;
+    margin: 8px 4px 8px 8px; /* top, right, bottom, left */
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: center; /* Vertically center the button */
+}
+
+#copy-last-output-button:hover {
+    background-color: #4a4d5f;
+}
+
+#copy-last-output-button .material-symbols-outlined {
+    font-size: 20px;
+    font-weight: 300;
+    color: #e8eaed;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+#copy-last-output-button:hover .material-symbols-outlined {
+    opacity: 1;
+}
+
 #send-prompt-button {
     flex-shrink: 0;
     margin: 8px;
+    margin-left: 0; /* Remove left margin to sit next to copy button */
     width: 28px;
     height: 28px;
     border-radius: 8px;

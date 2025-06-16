@@ -39,13 +39,21 @@ function waitForElement(selector, timeout = 8000) {
     });
 }
 
-// A router to map hostnames to their specific handler functions.
+// A router to map hostnames to their specific prompt injection handlers.
 const siteHandlers = {
     'aistudio.google.com': handleAiStudio,
     'chat.qwen.ai': handleQwen,
     'chatgpt.com': handleChatGPT,
     'claude.ai': handleClaude,
     'gemini.google.com': handleGemini
+};
+
+// A router to map hostnames to their specific output extraction handlers.
+const siteOutputHandlers = {
+    'aistudio.google.com': getAIStudioOutput,
+    'chatgpt.com': getChatGPTOutput,
+    'gemini.google.com': getGeminiOutput,
+    'claude.ai': getClaudeOutput,
 };
 
 /**
@@ -60,7 +68,6 @@ async function handlePromptInjection(prompt) {
 
 /**
  * Site-specific handler for aistudio.google.com.
- * It now finds the prompt input area both before and after the first submission.
  * @param {string} prompt The text to be injected.
  */
 async function handleAiStudio(prompt) {
@@ -119,12 +126,9 @@ async function handleQwen(prompt) {
 
 /**
  * Site-specific handler for chatgpt.com.
- * It now finds the prompt input area (textarea or contenteditable div)
- * both before and after the first submission.
  * @param {string} prompt The text to be injected.
  */
 async function handleChatGPT(prompt) {
-    // ChatGPT can use a textarea initially or a contenteditable div later.
     const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
     const inputArea = await waitForElement(selector);
 
@@ -133,7 +137,6 @@ async function handleChatGPT(prompt) {
         return;
     }
 
-    // Use the appropriate property based on the element type.
     if (inputArea.isContentEditable) {
         inputArea.textContent = prompt;
     } else {
@@ -212,9 +215,93 @@ async function handleGeneric(prompt) {
     }
 }
 
+/**
+ * Extracts the last response from AI Studio.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getAIStudioOutput() {
+    const responses = document.querySelectorAll('ms-text-chunk');
+    if (responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        if (lastResponse) {
+            return lastResponse.innerText;
+        }
+    }
+    return '';
+}
+
+/**
+ * Extracts the last assistant message from ChatGPT.
+ * @returns {Promise<string>} The text of the last message.
+ */
+async function getChatGPTOutput() {
+    const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
+    if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        const content = lastMessage.querySelector('.markdown');
+        if (content) {
+            return content.innerText;
+        }
+    }
+    return '';
+}
+
+/**
+ * Extracts the last response from Gemini.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getGeminiOutput() {
+    const responses = document.querySelectorAll('.model-response');
+    if (responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        return lastResponse.innerText;
+    }
+    return '';
+}
+
+/**
+ * Extracts the last message from Claude.
+ * @returns {Promise<string>} The text of the last message.
+ */
+async function getClaudeOutput() {
+    const messageGroups = document.querySelectorAll('[data-testid^="message-"]');
+    if (messageGroups.length > 0) {
+        const lastGroup = messageGroups[messageGroups.length - 1];
+        if (lastGroup) {
+            return lastGroup.innerText;
+        }
+    }
+    return '';
+}
+
+/**
+ * Routes the output extraction to a site-specific handler.
+ */
+async function handleOutputExtraction() {
+    const hostname = window.location.hostname;
+    const handler = siteOutputHandlers[hostname];
+    let lastOutput = '';
+    if (handler) {
+        try {
+            lastOutput = await handler();
+        } catch (e) {
+            console.error('AI-Sidebar: Error extracting output:', e);
+        }
+    }
+
+    // Send the extracted output back to the parent sidepanel.
+    window.parent.postMessage({
+        action: 'receiveLastOutput',
+        output: lastOutput,
+        source: hostname
+    }, '*');
+}
+
 // Main listener for messages from the sidepanel.
 window.addEventListener('message', (event) => {
-    if (event.data && event.data.action === 'injectPrompt') {
+    if (!event.data) return;
+
+    if (event.data.action === 'injectPrompt') {
         const prompt = event.data.prompt;
         const executeInjection = () => handlePromptInjection(prompt);
 
@@ -223,5 +310,9 @@ window.addEventListener('message', (event) => {
         } else {
             window.addEventListener('load', executeInjection, { once: true });
         }
+    }
+
+    if (event.data.action === 'getLastOutput') {
+        handleOutputExtraction();
     }
 });
