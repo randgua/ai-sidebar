@@ -7,7 +7,7 @@ body, html {
     display: flex;
     flex-direction: column;
     position: relative; /* Establishes a positioning context for children */
-    background-color: #1e1f2b; /* Set a consistent dark background */
+    background-color: #1e1f2b;
     overflow: hidden; /* Prevent the main document from scrolling */
     overscroll-behavior-y: contain; /* Prevent vertical scroll chaining (bounce effect) */
 }
@@ -41,7 +41,7 @@ body, html {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
     font-style: normal;
-    font-size: 16px; /* Icon visual size */
+    font-size: 16px;
     line-height: 1;
     letter-spacing: normal;
     text-transform: none;
@@ -55,9 +55,8 @@ body, html {
     text-rendering: optimizeLegibility;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'liga';
-
-    width: 24px;  /* Container width for the icon */
-    height: 24px; /* Container height for the icon */
+    width: 24px;
+    height: 24px;
     padding: 0;
     cursor: pointer;
     color: #8ab4f7;
@@ -71,7 +70,7 @@ body, html {
 
 .material-symbols-outlined:hover {
     background-color: transparent;
-    opacity: 1; /* Make icon fully opaque on hover */
+    opacity: 1;
 }
 
 /* Style for icon when clicked or active */
@@ -96,7 +95,7 @@ body, html {
     flex-basis: 0; /* Start from a zero basis for equal distribution with flex-grow */
     min-width: 0; /* Allows iframe to shrink below its content's intrinsic min-width */
     border: none;
-    height: 100%; /* Each iframe takes full height of the container */
+    height: 100%;
 }
 
 .popup {
@@ -112,7 +111,6 @@ body, html {
     padding: 10px 5px;
     max-height: 800px;
     overflow-y: auto;
-
     /* Animation properties */
     visibility: hidden;
     opacity: 0;
@@ -141,12 +139,12 @@ body, html {
     transition: background-color 0.1s ease-out; /* Smooth transition for drag-over */
 }
 .url-item:last-child {
-    border-bottom: none; /* No border for the last item */
+    border-bottom: none;
 }
 
 /* Visual feedback for when an item is being dragged over another */
 .url-item.drag-over {
-    background-color: #cccccc; /* Darker background for drag-over indication */
+    background-color: #cccccc;
 }
 
 .url-item:active {
@@ -225,8 +223,8 @@ body, html {
     border-radius: 3px;
     cursor: pointer;
     font-size: 12px;
-    white-space: nowrap; /* Keeps text on a single line */
-    text-align: center; /* Center text within the button */
+    white-space: nowrap;
+    text-align: center;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; /* Smooth transition for hover effects */
 }
 
@@ -236,7 +234,6 @@ body, html {
 }
 
 .popup-actions-section button:hover {
-    /* Darkened colors for hover state */
     background-color: #b3d1ff;
     border-color: #8cbaff;
     color: #003366;
@@ -244,7 +241,7 @@ body, html {
 
 .add-url-section {
     display: flex;
-    margin-bottom: 15px; /* Space below this section */
+    margin-bottom: 15px;
 }
 
 .add-url-section input[type="text"] {
@@ -288,7 +285,7 @@ body, html {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    display: none; /* Initially hidden */
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 2000;
@@ -352,7 +349,7 @@ body, html {
     flex-shrink: 0;
     padding: 8px;
     background-color: #1e1f2b;
-    border-top: none; /* Remove the top border line */
+    border-top: none;
     position: relative;
 }
 
@@ -469,10 +466,11 @@ body, html {
 
 #send-prompt-button:not(:disabled) {
     background-color: #87a9ff;
+    align-self: center; /* Vertically center the button when active */
 }
 
 #send-prompt-button:hover:not(:disabled) {
-    background-color: #6c8eec; /* A darker shade for hover */
+    background-color: #6c8eec;
 }
 
 #send-prompt-button:disabled {
