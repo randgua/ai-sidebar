@@ -612,7 +612,11 @@ document.addEventListener('DOMContentLoaded', function () {
             sendMessageToIframes(promptText);
             promptInput.value = '';
             autoResizeTextarea(promptInput);
-            promptInput.focus();
+            // Use a timeout to ensure focus returns to the main input
+            // after any potential focus shifts within the iframes.
+            setTimeout(() => {
+                promptInput.focus();
+            }, 100);
         }
     }
 

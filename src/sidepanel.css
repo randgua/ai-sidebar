@@ -467,8 +467,12 @@ body, html {
     transition: background-color 0.2s ease;
 }
 
+#send-prompt-button:not(:disabled) {
+    background-color: #87a9ff;
+}
+
 #send-prompt-button:hover:not(:disabled) {
-    background-color: #5f6368;
+    background-color: #6c8eec; /* A darker shade for hover */
 }
 
 #send-prompt-button:disabled {
