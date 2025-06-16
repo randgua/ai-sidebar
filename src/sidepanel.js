@@ -154,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
     
-        // Convert local file paths to a file URL.
         if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
             urlString = 'file:///' + urlString.replace(/\\/g, '/');
         }
@@ -163,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function () {
             new URL(urlString);
             return urlString;
         } catch (error) {
-            // If parsing fails, try adding a protocol.
             if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
                 const assumedUrl = 'https://' + urlString;
                 try {
@@ -233,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const oldUrlKeyInCache = urlEntry.url;
                 urlEntry.url = formattedUrl;
 
-                // Update the key in the iframe cache if it exists.
                 if (iframeCache[oldUrlKeyInCache]) {
                     const cachedIframe = iframeCache[oldUrlKeyInCache];
                     delete iframeCache[oldUrlKeyInCache];
@@ -438,13 +435,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadUrls() {
         chrome.storage.local.get(['managedUrls'], function(result) {
-            if (chrome.runtime.lastError) {
-                console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
+            const loadedUrls = result.managedUrls;
+            if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
+                if (chrome.runtime.lastError) {
+                    console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
+                }
+                // If storage is empty, corrupted, or there was an error, load the default URLs.
                 managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
-            } else if (result.managedUrls && Array.isArray(result.managedUrls) && result.managedUrls.length > 0) {
-                managedUrls = result.managedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
             } else {
-                managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
+                // If URLs are loaded successfully, ensure each has a unique ID for robust handling.
+                managedUrls = loadedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
             }
             saveUrls();
             renderUrlList();
@@ -569,10 +569,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /**
-     * Auto-resizes a textarea to fit its content, up to a maximum height.
-     * @param {HTMLTextAreaElement} textarea - The textarea element.
-     */
     function autoResizeTextarea(textarea) {
         if (!textarea || promptContainer.classList.contains('collapsed')) return;
 
@@ -590,10 +586,6 @@ document.addEventListener('DOMContentLoaded', function () {
     promptInput.addEventListener('input', () => autoResizeTextarea(promptInput));
     window.addEventListener('resize', () => autoResizeTextarea(promptInput));
 
-    /**
-     * Sends a message containing the prompt to all active iframes.
-     * @param {string} prompt - The text to send.
-     */
     function sendMessageToIframes(prompt) {
         const activeIframes = iframeContainer.querySelectorAll('iframe');
         if (activeIframes.length === 0) {

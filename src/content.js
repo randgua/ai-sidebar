@@ -60,11 +60,17 @@ async function handlePromptInjection(prompt) {
 
 /**
  * Site-specific handler for aistudio.google.com.
+ * It now finds the prompt input area both before and after the first submission.
  * @param {string} prompt The text to be injected.
  */
 async function handleAiStudio(prompt) {
-    const inputArea = await waitForElement('textarea[aria-label="Type something or tab to choose an example prompt"]');
-    if (!inputArea) return;
+    const selector = 'textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Start typing a prompt"]';
+    const inputArea = await waitForElement(selector);
+    
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on aistudio.google.com.');
+        return;
+    }
 
     inputArea.value = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -85,7 +91,6 @@ async function handleAiStudio(prompt) {
 
 /**
  * Site-specific handler for chat.qwen.ai (Tongyi Qianwen).
- * This version simulates a user focusing, typing, and pressing Enter.
  * @param {string} prompt The text to be injected.
  */
 async function handleQwen(prompt) {
@@ -114,20 +119,34 @@ async function handleQwen(prompt) {
 
 /**
  * Site-specific handler for chatgpt.com.
+ * It now finds the prompt input area (textarea or contenteditable div)
+ * both before and after the first submission.
  * @param {string} prompt The text to be injected.
  */
 async function handleChatGPT(prompt) {
-    const inputArea = await waitForElement('#prompt-textarea');
-    if (!inputArea) return;
+    // ChatGPT can use a textarea initially or a contenteditable div later.
+    const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
+    const inputArea = await waitForElement(selector);
 
-    inputArea.innerText = prompt;
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on chatgpt.com.');
+        return;
+    }
+
+    // Use the appropriate property based on the element type.
+    if (inputArea.isContentEditable) {
+        inputArea.textContent = prompt;
+    } else {
+        inputArea.value = prompt;
+    }
+    
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
     const sendButton = await waitForElement('button[data-testid="send-button"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
     } else {
-        console.warn('AI-Sidebar: Send button not found or was disabled.');
+        console.warn('AI-Sidebar: Send button not found or was disabled on chatgpt.com.');
     }
 }
 
