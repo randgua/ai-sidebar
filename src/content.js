@@ -309,4 +309,3 @@ window.addEventListener('message', (event) => {
         handleOutputExtraction();
     }
 });
-src/content.js

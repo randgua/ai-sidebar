@@ -487,18 +487,22 @@ body, html {
     margin-left: 0; /* Remove left margin to sit next to copy button */
     width: 28px;
     height: 28px;
-    border-radius: 8px;
     border: none;
-    background-color: #4a4d5f;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    /* Add transition for border-radius for smooth shape change */
+    transition: background-color 0.2s ease, border-radius 0.2s ease;
+    /* Default style for disabled state (circular, dark background) */
+    border-radius: 50%;
+    background-color: #4a4d5f;
 }
 
 #send-prompt-button:not(:disabled) {
+    /* Style for enabled state (square-ish, lighter background) */
     background-color: #87a9ff;
+    border-radius: 8px;
     align-self: center; /* Vertically center the button when active */
 }
 
@@ -507,8 +511,8 @@ body, html {
 }
 
 #send-prompt-button:disabled {
-    background-color: transparent;
     cursor: not-allowed;
+    /* The circular shape and dark background are now inherited from the base #send-prompt-button rule */
 }
 
 #send-prompt-button .material-symbols-outlined {
