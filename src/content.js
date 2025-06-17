@@ -102,7 +102,10 @@ async function handleAiStudio(prompt) {
  */
 async function handleQwen(prompt) {
     const inputArea = await waitForElement('textarea[placeholder*="How can I help you"]');
-    if (!inputArea) return;
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on chat.qwen.ai.');
+        return;
+    }
 
     inputArea.focus();
 
@@ -110,18 +113,13 @@ async function handleQwen(prompt) {
     nativeInputValueSetter.call(inputArea, prompt);
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // Allow a brief moment for the framework to process the input event.
-    setTimeout(() => {
-        const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true,
-            cancelable: true
-        });
-        inputArea.dispatchEvent(enterEvent);
-    }, 100);
+    const sendButton = await waitForElement('button#send-message-button:not([disabled])');
+
+    if (sendButton) {
+        sendButton.click();
+    } else {
+        console.warn('AI-Sidebar: Qwen send button (id="send-message-button") not found or was disabled.');
+    }
 }
 
 /**
