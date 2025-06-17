@@ -353,7 +353,7 @@ body, html {
 
 #toggle-prompt-button {
     position: absolute;
-    top: -13px;
+    top: -18px;
     left: 50%;
     transform: translateX(-50%);
     width: 24px;
