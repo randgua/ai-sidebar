@@ -494,8 +494,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Standalone Page Specific Listeners ---
     if (backToPanelButton) {
         backToPanelButton.addEventListener('click', () => {
-            // This will close the current tab, which is the standalone page.
-            window.close();
+            // Send a message to the background script to open the side panel.
+            chrome.runtime.sendMessage({ action: "openSidePanel" }, () => {
+                // After the message is sent, close the current tab.
+                window.close();
+            });
         });
     }
     if (collapseButton && leftSidebar) {

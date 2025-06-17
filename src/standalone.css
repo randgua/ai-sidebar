@@ -153,22 +153,22 @@ body, html {
 /* Position new "Back to Panel" button */
 #back-to-panel-container {
     position: absolute;
-    top: 2px;
-    left: 4px;
+    top: 0;
+    left: 0;
 }
 
 /* Position Refresh button next to the new button */
 #main-content #refresh-button-container {
     position: absolute;
-    top: 2px;
-    left: 40px; /* Positioned after the back button */
+    top: 0;
+    left: 20x; /* Positioned after the back button */
 }
 
 /* Position Settings button at the end */
 #main-content #settings-container {
     position: absolute;
-    top: 2px;
-    right: 4px;
+    top: 0;
+    right: 0;
 }
 
 #iframe-container {

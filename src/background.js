@@ -3,6 +3,18 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error('Failed to set panel behavior:', error));
 
+// Listener for messages from other parts of the extension.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "openSidePanel") {
+        // Open the side panel in the window where the message came from.
+        if (sender.tab) {
+            chrome.sidePanel.open({ windowId: sender.tab.windowId });
+        }
+        sendResponse({ status: "Side panel opening" });
+    }
+    return true; // Keep the message channel open for the response.
+});
+
 chrome.runtime.onInstalled.addListener(function () {
     // Add rules to modify response headers, allowing more sites to be embedded in iframes.
     // This removes x-frame-options and content-security-policy headers that prevent embedding.
