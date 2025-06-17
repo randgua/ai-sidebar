@@ -653,11 +653,11 @@ document.addEventListener('DOMContentLoaded', function () {
             sendMessageToIframes(promptText);
             promptInput.value = '';
             autoResizeTextarea(promptInput);
-            // Use a timeout to ensure focus returns to the main input
+            // Use a longer timeout to ensure focus returns to the main input
             // after any potential focus shifts within the iframes.
             setTimeout(() => {
                 promptInput.focus();
-            }, 100);
+            }, 300); // Increased delay to 300ms
         }
     }
 
