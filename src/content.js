@@ -82,18 +82,13 @@ async function handleAiStudio(prompt) {
     inputArea.value = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    const clientHints = await navigator.userAgentData.getHighEntropyValues(['platform']);
-    const isMac = clientHints.platform === 'macOS';
-
-    const enterEvent = new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        bubbles: true,
-        cancelable: true,
-        ctrlKey: !isMac,
-        metaKey: isMac
-    });
-    inputArea.dispatchEvent(enterEvent);
+    // Find and click the send button instead of dispatching an Enter key event.
+    const sendButton = await waitForElement('button[aria-label="Run"]:not([disabled])');
+    if (sendButton) {
+        sendButton.click();
+    } else {
+        console.warn('AI-Sidebar: AI Studio send button (aria-label="Run") not found or was disabled.');
+    }
 }
 
 /**
@@ -314,3 +309,4 @@ window.addEventListener('message', (event) => {
         handleOutputExtraction();
     }
 });
+src/content.js
