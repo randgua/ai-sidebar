@@ -1,0 +1,165 @@
+/* Import existing styles for consistency */
+@import url("sidepanel.css");
+
+/* Override body for full-page layout */
+body, html {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: #1e1f2b;
+    display: flex;
+    font-family: Arial, sans-serif;
+}
+
+#app-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+#left-sidebar {
+    width: 220px;
+    background-color: #0d0e12;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    transition: width 0.2s ease-in-out;
+    color: #e8eaed;
+}
+
+#left-sidebar.collapsed {
+    width: 68px;
+    align-items: center;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 8px 4px;
+    margin-bottom: 24px;
+}
+
+#collapse-sidebar-button {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+}
+#collapse-sidebar-button:hover {
+    opacity: 1;
+}
+
+#left-sidebar.collapsed #collapse-sidebar-button {
+    transform: rotate(180deg);
+}
+
+.sidebar-menu {
+    flex-grow: 1;
+}
+
+.sidebar-menu .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.sidebar-menu .menu-item:hover {
+    background-color: #2a2b36;
+}
+
+.sidebar-menu .menu-item.active {
+    background-color: #3c4043;
+}
+
+.sidebar-menu .menu-item .material-symbols-outlined {
+    margin-right: 16px;
+}
+
+#left-sidebar.collapsed .menu-text {
+    display: none;
+}
+
+#left-sidebar.collapsed .sidebar-menu .menu-item {
+    justify-content: center;
+}
+
+#left-sidebar.collapsed .sidebar-menu .menu-item .material-symbols-outlined {
+    margin-right: 0;
+}
+
+.sidebar-footer {
+    padding: 8px 4px;
+    display: flex;
+    justify-content: center;
+}
+
+#back-to-panel-button {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+#back-to-panel-button:hover {
+    opacity: 1;
+}
+
+/* --- Corrected Main Content Layout --- */
+
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+    padding-top: 30px;
+    box-sizing: border-box;
+    min-width: 0; /* Allow the main content to shrink below its content's minimum size */
+}
+
+/* Position the controls bar within the padding of the parent */
+#controls-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+
+/* Override icon container positions from sidepanel.css to work within the new controls bar */
+#main-content #refresh-button-container {
+    position: absolute;
+    top: 1px;
+    left: 1px; /* Positioned at the start */
+}
+
+#main-content #settings-container {
+    position: absolute;
+    top: 1px;
+    right: 2px; /* Positioned at the end */
+}
+
+/* The iframe container should now grow to fill the available space correctly */
+#iframe-container {
+    flex-grow: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    overscroll-behavior-y: contain;
+    min-height: 0;
+    margin-top: 0;
+}
+
+#iframe-container iframe {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    border: none;
+    height: 100%;
+}

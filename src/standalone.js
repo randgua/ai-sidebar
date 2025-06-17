@@ -1,3 +1,4 @@
+// This script manages the full-page view, reusing logic from sidepanel.js
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
 let popupNotificationTimeout = null;
@@ -5,9 +6,9 @@ let isModalActive = false;
 let collectedOutputs = [];
 
 document.addEventListener('DOMContentLoaded', function () {
+    // --- UI Elements ---
     const iframeContainer = document.getElementById('iframe-container');
     const refreshIcon = document.getElementById('refresh-icon');
-    const fullPageChatIcon = document.getElementById('full-page-chat-icon');
     const settingsContainer = document.getElementById('settings-container');
     const urlListManagementDiv = document.getElementById('url-list-management');
     const newUrlInput = document.getElementById('new-url-input');
@@ -17,7 +18,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
     const copyLastOutputButton = document.getElementById('copy-last-output-button');
+    const promptInput = document.getElementById('prompt-input');
+    const promptContainer = document.getElementById('prompt-container');
+    const togglePromptButton = document.getElementById('toggle-prompt-button');
+    const sendPromptButton = document.getElementById('send-prompt-button');
+    // Standalone-specific elements
+    const backButton = document.getElementById('back-to-panel-button');
+    const collapseButton = document.getElementById('collapse-sidebar-button');
+    const leftSidebar = document.getElementById('left-sidebar');
 
+    // --- State Variables ---
     let managedUrls = [];
     const iframeCache = {};
 
@@ -35,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
+    // --- Core Functions (from sidepanel.js) ---
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -56,38 +67,26 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             document.body.appendChild(confirmationMessageElement);
         }
-
-        if (confirmationMessageElement.timeoutId) {
-            clearTimeout(confirmationMessageElement.timeoutId);
-        }
-
+        if (confirmationMessageElement.timeoutId) clearTimeout(confirmationMessageElement.timeoutId);
         confirmationMessageElement.textContent = message;
         confirmationMessageElement.style.visibility = 'visible';
         confirmationMessageElement.style.opacity = '1';
-
         confirmationMessageElement.timeoutId = setTimeout(() => {
             confirmationMessageElement.style.opacity = '0';
         }, duration);
     }
 
     function showPopupMessage(messageText, duration = 3000) {
-        if (!settingsPopup) {
-            console.error('Settings popup element not found.');
-            return;
-        }
+        if (!settingsPopup) return;
         let messageElement = settingsPopup.querySelector('.popup-message-area');
         if (!messageElement) {
             messageElement = document.createElement('div');
             messageElement.className = 'popup-message-area';
-            messageElement.style.padding = '10px';
-            messageElement.style.marginTop = '10px';
-            messageElement.style.backgroundColor = '#e9f5fe';
-            messageElement.style.color = '#0d6efd';
-            messageElement.style.border = '1px solid #b6d4fe';
-            messageElement.style.borderRadius = '4px';
-            messageElement.style.textAlign = 'center';
-            messageElement.style.fontSize = '13px';
-            messageElement.style.display = 'none';
+            Object.assign(messageElement.style, {
+                padding: '10px', marginTop: '10px', backgroundColor: '#e9f5fe',
+                color: '#0d6efd', border: '1px solid #b6d4fe', borderRadius: '4px',
+                textAlign: 'center', fontSize: '13px', display: 'none'
+            });
             settingsPopup.appendChild(messageElement);
         }
         messageElement.textContent = messageText;
@@ -95,53 +94,32 @@ document.addEventListener('DOMContentLoaded', function () {
         if (popupNotificationTimeout) clearTimeout(popupNotificationTimeout);
         popupNotificationTimeout = setTimeout(() => {
             messageElement.style.display = 'none';
-            messageElement.textContent = '';
         }, duration);
     }
 
     function showCustomConfirm(message, onConfirm) {
-        isModalActive = true; // Lock the popup from closing
+        isModalActive = true;
         const modal = document.getElementById('custom-confirm-modal');
         const messageP = document.getElementById('custom-confirm-message');
         const yesButton = document.getElementById('confirm-yes-button');
         const noButton = document.getElementById('confirm-no-button');
-
         messageP.textContent = message;
         modal.style.display = 'flex';
         yesButton.focus();
-
-        const handleYes = () => {
-            modal.style.display = 'none';
-            onConfirm();
-            cleanup();
-        };
-
-        const handleNo = () => {
-            modal.style.display = 'none';
-            cleanup();
-        };
-
+        const handleYes = () => { modal.style.display = 'none'; onConfirm(); cleanup(); };
+        const handleNo = () => { modal.style.display = 'none'; cleanup(); };
         const handleEnterKey = (event) => {
             if (event.key === 'Enter') {
-                if (document.activeElement === yesButton) {
-                    event.preventDefault();
-                    handleYes();
-                } else if (document.activeElement === noButton) {
-                    event.preventDefault();
-                    handleNo();
-                }
+                if (document.activeElement === yesButton) { event.preventDefault(); handleYes(); }
+                else if (document.activeElement === noButton) { event.preventDefault(); handleNo(); }
             }
         };
-
         const cleanup = () => {
             yesButton.removeEventListener('click', handleYes);
             noButton.removeEventListener('click', handleNo);
             window.removeEventListener('keydown', handleEnterKey, true);
-            setTimeout(() => {
-                isModalActive = false;
-            }, 0);
+            setTimeout(() => { isModalActive = false; }, 0);
         };
-
         yesButton.addEventListener('click', handleYes);
         noButton.addEventListener('click', handleNo);
         window.addEventListener('keydown', handleEnterKey, true);
@@ -153,23 +131,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
-    
         if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
             urlString = 'file:///' + urlString.replace(/\\/g, '/');
         }
-    
         try {
             new URL(urlString);
             return urlString;
         } catch (error) {
             if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
                 const assumedUrl = 'https://' + urlString;
-                try {
-                    new URL(assumedUrl);
-                    return assumedUrl;
-                } catch (assumeError) {
-                    return null;
-                }
+                try { new URL(assumedUrl); return assumedUrl; } catch (e) { return null; }
             }
             return null;
         }
@@ -177,19 +148,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderUrlList() {
         urlListManagementDiv.innerHTML = '';
-
         managedUrls.forEach(urlEntry => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'url-item';
             itemDiv.setAttribute('draggable', true);
             itemDiv.dataset.id = urlEntry.id.toString();
-
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
             dragHandle.innerHTML = '☰';
             dragHandle.title = 'Drag to reorder';
             itemDiv.appendChild(dragHandle);
-
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = urlEntry.selected;
@@ -198,70 +166,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveUrls();
                 updateIframes();
             });
-
             const urlInput = document.createElement('input');
             urlInput.type = 'text';
             urlInput.value = urlEntry.url;
             let originalUrlOnFocus = urlEntry.url;
-
-            urlInput.addEventListener('focus', () => {
-                originalUrlOnFocus = urlInput.value;
-                itemDiv.draggable = false;
-            });
-
+            urlInput.addEventListener('focus', () => { originalUrlOnFocus = urlInput.value; itemDiv.draggable = false; });
             urlInput.addEventListener('blur', () => {
                 itemDiv.draggable = true;
                 const newUrlValue = urlInput.value.trim();
-
                 if (newUrlValue === originalUrlOnFocus) return;
-
                 const formattedUrl = formatAndValidateUrl(newUrlValue);
                 if (!formattedUrl) {
                     showPopupMessage('Invalid URL format.');
                     urlInput.value = originalUrlOnFocus;
                     return;
                 }
-
                 if (managedUrls.some(u => u.url === formattedUrl && u.id !== urlEntry.id)) {
                     showPopupMessage('This URL already exists in the list.');
                     urlInput.value = originalUrlOnFocus;
                     return;
                 }
-
                 const oldUrlKeyInCache = urlEntry.url;
                 urlEntry.url = formattedUrl;
-
                 if (iframeCache[oldUrlKeyInCache]) {
-                    const cachedIframe = iframeCache[oldUrlKeyInCache];
+                    iframeCache[formattedUrl] = iframeCache[oldUrlKeyInCache];
                     delete iframeCache[oldUrlKeyInCache];
-                    iframeCache[formattedUrl] = cachedIframe;
                 }
                 saveUrls();
                 showPopupMessage('URL updated successfully!');
                 updateIframes();
             });
-
             urlInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
                 else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); }
             });
-
             const openButton = document.createElement('button');
             openButton.textContent = 'Open';
             openButton.className = 'open-url-button';
-            openButton.addEventListener('click', () => {
-                chrome.tabs.create({ url: urlEntry.url });
-            });
-
+            openButton.addEventListener('click', () => { chrome.tabs.create({ url: urlEntry.url }); });
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Delete';
             removeButton.className = 'remove-url-button';
             removeButton.addEventListener('click', () => {
                 showCustomConfirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`, () => {
                     if (iframeCache[urlEntry.url]) {
-                        if (iframeCache[urlEntry.url].parentNode) {
-                            iframeContainer.removeChild(iframeCache[urlEntry.url]);
-                        }
+                        if (iframeCache[urlEntry.url].parentNode) iframeContainer.removeChild(iframeCache[urlEntry.url]);
                         delete iframeCache[urlEntry.url];
                     }
                     const wasSelected = urlEntry.selected;
@@ -275,13 +224,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     showPopupMessage('URL removed.');
                 });
             });
-
-            itemDiv.appendChild(checkbox);
-            itemDiv.appendChild(urlInput);
-            itemDiv.appendChild(openButton);
-            itemDiv.appendChild(removeButton);
+            itemDiv.append(checkbox, urlInput, openButton, removeButton);
             urlListManagementDiv.appendChild(itemDiv);
-
             itemDiv.addEventListener('dragstart', (e) => {
                 if (managedUrls.some(u => u.selected)) {
                     iframeContainer.style.pointerEvents = 'none';
@@ -292,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.dataTransfer.effectAllowed = 'move';
                 setTimeout(() => { if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5'; }, 0);
             });
-
             itemDiv.addEventListener('dragend', () => {
                 iframeContainer.style.pointerEvents = 'auto';
                 iframeContainer.style.opacity = '1';
@@ -301,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 draggedDOMElement = null;
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
             });
-
             itemDiv.addEventListener('dragover', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
                 e.preventDefault();
@@ -309,40 +251,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
                 itemDiv.classList.add('drag-over');
             });
-
             itemDiv.addEventListener('dragleave', () => itemDiv.classList.remove('drag-over'));
-
             itemDiv.addEventListener('drop', (e) => {
                 if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
                 e.preventDefault();
                 itemDiv.classList.remove('drag-over');
                 const draggedId = e.dataTransfer.getData('text/plain');
                 const targetId = itemDiv.dataset.id;
-
                 const draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
                 if (draggedItemIndex === -1) return;
-
                 const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
-
                 let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
-                if (targetItemIndex === -1) {
-                    managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry);
-                    return;
-                }
-
+                if (targetItemIndex === -1) { managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry); return; }
                 const rect = itemDiv.getBoundingClientRect();
                 const isAfter = e.clientY > rect.top + rect.height / 2;
                 managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
-
                 saveUrls();
-
                 const parent = urlListManagementDiv;
-                if (isAfter) {
-                    parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
-                } else {
-                    parent.insertBefore(draggedDOMElement, itemDiv);
-                }
-
+                if (isAfter) parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
+                else parent.insertBefore(draggedDOMElement, itemDiv);
                 updateIframes();
                 showPopupMessage('List order updated successfully.');
             });
@@ -351,83 +278,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
-
         const existingEmptyMessage = iframeContainer.querySelector('.empty-message');
         if (existingEmptyMessage) iframeContainer.removeChild(existingEmptyMessage);
-
         if (selectedUrlEntries.length === 0) {
             iframeContainer.innerHTML = '';
             const emptyMessage = document.createElement('div');
             emptyMessage.className = 'empty-message';
-            emptyMessage.textContent = managedUrls.length === 0 ?
-                'No websites available. Add some in Settings, or reload to load the default list.' :
-                'No websites selected. Please select websites to display from Settings.';
+            emptyMessage.textContent = managedUrls.length === 0 ? 'No websites available. Add some in Settings.' : 'No websites selected. Please select websites from Settings.';
             iframeContainer.appendChild(emptyMessage);
-            Object.values(iframeCache).forEach(iframe => {
-                if (iframe && iframe.style) iframe.style.display = 'none';
-            });
+            Object.values(iframeCache).forEach(iframe => { if (iframe && iframe.style) iframe.style.display = 'none'; });
             return;
         }
-
         const newDesiredIframeElements = [];
         selectedUrlEntries.forEach(urlEntry => {
             let iframe = iframeCache[urlEntry.url];
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.src = urlEntry.url;
-                iframe.style.flexGrow = '1'; iframe.style.flexBasis = '0'; iframe.style.minWidth = '0';
-                iframe.style.border = 'none'; iframe.style.height = '100%';
+                Object.assign(iframe.style, { flexGrow: '1', flexBasis: '0', minWidth: '0', border: 'none', height: '100%' });
                 iframeCache[urlEntry.url] = iframe;
-            } else {
-                if (iframe.src !== urlEntry.url) {
-                    iframe.src = urlEntry.url;
-                }
+            } else if (iframe.src !== urlEntry.url) {
+                iframe.src = urlEntry.url;
             }
             iframe.style.display = 'block';
             newDesiredIframeElements.push(iframe);
         });
-
         const currentDomIframes = Array.from(iframeContainer.children).filter(el => el.tagName === 'IFRAME');
-
-        currentDomIframes.forEach(domIframe => {
-            if (!newDesiredIframeElements.includes(domIframe)) {
-                iframeContainer.removeChild(domIframe);
-            }
-        });
-
-        let domOrderMatchesDesired = true;
-        if (iframeContainer.children.length !== newDesiredIframeElements.length) {
-            domOrderMatchesDesired = false;
-        } else {
-            for (let i = 0; i < newDesiredIframeElements.length; i++) {
-                if (iframeContainer.children[i] !== newDesiredIframeElements[i]) {
-                    domOrderMatchesDesired = false;
-                    break;
-                }
-            }
-        }
-
+        currentDomIframes.forEach(domIframe => { if (!newDesiredIframeElements.includes(domIframe)) iframeContainer.removeChild(domIframe); });
+        let domOrderMatchesDesired = iframeContainer.children.length === newDesiredIframeElements.length &&
+            Array.from(iframeContainer.children).every((child, i) => child === newDesiredIframeElements[i]);
         if (!domOrderMatchesDesired) {
-            newDesiredIframeElements.forEach(iframe => {
-                iframeContainer.appendChild(iframe);
-            });
+            newDesiredIframeElements.forEach(iframe => iframeContainer.appendChild(iframe));
         }
-
         Object.keys(iframeCache).forEach(urlInCache => {
-            const isSelected = selectedUrlEntries.some(entry => entry.url === urlInCache);
-            if (!isSelected) {
+            if (!selectedUrlEntries.some(entry => entry.url === urlInCache)) {
                 const iframeToHide = iframeCache[urlInCache];
-                if (iframeToHide && iframeToHide.style.display !== 'none') {
-                    iframeToHide.style.display = 'none';
-                }
+                if (iframeToHide && iframeToHide.style.display !== 'none') iframeToHide.style.display = 'none';
             }
         });
-
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
-            if (!currentManagedUrlsSet.has(urlInCache)) {
-                delete iframeCache[urlInCache];
-            }
+            if (!currentManagedUrlsSet.has(urlInCache)) delete iframeCache[urlInCache];
         }
     }
 
@@ -435,9 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.storage.local.get(['managedUrls'], function(result) {
             const loadedUrls = result.managedUrls;
             if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
-                if (chrome.runtime.lastError) {
-                    console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
-                }
+                if (chrome.runtime.lastError) console.error('Error loading URLs:', chrome.runtime.lastError.message);
                 managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
             } else {
                 managedUrls = loadedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
@@ -449,31 +338,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function syncUrlListCheckboxes() {
-        const urlItems = urlListManagementDiv.querySelectorAll('.url-item');
-        urlItems.forEach(item => {
-            const urlId = item.dataset.id;
-            const urlEntry = managedUrls.find(u => u.id.toString() === urlId);
+        urlListManagementDiv.querySelectorAll('.url-item').forEach(item => {
+            const urlEntry = managedUrls.find(u => u.id.toString() === item.dataset.id);
             if (urlEntry) {
                 const checkbox = item.querySelector('input[type="checkbox"]');
-                if (checkbox && checkbox.checked !== urlEntry.selected) {
-                    checkbox.checked = urlEntry.selected;
-                }
+                if (checkbox && checkbox.checked !== urlEntry.selected) checkbox.checked = urlEntry.selected;
             }
         });
     }
 
+    function autoResizeTextarea(textarea) {
+        if (!textarea || promptContainer.classList.contains('collapsed')) return;
+        const maxHeight = Math.floor(window.innerHeight / 3);
+        textarea.style.maxHeight = `${maxHeight}px`;
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+        if (sendPromptButton) sendPromptButton.disabled = textarea.value.trim() === '';
+    }
+
+    function sendMessageToIframes(prompt) {
+        const activeIframes = iframeContainer.querySelectorAll('iframe');
+        if (activeIframes.length === 0) {
+            showGlobalConfirmationMessage('No active panels to send prompt to.');
+            return;
+        }
+        let sentCount = 0;
+        activeIframes.forEach(iframe => {
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ action: 'injectPrompt', prompt: prompt }, '*');
+                sentCount++;
+            }
+        });
+        showGlobalConfirmationMessage(`Prompt sent to ${sentCount} panel(s).`);
+    }
+
+    function executeSend() {
+        const promptText = promptInput.value.trim();
+        if (promptText) {
+            sendMessageToIframes(promptText);
+            promptInput.value = '';
+            autoResizeTextarea(promptInput);
+            setTimeout(() => promptInput.focus(), 300);
+        }
+    }
+
+    // --- Event Listeners ---
     addUrlButton.addEventListener('click', () => {
         const newUrlValue = newUrlInput.value.trim();
         if (newUrlValue) {
             const formattedUrl = formatAndValidateUrl(newUrlValue);
-            if (!formattedUrl) {
-                showPopupMessage('Please enter a valid URL or local file path.');
-                return;
-            }
-            if (managedUrls.some(entry => entry.url === formattedUrl)) {
-                showPopupMessage('This URL already exists in the list.');
-                return;
-            }
+            if (!formattedUrl) { showPopupMessage('Please enter a valid URL.'); return; }
+            if (managedUrls.some(entry => entry.url === formattedUrl)) { showPopupMessage('This URL already exists.'); return; }
             managedUrls.push({ id: crypto.randomUUID(), url: formattedUrl, selected: false });
             saveUrls();
             renderUrlList();
@@ -484,24 +399,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     newUrlInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addUrlButton.click(); });
 
-    if (fullPageChatIcon) {
-        fullPageChatIcon.addEventListener('click', function() {
-            fullPageChatIcon.classList.add('clicked');
-            chrome.tabs.create({ url: 'standalone.html' });
-            setTimeout(() => fullPageChatIcon.classList.remove('clicked'), 200);
-        });
-    }
-
     refreshIcon.addEventListener('click', function () {
         refreshIcon.classList.add('clicked');
         let refreshedCount = 0;
         managedUrls.forEach(urlEntry => {
             if (urlEntry.selected) {
                 const iframe = iframeCache[urlEntry.url];
-                if (iframe) {
-                    iframe.src = iframe.src;
-                    refreshedCount++;
-                }
+                if (iframe) { iframe.src = iframe.src; refreshedCount++; }
             }
         });
         showGlobalConfirmationMessage(refreshedCount > 0 ? `Refreshed ${refreshedCount} panel(s).` : 'No active panels to refresh.');
@@ -509,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (invertSelectionButton) invertSelectionButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to invert selection.'); return; }
+        if (managedUrls.length === 0) { showPopupMessage('No URLs to invert selection.'); return; }
         managedUrls.forEach(urlEntry => urlEntry.selected = !urlEntry.selected);
         saveUrls();
         syncUrlListCheckboxes();
@@ -518,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (selectAllButton) selectAllButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage('No URLs available in the list to select.'); return; }
+        if (managedUrls.length === 0) { showPopupMessage('No URLs to select.'); return; }
         let newlySelectedCount = 0;
         managedUrls.forEach(urlEntry => { if (!urlEntry.selected) { urlEntry.selected = true; newlySelectedCount++; } });
         if (newlySelectedCount > 0) {
@@ -527,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateIframes();
             showPopupMessage('All URLs selected.');
         } else {
-            showPopupMessage('All URLs were already selected; no changes made.');
+            showPopupMessage('All URLs were already selected.');
         }
     });
 
@@ -540,24 +444,12 @@ document.addEventListener('DOMContentLoaded', function () {
             updateIframes();
             showPopupMessage('All selections cleared.');
         } else {
-            showPopupMessage('No URLs were selected to clear; no changes made.');
+            showPopupMessage('No URLs were selected.');
         }
     });
 
-    settingsContainer.addEventListener('mouseenter', () => {
-        settingsPopup.classList.add('show');
-    });
-
-    settingsContainer.addEventListener('mouseleave', () => {
-        if (!isModalActive) {
-            settingsPopup.classList.remove('show');
-        }
-    });
-
-    const promptInput = document.getElementById('prompt-input');
-    const promptContainer = document.getElementById('prompt-container');
-    const togglePromptButton = document.getElementById('toggle-prompt-button');
-    const sendPromptButton = document.getElementById('send-prompt-button');
+    settingsContainer.addEventListener('mouseenter', () => settingsPopup.classList.add('show'));
+    settingsContainer.addEventListener('mouseleave', () => { if (!isModalActive) settingsPopup.classList.remove('show'); });
 
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
@@ -569,18 +461,8 @@ document.addEventListener('DOMContentLoaded', function () {
         copyLastOutputButton.addEventListener('click', () => {
             collectedOutputs = [];
             const activeIframes = iframeContainer.querySelectorAll('iframe');
-    
-            if (activeIframes.length === 0) {
-                showGlobalConfirmationMessage('No active panels to copy from.');
-                return;
-            }
-    
-            activeIframes.forEach(iframe => {
-                if (iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
-                }
-            });
-    
+            if (activeIframes.length === 0) { showGlobalConfirmationMessage('No active panels to copy from.'); return; }
+            activeIframes.forEach(iframe => { if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*'); });
             setTimeout(() => {
                 if (collectedOutputs.length > 0) {
                     promptInput.value = collectedOutputs.join('\n\n---\n\n');
@@ -597,77 +479,29 @@ document.addEventListener('DOMContentLoaded', function () {
     if (togglePromptButton) {
         togglePromptButton.addEventListener('click', () => {
             promptContainer.classList.toggle('collapsed');
-            if (promptContainer.classList.contains('collapsed')) {
-                togglePromptButton.textContent = 'expand_less';
-                togglePromptButton.title = 'Expand prompt area';
-            } else {
-                togglePromptButton.textContent = 'expand_more';
-                togglePromptButton.title = 'Collapse prompt area';
-                autoResizeTextarea(promptInput);
-            }
+            const isCollapsed = promptContainer.classList.contains('collapsed');
+            togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
+            togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
+            if (!isCollapsed) autoResizeTextarea(promptInput);
         });
-    }
-
-    function autoResizeTextarea(textarea) {
-        if (!textarea || promptContainer.classList.contains('collapsed')) return;
-
-        const maxHeight = Math.floor(window.innerHeight / 3);
-        textarea.style.maxHeight = `${maxHeight}px`;
-
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-
-        if (sendPromptButton) {
-            sendPromptButton.disabled = textarea.value.trim() === '';
-        }
     }
 
     promptInput.addEventListener('input', () => autoResizeTextarea(promptInput));
     window.addEventListener('resize', () => autoResizeTextarea(promptInput));
+    if (sendPromptButton) sendPromptButton.addEventListener('click', executeSend);
+    promptInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); executeSend(); } });
 
-    function sendMessageToIframes(prompt) {
-        const activeIframes = iframeContainer.querySelectorAll('iframe');
-        if (activeIframes.length === 0) {
-            showGlobalConfirmationMessage('No active panels to send prompt to.');
-            return;
-        }
-
-        let sentCount = 0;
-        activeIframes.forEach(iframe => {
-            if (iframe.contentWindow) {
-                iframe.contentWindow.postMessage({
-                    action: 'injectPrompt',
-                    prompt: prompt
-                }, '*');
-                sentCount++;
-            }
+    // --- Standalone Page Specific Listeners ---
+    if (backButton) {
+        backButton.addEventListener('click', () => window.close());
+    }
+    if (collapseButton && leftSidebar) {
+        collapseButton.addEventListener('click', () => {
+            leftSidebar.classList.toggle('collapsed');
         });
-        showGlobalConfirmationMessage(`Prompt sent to ${sentCount} panel(s).`);
     }
 
-    function executeSend() {
-        const promptText = promptInput.value.trim();
-        if (promptText) {
-            sendMessageToIframes(promptText);
-            promptInput.value = '';
-            autoResizeTextarea(promptInput);
-            setTimeout(() => {
-                promptInput.focus();
-            }, 300);
-        }
-    }
-
-    if (sendPromptButton) {
-        sendPromptButton.addEventListener('click', executeSend);
-    }
-
-    promptInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            executeSend();
-        }
-    });
-
+    // --- Initial Load ---
     loadUrls();
     autoResizeTextarea(promptInput);
 });
