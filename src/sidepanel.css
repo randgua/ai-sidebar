@@ -462,7 +462,7 @@ body, html {
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    align-self: center; /* Vertically center the button */
+    align-self: flex-end; /* Aligns the button to the bottom */
 }
 
 #copy-last-output-button:hover {
@@ -500,10 +500,10 @@ body, html {
 }
 
 #send-prompt-button:not(:disabled) {
-    /* Style for enabled state (square-ish, lighter background) */
+    /* Style for enabled state (should remain circular) */
     background-color: #87a9ff;
-    border-radius: 8px;
-    align-self: center; /* Vertically center the button when active */
+    /* Removed border-radius: 8px; to keep it circular */
+    align-self: flex-end; /* Vertically align the button to the bottom when active */
 }
 
 #send-prompt-button:hover:not(:disabled) {
