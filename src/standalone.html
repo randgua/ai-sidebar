@@ -8,9 +8,11 @@
 </head>
 <body>
     <div id="app-container">
-        <div id="left-sidebar">
+        <!-- The "collapsed" class is added here to make the sidebar collapsed by default -->
+        <div id="left-sidebar" class="collapsed">
             <div class="sidebar-header">
-                <span id="collapse-sidebar-button" class="material-symbols-outlined" title="Collapse Sidebar">chevron_left</span>
+                <!-- Extension logo added to the top-left corner -->
+                <img id="extension-logo" src="icons/icon48.png" alt="Extension Logo">
             </div>
             <div class="sidebar-menu">
                 <div class="menu-item active" data-view="chat">
@@ -39,12 +41,17 @@
                 </div>
             </div>
             <div class="sidebar-footer">
-                 <span id="back-to-panel-button" class="material-symbols-outlined" title="Back to Side Panel">close_fullscreen</span>
+                 <!-- Collapse button moved to the bottom-left -->
+                 <span id="collapse-sidebar-button" class="material-symbols-outlined" title="Collapse Sidebar">chevron_left</span>
             </div>
         </div>
         <div id="main-content">
             <!-- This content is a replica of sidepanel.html -->
             <div id="controls-bar">
+                <!-- New button to close standalone view -->
+                <div id="back-to-panel-container" class="control-icon-container">
+                    <span id="back-to-panel-button" class="material-symbols-outlined" title="Back to Side Panel">close_fullscreen</span>
+                </div>
                 <div id="refresh-button-container" class="control-icon-container">
                     <span id="refresh-icon" class="material-symbols-outlined" title="Refresh Panel">refresh</span>
                 </div>

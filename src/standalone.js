@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const togglePromptButton = document.getElementById('toggle-prompt-button');
     const sendPromptButton = document.getElementById('send-prompt-button');
     // Standalone-specific elements
-    const backButton = document.getElementById('back-to-panel-button');
+    const backToPanelButton = document.getElementById('back-to-panel-button');
     const collapseButton = document.getElementById('collapse-sidebar-button');
     const leftSidebar = document.getElementById('left-sidebar');
 
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
-    // --- Core Functions (from sidepanel.js) ---
+    // --- Core Functions (reused from sidepanel.js) ---
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -492,8 +492,11 @@ document.addEventListener('DOMContentLoaded', function () {
     promptInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); executeSend(); } });
 
     // --- Standalone Page Specific Listeners ---
-    if (backButton) {
-        backButton.addEventListener('click', () => window.close());
+    if (backToPanelButton) {
+        backToPanelButton.addEventListener('click', () => {
+            // This will close the current tab, which is the standalone page.
+            window.close();
+        });
     }
     if (collapseButton && leftSidebar) {
         collapseButton.addEventListener('click', () => {

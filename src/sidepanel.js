@@ -486,9 +486,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (fullPageChatIcon) {
         fullPageChatIcon.addEventListener('click', function() {
-            fullPageChatIcon.classList.add('clicked');
+            // Create the full page view in a new tab.
             chrome.tabs.create({ url: 'standalone.html' });
-            setTimeout(() => fullPageChatIcon.classList.remove('clicked'), 200);
+            // Close the side panel itself.
+            window.close();
         });
     }
 
