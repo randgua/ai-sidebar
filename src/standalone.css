@@ -112,30 +112,39 @@ body, html {
     
     width: 24px;
     height: 24px;
-    background-color: #3c4043;
+    /* Match the style of the prompt area toggle button. */
+    background-color: #1e1f2b;
     border: 1px solid #5f6368;
-    border-radius: 50%;
+    color: #8ab4f7;
+    font-size: 20px;
     
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    
-    color: #e8eaed;
-    opacity: 0.8;
+    user-select: none;
     z-index: 10;
     
-    transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 #collapse-sidebar-button:hover {
-    background-color: #4a4d5f;
-    opacity: 1;
+    background-color: #3c4043;
+}
+
+#collapse-sidebar-button:active {
+    transform: translate(-50%, -50%) scale(0.9);
 }
 
 #left-sidebar.collapsed + #main-content #collapse-sidebar-button {
     /* When sidebar is collapsed, rotate the icon. */
     transform: translate(-50%, -50%) rotate(180deg);
+}
+
+/* Handle active state when collapsed. */
+#left-sidebar.collapsed + #main-content #collapse-sidebar-button:active {
+    transform: translate(-50%, -50%) rotate(180deg) scale(0.9);
 }
 
 
