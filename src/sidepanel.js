@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chatgpt.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://claude.ai/", selected: false },
-        { id: crypto.randomUUID(), url: "https://x.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://grok.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://www.perplexity.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.deepseek.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.qwen.ai/", selected: false },
@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
+    // Displays a short-lived message at the bottom of the screen.
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -70,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
+    // Displays a message inside the settings popup area.
     function showPopupMessage(messageText, duration = 3000) {
         if (!settingsPopup) {
             console.error('Settings popup element not found.');
@@ -99,8 +101,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
+    // Displays a modal confirmation dialog.
     function showCustomConfirm(message, onConfirm) {
-        isModalActive = true; // Lock the popup from closing
+        isModalActive = true;
         const modal = document.getElementById('custom-confirm-modal');
         const messageP = document.getElementById('custom-confirm-message');
         const yesButton = document.getElementById('confirm-yes-button');
@@ -151,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.storage.local.set({ managedUrls: managedUrls });
     }
 
+    // Validates and formats a URL, assuming https if no protocol is provided.
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
     
@@ -175,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Renders the list of manageable URLs in the settings popup.
     function renderUrlList() {
         urlListManagementDiv.innerHTML = '';
 
@@ -282,6 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
             itemDiv.appendChild(removeButton);
             urlListManagementDiv.appendChild(itemDiv);
 
+            // Set up drag-and-drop event listeners for reordering.
             itemDiv.addEventListener('dragstart', (e) => {
                 if (managedUrls.some(u => u.selected)) {
                     iframeContainer.style.pointerEvents = 'none';
@@ -349,6 +355,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Updates the displayed iframes based on the current selection of URLs.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
@@ -431,6 +438,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Loads URLs from storage, or uses defaults if none are found.
     function loadUrls() {
         chrome.storage.local.get(['managedUrls'], function(result) {
             const loadedUrls = result.managedUrls;
@@ -576,12 +584,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
     
+            // Request output from all active iframes.
             activeIframes.forEach(iframe => {
                 if (iframe.contentWindow) {
                     iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
                 }
             });
     
+            // Wait for responses to be collected via the message listener.
             setTimeout(() => {
                 if (collectedOutputs.length > 0) {
                     promptInput.value = collectedOutputs.join('\n\n---\n\n');
@@ -609,6 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Automatically adjusts the height of the prompt textarea based on its content.
     function autoResizeTextarea(textarea) {
         if (!textarea || promptContainer.classList.contains('collapsed')) return;
 
@@ -663,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     promptInput.addEventListener('keydown', (event) => {
+        // Send prompt on Enter key, but not on Shift+Enter.
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             executeSend();

@@ -24,7 +24,6 @@ body, html {
     flex-direction: column;
     padding: 12px;
     box-sizing: border-box;
-    transition: width 0.2s ease-in-out, padding 0.2s ease-in-out;
     color: #e8eaed;
     position: relative;
 }

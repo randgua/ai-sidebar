@@ -6,7 +6,6 @@ let isModalActive = false;
 let collectedOutputs = [];
 
 document.addEventListener('DOMContentLoaded', function () {
-    // --- UI Elements ---
     const iframeContainer = document.getElementById('iframe-container');
     const refreshIcon = document.getElementById('refresh-icon');
     const settingsContainer = document.getElementById('settings-container');
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const collapseButton = document.getElementById('collapse-sidebar-button');
     const leftSidebar = document.getElementById('left-sidebar');
 
-    // --- State Variables ---
     let managedUrls = [];
     const iframeCache = {};
 
@@ -36,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chatgpt.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://claude.ai/", selected: false },
-        { id: crypto.randomUUID(), url: "https://x.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://grok.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://www.perplexity.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.deepseek.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.qwen.ai/", selected: false },
@@ -45,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
-    // --- Core Functions (reused from sidepanel.js) ---
+    // Core Functions (reused from sidepanel.js)
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -382,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- Event Listeners ---
     addUrlButton.addEventListener('click', () => {
         const newUrlValue = newUrlInput.value.trim();
         if (newUrlValue) {
@@ -491,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (sendPromptButton) sendPromptButton.addEventListener('click', executeSend);
     promptInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); executeSend(); } });
 
-    // --- Standalone Page Specific Listeners ---
+    // Standalone Page Specific Listeners
     if (backToPanelButton) {
         backToPanelButton.addEventListener('click', () => {
             // Send a message to the background script to open the side panel.
@@ -507,7 +504,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Initial Load ---
     loadUrls();
     autoResizeTextarea(promptInput);
 });
