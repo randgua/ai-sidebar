@@ -8,10 +8,9 @@
 </head>
 <body>
     <div id="app-container">
-        <!-- The "collapsed" class is added here to make the sidebar collapsed by default -->
+        <!-- The "collapsed" class can be toggled via JS. -->
         <div id="left-sidebar" class="collapsed">
             <div class="sidebar-header">
-                <!-- Extension logo added to the top-left corner -->
                 <img id="extension-logo" src="icons/icon48.png" alt="Extension Logo">
             </div>
             <div class="sidebar-menu">
@@ -41,14 +40,14 @@
                 </div>
             </div>
             <div class="sidebar-footer">
-                 <!-- Collapse button moved to the bottom-left -->
-                 <span id="collapse-sidebar-button" class="material-symbols-outlined" title="Collapse Sidebar">chevron_left</span>
+                 <!-- Placeholder, button has been moved to main-content. -->
             </div>
         </div>
         <div id="main-content">
-            <!-- This content is a replica of sidepanel.html -->
+            <!-- The collapse button is now inside main-content for stable positioning. -->
+            <span id="collapse-sidebar-button" class="material-symbols-outlined" title="Toggle Sidebar">chevron_left</span>
+            
             <div id="controls-bar">
-                <!-- New button to close standalone view -->
                 <div id="back-to-panel-container" class="control-icon-container">
                     <span id="back-to-panel-button" class="material-symbols-outlined" title="Back to Side Panel">close_fullscreen</span>
                 </div>

@@ -1,7 +1,7 @@
-/* Import existing styles for consistency */
+/* Import existing styles for consistency. */
 @import url("sidepanel.css");
 
-/* Override body for full-page layout */
+/* Override body for full-page layout. */
 body, html {
     height: 100vh;
     width: 100vw;
@@ -24,19 +24,20 @@ body, html {
     flex-direction: column;
     padding: 12px;
     box-sizing: border-box;
-    transition: width 0.2s ease-in-out;
+    transition: width 0.2s ease-in-out, padding 0.2s ease-in-out;
     color: #e8eaed;
-    position: relative; /* Set as positioning context for the collapse button */
+    position: relative;
 }
 
 #left-sidebar.collapsed {
-    width: 68px;
-    align-items: center;
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    overflow: hidden;
 }
 
 .sidebar-header {
     display: flex;
-    justify-content: flex-start; /* Align logo to the left */
     align-items: center;
     padding: 8px;
     margin-bottom: 24px;
@@ -46,11 +47,6 @@ body, html {
 #extension-logo {
     width: 32px;
     height: 32px;
-}
-
-#left-sidebar.collapsed .sidebar-header {
-    justify-content: center; /* Center logo when collapsed */
-    padding: 8px 4px;
 }
 
 .sidebar-menu {
@@ -92,20 +88,30 @@ body, html {
 }
 
 .sidebar-footer {
-    height: 34px; /* Reserve space at the bottom */
+    height: 34px;
+}
+
+/* --- Main Content Layout --- */
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* Set as positioning context for the collapse button. */
+    height: 100%;
+    padding-top: 0;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 /* --- Collapse Sidebar Button --- */
 #collapse-sidebar-button {
     position: absolute;
     bottom: 16px;
-    left: 100%;
-    /* Move button left so its right edge aligns with the boundary */
-    transform: translateX(-100%);
+    left: 12px; /* Position relative to the main content area. */
     
     width: 24px;
     height: 24px;
-    background-color: #3c4043; /* Grey background */
+    background-color: #3c4043;
     border: 1px solid #5f6368;
     border-radius: 50%;
     
@@ -122,29 +128,17 @@ body, html {
 }
 
 #collapse-sidebar-button:hover {
-    background-color: #4a4d5f; /* Brighter on hover */
+    background-color: #4a4d5f;
     opacity: 1;
 }
 
-#left-sidebar.collapsed #collapse-sidebar-button {
-    /* Keep the right edge aligned with the boundary and rotate the icon */
-    transform: translateX(-100%) rotate(180deg);
+#left-sidebar.collapsed + #main-content #collapse-sidebar-button {
+    /* When sidebar is collapsed, rotate the icon to point right. */
+    transform: rotate(180deg);
 }
 
 
-/* --- Main Content Layout --- */
-#main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    height: 100%;
-    padding-top: 0; /* Allow iframe content to extend to the top */
-    box-sizing: border-box;
-    min-width: 0;
-}
-
-/* Position the controls bar to float over the content */
+/* Position the controls bar to float over the content. */
 #controls-bar {
     position: absolute;
     top: 0;
@@ -153,38 +147,36 @@ body, html {
     height: 40px;
     display: flex;
     align-items: center;
-    z-index: 10; /* Ensure controls are above the iframe */
+    z-index: 10; /* Ensure controls are above the iframe. */
 }
 
-/* General style for control icons in the main content area */
 #main-content .control-icon-container {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-/* Increase size and clickable area for control icons */
 #main-content .material-symbols-outlined {
-    font-size: 22px; /* Larger icon */
-    width: 32px;     /* Larger container */
-    height: 32px;    /* Larger container */
+    font-size: 22px;
+    width: 32px;
+    height: 32px;
 }
 
-/* Position new "Back to Panel" button */
+/* Position the "Back to Panel" button. */
 #back-to-panel-container {
     position: absolute;
     top: 0;
     left: 0;
 }
 
-/* Position Refresh button next to the new button */
+/* Position the Refresh button next to the back button. */
 #main-content #refresh-button-container {
     position: absolute;
     top: 0;
-    left: 36px; /* Positioned after the back button */
+    left: 36px;
 }
 
-/* Position Settings button at the end */
+/* Position the Settings button at the far right. */
 #main-content #settings-container {
     position: absolute;
     top: 0;
