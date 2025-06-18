@@ -107,8 +107,8 @@ body, html {
 #collapse-sidebar-button {
     position: absolute;
     top: 50%; /* Vertically center the button. */
-    left: 12px; /* Position on the far left of the main content area. */
-    transform: translateY(-50%); /* Adjust for the button's own height. */
+    left: 0; /* Align to the left edge of the main content. */
+    transform: translate(-50%, -50%); /* Center the button on the boundary line. */
     
     width: 24px;
     height: 24px;
@@ -134,8 +134,8 @@ body, html {
 }
 
 #left-sidebar.collapsed + #main-content #collapse-sidebar-button {
-    /* When sidebar is collapsed, rotate the icon while maintaining vertical alignment. */
-    transform: translateY(-50%) rotate(180deg);
+    /* When sidebar is collapsed, rotate the icon. */
+    transform: translate(-50%, -50%) rotate(180deg);
 }
 
 
