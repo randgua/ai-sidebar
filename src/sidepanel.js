@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let managedUrls = [];
     const iframeCache = {};
 
+    // Default URLs to populate the list if storage is empty.
     const defaultUrls = [
         { id: crypto.randomUUID(), url: "https://aistudio.google.com/", selected: true },
         { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
@@ -35,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
-    // Displays a short-lived message at the bottom of the screen.
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
-    // Displays a message inside the settings popup area.
     function showPopupMessage(messageText, duration = 3000) {
         if (!settingsPopup) {
             console.error('Settings popup element not found.');
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, duration);
     }
 
-    // Displays a modal confirmation dialog.
     function showCustomConfirm(message, onConfirm) {
         isModalActive = true;
         const modal = document.getElementById('custom-confirm-modal');
@@ -179,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Renders the list of manageable URLs in the settings popup.
     function renderUrlList() {
         urlListManagementDiv.innerHTML = '';
 
@@ -355,7 +352,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Updates the displayed iframes based on the current selection of URLs.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
 
@@ -438,7 +434,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Loads URLs from storage, or uses defaults if none are found.
     function loadUrls() {
         chrome.storage.local.get(['managedUrls'], function(result) {
             const loadedUrls = result.managedUrls;
@@ -494,9 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (fullPageChatIcon) {
         fullPageChatIcon.addEventListener('click', function() {
-            // Create the full page view in a new tab.
             chrome.tabs.create({ url: 'standalone.html' });
-            // Close the side panel itself.
             window.close();
         });
     }
@@ -584,24 +577,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
     
-            // Request output from all active iframes.
             activeIframes.forEach(iframe => {
                 if (iframe.contentWindow) {
                     iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
                 }
             });
     
-            // Wait for responses to be collected via the message listener.
+            // Wait for async messages to be collected before processing.
             setTimeout(() => {
                 if (collectedOutputs.length > 0) {
-                    promptInput.value = collectedOutputs.join('\n\n---\n\n');
+                    const textToAppend = collectedOutputs.join('\n\n---\n\n');
+                    const isInputEmpty = promptInput.value.trim() === '';
+    
+                    // Append the new content, adding newlines for separation if needed.
+                    if (isInputEmpty) {
+                        promptInput.value = textToAppend;
+                    } else {
+                        promptInput.value += '\n\n' + textToAppend;
+                    }
+    
                     autoResizeTextarea(promptInput);
                     promptInput.focus();
-                    showGlobalConfirmationMessage(`Copied output from ${collectedOutputs.length} panel(s).`);
+                    
+                    // Defer setting the cursor position to avoid timing issues with browser rendering.
+                    setTimeout(() => {
+                        promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
+                        promptInput.scrollTop = promptInput.scrollHeight;
+                    }, 0);
+                    
+                    showGlobalConfirmationMessage(`Appended output from ${collectedOutputs.length} panel(s).`);
                 } else {
                     showGlobalConfirmationMessage('Could not find any output to copy.');
                 }
-            }, 1500);
+            }, 1500); // This timeout should be sufficient for iframes to respond.
         });
     }
 
@@ -619,7 +627,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Automatically adjusts the height of the prompt textarea based on its content.
     function autoResizeTextarea(textarea) {
         if (!textarea || promptContainer.classList.contains('collapsed')) return;
 
@@ -628,6 +635,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
+
+        textarea.scrollTop = textarea.scrollHeight;
 
         if (sendPromptButton) {
             sendPromptButton.disabled = textarea.value.trim() === '';
@@ -674,7 +683,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     promptInput.addEventListener('keydown', (event) => {
-        // Send prompt on Enter key, but not on Shift+Enter.
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             executeSend();

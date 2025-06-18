@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const promptContainer = document.getElementById('prompt-container');
     const togglePromptButton = document.getElementById('toggle-prompt-button');
     const sendPromptButton = document.getElementById('send-prompt-button');
-    // Standalone-specific elements
     const backToPanelButton = document.getElementById('back-to-panel-button');
     const collapseButton = document.getElementById('collapse-sidebar-button');
     const leftSidebar = document.getElementById('left-sidebar');
@@ -29,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let managedUrls = [];
     const iframeCache = {};
 
+    // Default URLs to populate the list if storage is empty.
     const defaultUrls = [
         { id: crypto.randomUUID(), url: "https://aistudio.google.com/", selected: true },
         { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
 
-    // Core Functions (reused from sidepanel.js)
     function showGlobalConfirmationMessage(message, duration = 3000) {
         if (!confirmationMessageElement) {
             confirmationMessageElement = document.createElement('div');
@@ -351,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
         textarea.style.maxHeight = `${maxHeight}px`;
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
+        textarea.scrollTop = textarea.scrollHeight;
         if (sendPromptButton) sendPromptButton.disabled = textarea.value.trim() === '';
     }
 
@@ -460,16 +460,34 @@ document.addEventListener('DOMContentLoaded', function () {
             const activeIframes = iframeContainer.querySelectorAll('iframe');
             if (activeIframes.length === 0) { showGlobalConfirmationMessage('No active panels to copy from.'); return; }
             activeIframes.forEach(iframe => { if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*'); });
+            
+            // Wait for async messages to be collected before processing.
             setTimeout(() => {
                 if (collectedOutputs.length > 0) {
-                    promptInput.value = collectedOutputs.join('\n\n---\n\n');
+                    const textToAppend = collectedOutputs.join('\n\n---\n\n');
+                    const isInputEmpty = promptInput.value.trim() === '';
+    
+                    // Append the new content, adding newlines for separation if needed.
+                    if (isInputEmpty) {
+                        promptInput.value = textToAppend;
+                    } else {
+                        promptInput.value += '\n\n' + textToAppend;
+                    }
+    
                     autoResizeTextarea(promptInput);
                     promptInput.focus();
-                    showGlobalConfirmationMessage(`Copied output from ${collectedOutputs.length} panel(s).`);
+                    
+                    // Defer setting the cursor position to avoid timing issues with browser rendering.
+                    setTimeout(() => {
+                        promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
+                        promptInput.scrollTop = promptInput.scrollHeight;
+                    }, 0);
+                    
+                    showGlobalConfirmationMessage(`Appended output from ${collectedOutputs.length} panel(s).`);
                 } else {
                     showGlobalConfirmationMessage('Could not find any output to copy.');
                 }
-            }, 1500);
+            }, 1500); // This timeout should be sufficient for iframes to respond.
         });
     }
 
@@ -488,12 +506,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (sendPromptButton) sendPromptButton.addEventListener('click', executeSend);
     promptInput.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); executeSend(); } });
 
-    // Standalone Page Specific Listeners
     if (backToPanelButton) {
         backToPanelButton.addEventListener('click', () => {
-            // Send a message to the background script to open the side panel.
             chrome.runtime.sendMessage({ action: "openSidePanel" }, () => {
-                // After the message is sent, close the current tab.
                 window.close();
             });
         });
