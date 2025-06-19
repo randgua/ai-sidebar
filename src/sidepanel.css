@@ -16,7 +16,6 @@ body, html {
     height: 0;
 }
 
-/* Position icon containers as an overlay. */
 #full-page-chat-container {
     position: absolute;
     top: 1px;
@@ -121,13 +120,31 @@ body, html {
     border: none;
 }
 
-/* Selective copy button for individual iframes */
-.selective-copy-button {
+/* Container for controls on individual iframes */
+.iframe-controls-container {
     position: absolute;
     bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;
+    display: flex;
+    gap: 8px; /* Spacing between buttons */
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Show controls on wrapper hover */
+.iframe-wrapper:hover .iframe-controls-container {
+    opacity: 0.7;
+}
+
+.iframe-wrapper:hover .iframe-controls-container:hover {
+    opacity: 1; /* Make fully visible when hovering over the buttons themselves */
+}
+
+/* Shared styles for buttons inside the container */
+.selective-copy-button,
+.selective-send-button {
     background-color: transparent;
     border: none;
     border-radius: 0;
@@ -138,20 +155,15 @@ body, html {
     align-items: center;
     justify-content: center;
     color: #e8eaed;
-    opacity: 0;
-    transition: opacity 0.2s ease;
 }
 
-.iframe-wrapper:hover .selective-copy-button {
-    opacity: 0.7;
-}
-
-.selective-copy-button:hover {
-    opacity: 1;
+.selective-copy-button:hover,
+.selective-send-button:hover {
     background-color: transparent;
 }
 
-.selective-copy-button .material-symbols-outlined {
+.selective-copy-button .material-symbols-outlined,
+.selective-send-button .material-symbols-outlined {
     font-size: 18px;
 }
 

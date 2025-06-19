@@ -284,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function () {
             itemDiv.appendChild(removeButton);
             urlListManagementDiv.appendChild(itemDiv);
 
-            // Set up drag-and-drop event listeners for reordering.
             itemDiv.addEventListener('dragstart', (e) => {
                 if (managedUrls.some(u => u.selected)) {
                     iframeContainer.style.pointerEvents = 'none';
@@ -410,6 +409,31 @@ document.addEventListener('DOMContentLoaded', function () {
             const wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
 
+            // Create a container for the buttons
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'iframe-controls-container';
+
+            // Create the new Selective Send Button
+            const sendBtn = document.createElement('button');
+            sendBtn.className = 'selective-send-button';
+            sendBtn.title = 'Send prompt to this panel';
+            sendBtn.innerHTML = '<span class="material-symbols-outlined">arrow_upward</span>';
+            sendBtn.addEventListener('click', () => {
+                const promptInput = document.getElementById('prompt-input');
+                const promptText = promptInput.value.trim();
+                if (promptText) {
+                    iframe.contentWindow.postMessage({
+                        action: 'injectPrompt',
+                        prompt: promptText
+                    }, '*');
+                    const hostname = new URL(urlEntry.url).hostname;
+                    showGlobalConfirmationMessage(`Prompt sent to ${hostname}`);
+                } else {
+                    showGlobalConfirmationMessage('Prompt input is empty.');
+                }
+            });
+
+            // Create the existing Selective Copy Button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = 'Copy output from this panel';
@@ -418,7 +442,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleSelectiveCopy(iframe, urlEntry.url);
             });
 
-            wrapper.appendChild(copyBtn);
+            // Add buttons to the container
+            controlsContainer.appendChild(sendBtn);
+            controlsContainer.appendChild(copyBtn);
+
+            // Add the container and the iframe to the wrapper
+            wrapper.appendChild(controlsContainer);
             wrapper.appendChild(iframe);
             iframeContainer.appendChild(wrapper);
         });
