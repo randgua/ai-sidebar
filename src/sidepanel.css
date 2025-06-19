@@ -101,7 +101,7 @@ body, html {
     flex-direction: row;
     overflow: hidden;
     overscroll-behavior-y: contain;
-    gap: 1px; /* Add a small gap between iframes */
+    gap: 1px;
 }
 
 /* Wrapper for each iframe and its controls */
@@ -124,13 +124,13 @@ body, html {
 /* Selective copy button for individual iframes */
 .selective-copy-button {
     position: absolute;
-    bottom: 8px;
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;
-    background-color: rgba(30, 31, 43, 0.85);
-    border: 1px solid #5f6368;
-    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
     width: 28px;
     height: 28px;
     cursor: pointer;
@@ -138,17 +138,17 @@ body, html {
     align-items: center;
     justify-content: center;
     color: #e8eaed;
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.2s ease, background-color 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 .iframe-wrapper:hover .selective-copy-button {
-    opacity: 0.7; /* Show on wrapper hover */
+    opacity: 0.7;
 }
 
 .selective-copy-button:hover {
-    opacity: 1; /* Fully visible on its own hover */
-    background-color: #3c4043;
+    opacity: 1;
+    background-color: transparent;
 }
 
 .selective-copy-button .material-symbols-outlined {

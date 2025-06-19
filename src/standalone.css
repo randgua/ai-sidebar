@@ -94,7 +94,8 @@ body, html {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    position: relative; /* Set as positioning context for the collapse button. */
+    /* Set as positioning context for the collapse button. */
+    position: relative;
     height: 100%;
     padding-top: 0;
     box-sizing: border-box;
@@ -103,9 +104,10 @@ body, html {
 
 #collapse-sidebar-button {
     position: absolute;
-    top: 50%; /* Vertically center the button. */
-    left: 1px; /* Position the button slightly to the right from the edge. */
-    transform: translate(-50%, -50%); /* Center the button on the boundary line. */
+    top: 50%;
+    left: 1px;
+    /* Center the button on the boundary line. */
+    transform: translate(-50%, -50%);
     width: 24px;
     height: 24px;
     background-color: #1e1f2b;
@@ -149,7 +151,7 @@ body, html {
     height: 40px;
     display: flex;
     align-items: center;
-    z-index: 10; /* Ensure controls are above the iframe. */
+    z-index: 10;
 }
 
 #main-content .control-icon-container {
