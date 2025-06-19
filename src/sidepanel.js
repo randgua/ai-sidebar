@@ -351,16 +351,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Handles copying the last output from a single iframe.
+     * Handles appending the last output from a single iframe to the prompt input.
      * @param {HTMLIFrameElement} iframe The iframe to get output from.
      * @param {string} url The URL of the iframe for display purposes.
      */
-    async function handleSelectiveCopy(iframe, url) {
+    async function handleSelectiveAppend(iframe, url) {
         const outputPromise = new Promise(resolve => {
             const listener = (event) => {
                 if (event.data && event.data.action === 'receiveLastOutput' && event.source === iframe.contentWindow) {
                     window.removeEventListener('message', listener);
-                    resolve(event.data.output);
+                    resolve({ output: event.data.output, source: new URL(url).hostname });
                 }
             };
             window.addEventListener('message', listener);
@@ -371,14 +371,37 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
-        const output = await outputPromise;
+        const result = await outputPromise;
 
-        if (output && output.trim()) {
-            navigator.clipboard.writeText(output.trim());
-            const hostname = new URL(url).hostname;
-            showGlobalConfirmationMessage(`Copied output from ${hostname}`);
+        if (result && result.output && result.output.trim()) {
+            const prettyNames = {
+                'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
+                'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
+                'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
+            };
+            const title = prettyNames[result.source] || result.source;
+            const markdownString = `## ${title}\n\n${result.output.trim()}`;
+            
+            const promptInput = document.getElementById('prompt-input');
+            const isInputEmpty = promptInput.value.trim() === '';
+            
+            if (isInputEmpty) {
+                promptInput.value = markdownString;
+            } else {
+                promptInput.value += '\n\n' + markdownString;
+            }
+
+            autoResizeTextarea(promptInput);
+            promptInput.focus();
+            
+            setTimeout(() => {
+                promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
+                promptInput.scrollTop = promptInput.scrollHeight;
+            }, 0);
+
+            showGlobalConfirmationMessage(`Appended output from ${result.source}`);
         } else {
-            showGlobalConfirmationMessage('Could not find any output to copy from this panel.');
+            showGlobalConfirmationMessage('Could not find any output to append from this panel.');
         }
     }
 
@@ -435,10 +458,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Create the existing Selective Copy Button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'selective-copy-button';
-            copyBtn.title = 'Copy output from this panel';
+            copyBtn.title = 'Output markdown format';
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
             copyBtn.addEventListener('click', () => {
-                handleSelectiveCopy(iframe, urlEntry.url);
+                handleSelectiveAppend(iframe, urlEntry.url);
             });
 
             // Add buttons to the container
@@ -623,12 +646,23 @@ document.addEventListener('DOMContentLoaded', function () {
                         return `## ${title}\n\n${item.output}`;
                     }).join('\n\n---\n\n');
                     
-                    navigator.clipboard.writeText(markdownString).then(() => {
-                        showGlobalConfirmationMessage(`Copied ${collectedOutputs.length} response(s) as Markdown.`);
-                    }).catch(err => {
-                        console.error('Failed to copy Markdown to clipboard:', err);
-                        showGlobalConfirmationMessage('Failed to copy as Markdown.');
-                    });
+                    const isInputEmpty = promptInput.value.trim() === '';
+    
+                    if (isInputEmpty) {
+                        promptInput.value = markdownString;
+                    } else {
+                        promptInput.value += '\n\n' + markdownString;
+                    }
+    
+                    autoResizeTextarea(promptInput);
+                    promptInput.focus();
+                    
+                    setTimeout(() => {
+                        promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
+                        promptInput.scrollTop = promptInput.scrollHeight;
+                    }, 0);
+                    
+                    showGlobalConfirmationMessage(`Appended output from ${collectedOutputs.length} panel(s).`);
                 } else {
                     showGlobalConfirmationMessage('Could not find any output to copy.');
                 }
