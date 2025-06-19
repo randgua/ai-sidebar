@@ -1,7 +1,7 @@
 // This script runs inside each iframe to receive prompts and interact with the page.
 
 /**
- * Waits for an element to appear in the DOM using MutationObserver for reliability.
+ * Waits for an element to appear in the DOM.
  * @param {string} selector The CSS selector for the element.
  * @param {number} timeout The maximum time to wait in milliseconds.
  * @returns {Promise<Element|null>} A promise that resolves with the element or null if not found.
@@ -12,7 +12,6 @@ function waitForElement(selector, timeout = 8000) {
         if (initialElement) {
             return resolve(initialElement);
         }
-
         const observer = new MutationObserver(() => {
             const element = document.querySelector(selector);
             if (element) {
@@ -21,14 +20,12 @@ function waitForElement(selector, timeout = 8000) {
                 resolve(element);
             }
         });
-
         observer.observe(document.body, {
             childList: true,
             subtree: true,
             attributes: true,
             attributeFilter: ['disabled']
         });
-
         const timer = setTimeout(() => {
             observer.disconnect();
             if (siteHandlers[window.location.hostname]) {
@@ -39,7 +36,7 @@ function waitForElement(selector, timeout = 8000) {
     });
 }
 
-// A router to map hostnames to their specific prompt injection handlers.
+// Hostname to prompt injection handler mapping.
 const siteHandlers = {
     'aistudio.google.com': handleAiStudio,
     'gemini.google.com': handleGemini,
@@ -50,7 +47,7 @@ const siteHandlers = {
 
 };
 
-// A router to map hostnames to their specific output extraction handlers.
+// Hostname to output extraction handler mapping.
 const siteOutputHandlers = {
     'aistudio.google.com': getAIStudioOutput,
     'gemini.google.com': getGeminiOutput,
@@ -61,7 +58,7 @@ const siteOutputHandlers = {
 };
 
 /**
- * Routes the prompt to a site-specific handler based on the current website's hostname.
+ * Routes the prompt to a site-specific handler.
  * @param {string} prompt The text to be injected.
  */
 async function handlePromptInjection(prompt) {
@@ -77,46 +74,34 @@ async function handlePromptInjection(prompt) {
 async function handleAiStudio(prompt) {
     const selector = 'textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Start typing a prompt"]';
     const inputArea = await waitForElement(selector);
-    
     if (!inputArea) {
         console.warn('AI-Sidebar: Could not find the input area on aistudio.google.com.');
         return;
     }
-
     inputArea.value = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-
     const sendButton = await waitForElement('button[aria-label="Run"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
     } else {
-        console.warn('AI-Sidebar: AI Studio send button (aria-label="Run") not found or was disabled.');
+        console.warn('AI-Sidebar: AI Studio send button not found or was disabled.');
     }
 }
 
 /**
- * Site-specific handler for chat.qwen.ai (Tongyi Qianwen).
+ * Site-specific handler for gemini.google.com.
  * @param {string} prompt The text to be injected.
  */
-async function handleQwen(prompt) {
-    const inputArea = await waitForElement('textarea[placeholder*="How can I help you"]');
-    if (!inputArea) {
-        console.warn('AI-Sidebar: Could not find the input area on chat.qwen.ai.');
-        return;
-    }
-
-    inputArea.focus();
-
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
-    nativeInputValueSetter.call(inputArea, prompt);
-    inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-
-    const sendButton = await waitForElement('button#send-message-button:not([disabled])');
-
+async function handleGemini(prompt) {
+    const inputArea = await waitForElement('div[role="textbox"][contenteditable="true"]');
+    if (!inputArea) return;
+    inputArea.textContent = prompt;
+    inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    const sendButton = await waitForElement('button[aria-label="Send message"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
     } else {
-        console.warn('AI-Sidebar: Qwen send button (id="send-message-button") not found or was disabled.');
+        console.warn('AI-Sidebar: Gemini send button not found or was disabled.');
     }
 }
 
@@ -127,20 +112,16 @@ async function handleQwen(prompt) {
 async function handleChatGPT(prompt) {
     const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
     const inputArea = await waitForElement(selector);
-
     if (!inputArea) {
         console.warn('AI-Sidebar: Could not find the input area on chatgpt.com.');
         return;
     }
-
     if (inputArea.isContentEditable) {
         inputArea.textContent = prompt;
     } else {
         inputArea.value = prompt;
     }
-    
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
     const sendButton = await waitForElement('button[data-testid="send-button"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
@@ -156,10 +137,8 @@ async function handleChatGPT(prompt) {
 async function handleClaude(prompt) {
     const inputArea = await waitForElement('div[contenteditable="true"][aria-label="Send a message"]');
     if (!inputArea) return;
-
     inputArea.innerText = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
     const sendButton = await waitForElement('button[aria-label="Send Message"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
@@ -169,65 +148,76 @@ async function handleClaude(prompt) {
 }
 
 /**
- * Site-specific handler for gemini.google.com.
- * @param {string} prompt The text to be injected.
- */
-async function handleGemini(prompt) {
-    const inputArea = await waitForElement('div[role="textbox"][contenteditable="true"]');
-    if (!inputArea) return;
-
-    inputArea.textContent = prompt;
-    inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
-    const sendButton = await waitForElement('button[aria-label="Send message"]:not([disabled])');
-    if (sendButton) {
-        sendButton.click();
-    } else {
-        console.warn('AI-Sidebar: Gemini send button not found or was disabled.');
-    }
-}
-
-/**
  * Site-specific handler for chat.deepseek.com.
  * @param {string} prompt The text to be injected.
  */
 async function handleDeepSeek(prompt) {
+    // 1. Find the textarea element.
     const inputArea = await waitForElement('textarea#chat-input');
     if (!inputArea) {
         console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
         return;
     }
 
-    inputArea.focus();
+    // 2. Programmatically set the textarea's value.
+    // This is often more reliable for frameworks like React.
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+    nativeInputValueSetter.call(inputArea, prompt);
 
+    // 3. Dispatch an 'input' event to ensure the application's state is updated.
+    inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+
+    // 4. A brief pause to allow the web application to process the input.
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 5. Simulate an "Enter" key press directly on the textarea.
+    // This is the most common and reliable way to submit forms and chat inputs.
+    const enterEvent = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        which: 13,
+        keyCode: 13,
+        bubbles: true,
+        cancelable: true
+    });
+    inputArea.dispatchEvent(enterEvent);
+}
+
+/**
+ * Site-specific handler for chat.qwen.ai.
+ * @param {string} prompt The text to be injected.
+ */
+async function handleQwen(prompt) {
+    const inputArea = await waitForElement('textarea[placeholder*="How can I help you"]');
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on chat.qwen.ai.');
+        return;
+    }
+    inputArea.focus();
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
     nativeInputValueSetter.call(inputArea, prompt);
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-
-    const sendButton = await waitForElement('div[role="button"][aria-label="Send"]');
-
+    const sendButton = await waitForElement('button#send-message-button:not([disabled])');
     if (sendButton) {
         sendButton.click();
     } else {
-        console.warn('AI-Sidebar: DeepSeek send button not found or was disabled.');
+        console.warn('AI-Sidebar: Qwen send button not found or was disabled.');
     }
 }
 
 /**
- * Generic handler for other websites using a heuristic-based approach.
+ * Generic handler for other websites.
  * @param {string} prompt The text to be injected.
  */
 async function handleGeneric(prompt) {
     const inputArea = await waitForElement('textarea, [role="textbox"]');
     if (!inputArea) return;
-
     if (inputArea.isContentEditable) {
         inputArea.textContent = prompt;
     } else {
         inputArea.value = prompt;
     }
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-
     const sendButton = await waitForElement('button[data-testid*="send"]:not([disabled]), button[aria-label*="Send"]:not([disabled]), button[aria-label*="Submit"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
@@ -253,6 +243,20 @@ async function getAIStudioOutput() {
 }
 
 /**
+ * Extracts the last response from Gemini.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getGeminiOutput() {
+    const responses = document.querySelectorAll('.model-response');
+    if (responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        return lastResponse.innerText;
+    }
+    return '';
+}
+
+
+/**
  * Extracts the last assistant message from ChatGPT.
  * @returns {Promise<string>} The text of the last message.
  */
@@ -269,19 +273,6 @@ async function getChatGPTOutput() {
 }
 
 /**
- * Extracts the last response from Gemini.
- * @returns {Promise<string>} The text of the last response.
- */
-async function getGeminiOutput() {
-    const responses = document.querySelectorAll('.model-response');
-    if (responses.length > 0) {
-        const lastResponse = responses[responses.length - 1];
-        return lastResponse.innerText;
-    }
-    return '';
-}
-
-/**
  * Extracts the last message from Claude.
  * @returns {Promise<string>} The text of the last message.
  */
@@ -291,22 +282,6 @@ async function getClaudeOutput() {
         const lastGroup = messageGroups[messageGroups.length - 1];
         if (lastGroup) {
             return lastGroup.innerText;
-        }
-    }
-    return '';
-}
-
-/**
- * Extracts the last response from Qwen.
- * @returns {Promise<string>} The text of the last response.
- */
-async function getQwenOutput() {
-    const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
-    if (assistantMessages.length > 0) {
-        const lastMessage = assistantMessages[assistantMessages.length - 1];
-        const content = lastMessage.querySelector('.markdown-body');
-        if (content) {
-            return content.innerText;
         }
     }
     return '';
@@ -329,6 +304,22 @@ async function getDeepSeekOutput() {
 }
 
 /**
+ * Extracts the last response from Qwen.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getQwenOutput() {
+    const assistantMessages = document.querySelectorAll('div.text-message.bot');
+    if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        const content = lastMessage.querySelector('.markdown-body');
+        if (content) {
+            return content.innerText;
+        }
+    }
+    return '';
+}
+
+/**
  * Routes the output extraction to a site-specific handler.
  */
 async function handleOutputExtraction() {
@@ -342,8 +333,6 @@ async function handleOutputExtraction() {
             console.error('AI-Sidebar: Error extracting output:', e);
         }
     }
-
-    // Send the extracted output back to the parent sidepanel.
     window.parent.postMessage({
         action: 'receiveLastOutput',
         output: lastOutput,
@@ -354,18 +343,15 @@ async function handleOutputExtraction() {
 // Main listener for messages from the sidepanel.
 window.addEventListener('message', (event) => {
     if (!event.data) return;
-
     if (event.data.action === 'injectPrompt') {
         const prompt = event.data.prompt;
         const executeInjection = () => handlePromptInjection(prompt);
-
         if (document.readyState === 'complete') {
             executeInjection();
         } else {
             window.addEventListener('load', executeInjection, { once: true });
         }
     }
-
     if (event.data.action === 'getLastOutput') {
         handleOutputExtraction();
     }
