@@ -247,14 +247,27 @@ async function getAIStudioOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getGeminiOutput() {
-    const responses = document.querySelectorAll('.model-response');
+    // Gemini uses a custom HTML element <model-response> to wrap each reply.
+    // We must select the tag itself, not a class.
+    const responses = document.querySelectorAll('model-response');
+    
     if (responses.length > 0) {
+        // Get the last response element on the page.
         const lastResponse = responses[responses.length - 1];
+        
+        // The actual text content is inside a child element with the 'markdown' class.
+        const content = lastResponse.querySelector('.markdown');
+        
+        if (content) {
+            return content.innerText;
+        }
+        // Fallback if the '.markdown' element structure changes, though less precise.
         return lastResponse.innerText;
     }
+    
+    // Return empty string if no response elements are found.
     return '';
 }
-
 
 /**
  * Extracts the last assistant message from ChatGPT.
