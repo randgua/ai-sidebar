@@ -45,7 +45,6 @@ const siteHandlers = {
     'grok.com': handleGeneric,
     'chat.deepseek.com': handleDeepSeek,
     'chat.qwen.ai': handleQwen,
-
 };
 
 // Hostname to output extraction handler mapping.
@@ -327,12 +326,13 @@ async function getDeepSeekOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getQwenOutput() {
-    const assistantMessages = document.querySelectorAll('div.text-message.bot');
-    if (assistantMessages.length > 0) {
-        const lastMessage = assistantMessages[assistantMessages.length - 1];
-        const content = lastMessage.querySelector('.markdown-body');
-        if (content) {
-            return content.innerText;
+    // Find all markdown content containers.
+    const responses = document.querySelectorAll('div.markdown-content-container');
+    if (responses.length > 0) {
+        // Get the last response element on the page.
+        const lastResponse = responses[responses.length - 1];
+        if (lastResponse) {
+            return lastResponse.innerText;
         }
     }
     return '';
