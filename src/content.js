@@ -42,6 +42,7 @@ const siteHandlers = {
     'gemini.google.com': handleGemini,
     'chatgpt.com': handleChatGPT,
     'claude.ai': handleClaude,
+    'grok.com': handleGeneric,
     'chat.deepseek.com': handleDeepSeek,
     'chat.qwen.ai': handleQwen,
 
@@ -53,6 +54,7 @@ const siteOutputHandlers = {
     'gemini.google.com': getGeminiOutput,
     'chatgpt.com': getChatGPTOutput,
     'claude.ai': getClaudeOutput,
+    'grok.com': getGrokOutput,
     'chat.deepseek.com': getDeepSeekOutput,
     'chat.qwen.ai': getQwenOutput,
 };
@@ -152,26 +154,15 @@ async function handleClaude(prompt) {
  * @param {string} prompt The text to be injected.
  */
 async function handleDeepSeek(prompt) {
-    // 1. Find the textarea element.
     const inputArea = await waitForElement('textarea#chat-input');
     if (!inputArea) {
         console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
         return;
     }
-
-    // 2. Programmatically set the textarea's value.
-    // This is often more reliable for frameworks like React.
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
     nativeInputValueSetter.call(inputArea, prompt);
-
-    // 3. Dispatch an 'input' event to ensure the application's state is updated.
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
-    // 4. A brief pause to allow the web application to process the input.
     await new Promise(resolve => setTimeout(resolve, 100));
-
-    // 5. Simulate an "Enter" key press directly on the textarea.
-    // This is the most common and reliable way to submit forms and chat inputs.
     const enterEvent = new KeyboardEvent('keydown', {
         key: 'Enter',
         code: 'Enter',
@@ -248,24 +239,17 @@ async function getAIStudioOutput() {
  */
 async function getGeminiOutput() {
     // Gemini uses a custom HTML element <model-response> to wrap each reply.
-    // We must select the tag itself, not a class.
     const responses = document.querySelectorAll('model-response');
-    
     if (responses.length > 0) {
-        // Get the last response element on the page.
         const lastResponse = responses[responses.length - 1];
-        
         // The actual text content is inside a child element with the 'markdown' class.
         const content = lastResponse.querySelector('.markdown');
-        
         if (content) {
             return content.innerText;
         }
-        // Fallback if the '.markdown' element structure changes, though less precise.
+        // Fallback if the '.markdown' element structure changes.
         return lastResponse.innerText;
     }
-    
-    // Return empty string if no response elements are found.
     return '';
 }
 
@@ -301,22 +285,34 @@ async function getClaudeOutput() {
 }
 
 /**
+ * Extracts the last response from Grok.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getGrokOutput() {
+    // Grok wraps responses in a div with this specific class.
+    const responses = document.querySelectorAll('div.response-content-markdown');
+    if (responses.length > 0) {
+        const lastResponse = responses[responses.length - 1];
+        if (lastResponse) {
+            return lastResponse.innerText;
+        }
+    }
+    return '';
+}
+
+/**
  * Extracts the last response from DeepSeek.
  * @returns {Promise<string>} The text of the last response.
  */
 async function getDeepSeekOutput() {
     // Directly find all content blocks rendered by DeepSeek's markdown component.
     const contentBlocks = document.querySelectorAll('div.ds-markdown');
-    
-    // If any blocks are found, return the inner text of the very last one.
     if (contentBlocks.length > 0) {
         const lastBlock = contentBlocks[contentBlocks.length - 1];
         if (lastBlock) {
             return lastBlock.innerText;
         }
     }
-    
-    // Return an empty string if no content blocks were found.
     return '';
 }
 
