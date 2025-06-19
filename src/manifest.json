@@ -23,6 +23,15 @@
   "background": {
     "service_worker": "background.js"
   },
+  "commands": {
+    "open-standalone-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open the standalone full page view"
+    }
+  },
   "side_panel": {
     "default_path": "sidepanel.html"
   },

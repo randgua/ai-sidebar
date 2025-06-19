@@ -15,6 +15,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep the message channel open for the response.
 });
 
+// Listener for keyboard shortcuts
+chrome.commands.onCommand.addListener((command) => {
+    if (command === "open-standalone-page") {
+        chrome.tabs.create({ url: 'standalone.html' });
+    }
+});
+
 chrome.runtime.onInstalled.addListener(function () {
     // Add rules to modify response headers, allowing more sites to be embedded in iframes.
     // This removes x-frame-options and content-security-policy headers that prevent embedding.
