@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
     const copyLastOutputButton = document.getElementById('copy-last-output-button');
+    const copyMarkdownButton = document.getElementById('copy-markdown-button');
     const promptInput = document.getElementById('prompt-input');
     const promptContainer = document.getElementById('prompt-container');
     const togglePromptButton = document.getElementById('toggle-prompt-button');
@@ -272,49 +273,82 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    /**
+     * Handles copying the last output from a single iframe.
+     * @param {HTMLIFrameElement} iframe The iframe to get output from.
+     * @param {string} url The URL of the iframe for display purposes.
+     */
+    async function handleSelectiveCopy(iframe, url) {
+        const outputPromise = new Promise(resolve => {
+            const listener = (event) => {
+                if (event.data && event.data.action === 'receiveLastOutput' && event.source === iframe.contentWindow) {
+                    window.removeEventListener('message', listener);
+                    resolve(event.data.output);
+                }
+            };
+            window.addEventListener('message', listener);
+            setTimeout(() => {
+                window.removeEventListener('message', listener);
+                resolve(null);
+            }, 1500);
+        });
+
+        iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+        const output = await outputPromise;
+
+        if (output && output.trim()) {
+            navigator.clipboard.writeText(output.trim());
+            const hostname = new URL(url).hostname;
+            showGlobalConfirmationMessage(`Copied output from ${hostname}`);
+        } else {
+            showGlobalConfirmationMessage('Could not find any output to copy from this panel.');
+        }
+    }
+    
+    // Renders iframes based on the current selection, wrapping them with controls.
     function updateIframes() {
         const selectedUrlEntries = managedUrls.filter(u => u.selected);
-        const existingEmptyMessage = iframeContainer.querySelector('.empty-message');
-        if (existingEmptyMessage) iframeContainer.removeChild(existingEmptyMessage);
+        iframeContainer.innerHTML = '';
+
         if (selectedUrlEntries.length === 0) {
-            iframeContainer.innerHTML = '';
             const emptyMessage = document.createElement('div');
             emptyMessage.className = 'empty-message';
-            emptyMessage.textContent = managedUrls.length === 0 ? 'No websites available. Add some in Settings.' : 'No websites selected. Please select websites from Settings.';
+            emptyMessage.textContent = managedUrls.length === 0 ? 
+                'No websites available. Add some in Settings.' : 
+                'No websites selected. Please select websites from Settings.';
             iframeContainer.appendChild(emptyMessage);
-            Object.values(iframeCache).forEach(iframe => { if (iframe && iframe.style) iframe.style.display = 'none'; });
             return;
         }
-        const newDesiredIframeElements = [];
+
         selectedUrlEntries.forEach(urlEntry => {
             let iframe = iframeCache[urlEntry.url];
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.src = urlEntry.url;
-                Object.assign(iframe.style, { flexGrow: '1', flexBasis: '0', minWidth: '0', border: 'none', height: '100%' });
                 iframeCache[urlEntry.url] = iframe;
-            } else if (iframe.src !== urlEntry.url) {
-                iframe.src = urlEntry.url;
             }
-            iframe.style.display = 'block';
-            newDesiredIframeElements.push(iframe);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'iframe-wrapper';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'selective-copy-button';
+            copyBtn.title = 'Copy output from this panel';
+            copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
+            copyBtn.addEventListener('click', () => {
+                handleSelectiveCopy(iframe, urlEntry.url);
+            });
+            
+            wrapper.appendChild(copyBtn);
+            wrapper.appendChild(iframe);
+            iframeContainer.appendChild(wrapper);
         });
-        const currentDomIframes = Array.from(iframeContainer.children).filter(el => el.tagName === 'IFRAME');
-        currentDomIframes.forEach(domIframe => { if (!newDesiredIframeElements.includes(domIframe)) iframeContainer.removeChild(domIframe); });
-        let domOrderMatchesDesired = iframeContainer.children.length === newDesiredIframeElements.length &&
-            Array.from(iframeContainer.children).every((child, i) => child === newDesiredIframeElements[i]);
-        if (!domOrderMatchesDesired) {
-            newDesiredIframeElements.forEach(iframe => iframeContainer.appendChild(iframe));
-        }
-        Object.keys(iframeCache).forEach(urlInCache => {
-            if (!selectedUrlEntries.some(entry => entry.url === urlInCache)) {
-                const iframeToHide = iframeCache[urlInCache];
-                if (iframeToHide && iframeToHide.style.display !== 'none') iframeToHide.style.display = 'none';
-            }
-        });
+
         const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
         for (const urlInCache in iframeCache) {
-            if (!currentManagedUrlsSet.has(urlInCache)) delete iframeCache[urlInCache];
+            if (!currentManagedUrlsSet.has(urlInCache)) {
+                delete iframeCache[urlInCache];
+            }
         }
     }
 
@@ -447,9 +481,10 @@ document.addEventListener('DOMContentLoaded', function () {
     settingsContainer.addEventListener('mouseenter', () => settingsPopup.classList.add('show'));
     settingsContainer.addEventListener('mouseleave', () => { if (!isModalActive) settingsPopup.classList.remove('show'); });
 
+    // Collects outputs from iframes, including the source hostname.
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
-            collectedOutputs.push(event.data.output.trim());
+            collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
         }
     });
 
@@ -463,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Wait for async messages to be collected before processing.
             setTimeout(() => {
                 if (collectedOutputs.length > 0) {
-                    const textToAppend = collectedOutputs.join('\n\n---\n\n');
+                    const textToAppend = collectedOutputs.map(item => item.output).join('\n\n---\n\n');
                     const isInputEmpty = promptInput.value.trim() === '';
     
                     if (isInputEmpty) {
@@ -475,7 +510,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     autoResizeTextarea(promptInput);
                     promptInput.focus();
                     
-                    // Defer setting the cursor position to avoid timing issues with browser rendering.
                     setTimeout(() => {
                         promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
                         promptInput.scrollTop = promptInput.scrollHeight;
@@ -485,7 +519,50 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     showGlobalConfirmationMessage('Could not find any output to copy.');
                 }
-            }, 1500); // This timeout should be sufficient for iframes to respond.
+            }, 1500);
+        });
+    }
+
+    if (copyMarkdownButton) {
+        copyMarkdownButton.addEventListener('click', () => {
+            collectedOutputs = [];
+            const activeIframes = iframeContainer.querySelectorAll('iframe');
+    
+            if (activeIframes.length === 0) {
+                showGlobalConfirmationMessage('No active panels to copy from.');
+                return;
+            }
+    
+            activeIframes.forEach(iframe => {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+                }
+            });
+    
+            // Wait for async messages to be collected before processing.
+            setTimeout(() => {
+                if (collectedOutputs.length > 0) {
+                    const prettyNames = {
+                        'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
+                        'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
+                        'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
+                    };
+    
+                    const markdownString = collectedOutputs.map(item => {
+                        const title = prettyNames[item.source] || item.source;
+                        return `## ${title}\n\n${item.output}`;
+                    }).join('\n\n---\n\n');
+                    
+                    navigator.clipboard.writeText(markdownString).then(() => {
+                        showGlobalConfirmationMessage(`Copied ${collectedOutputs.length} response(s) as Markdown.`);
+                    }).catch(err => {
+                        console.error('Failed to copy Markdown to clipboard:', err);
+                        showGlobalConfirmationMessage('Failed to copy as Markdown.');
+                    });
+                } else {
+                    showGlobalConfirmationMessage('Could not find any output to copy.');
+                }
+            }, 1500);
         });
     }
 

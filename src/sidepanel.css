@@ -27,7 +27,7 @@ body, html {
 #refresh-button-container {
     position: absolute;
     top: 1px;
-    left: 28px; /* Positioned next to the full-page icon. */
+    left: 28px;
     z-index: 1000;
 }
 
@@ -101,14 +101,58 @@ body, html {
     flex-direction: row;
     overflow: hidden;
     overscroll-behavior-y: contain;
+    gap: 1px; /* Add a small gap between iframes */
 }
 
-#iframe-container iframe {
+/* Wrapper for each iframe and its controls */
+.iframe-wrapper {
     flex-grow: 1;
     flex-basis: 0;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: #2a2b36;
+}
+
+.iframe-wrapper iframe {
+    flex-grow: 1;
+    width: 100%;
     border: none;
-    height: 100%;
+}
+
+/* Selective copy button for individual iframes */
+.selective-copy-button {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    background-color: rgba(30, 31, 43, 0.85);
+    border: 1px solid #5f6368;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e8eaed;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.iframe-wrapper:hover .selective-copy-button {
+    opacity: 0.7; /* Show on wrapper hover */
+}
+
+.selective-copy-button:hover {
+    opacity: 1; /* Fully visible on its own hover */
+    background-color: #3c4043;
+}
+
+.selective-copy-button .material-symbols-outlined {
+    font-size: 18px;
 }
 
 .popup {
@@ -358,14 +402,12 @@ body, html {
     position: relative;
 }
 
+/* Base style for the toggle button */
 #toggle-prompt-button {
     position: absolute;
-    top: -18px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 24px;
-    height: 24px;
-    background-color: #1e1f2b;
+    width: 28px;
+    height: 28px;
     border: 1px solid #5f6368;
     border-radius: 50%;
     display: flex;
@@ -373,19 +415,36 @@ body, html {
     justify-content: center;
     cursor: pointer;
     font-family: 'Material Symbols Outlined';
-    font-size: 20px;
+    font-size: 22px;
     user-select: none;
-    transition: transform 0.2s ease;
     color: #8ab4f7;
-    z-index: 1;
-}
-
-#toggle-prompt-button:hover {
-    background-color: #3c4043;
+    z-index: 2; /* Ensure it's above the input wrapper */
+    transition: transform 0.2s ease, top 0.2s ease, background-color 0.2s ease;
+    transform: translateX(-50%);
 }
 
 #toggle-prompt-button:active {
     transform: translateX(-50%) scale(0.9);
+}
+
+/* OPEN State: The down-arrow button is inside the prompt area */
+#prompt-container:not(.collapsed) #toggle-prompt-button {
+    top: 8px;
+    background-color: #3c4043;
+}
+
+#prompt-container:not(.collapsed) #toggle-prompt-button:hover {
+    background-color: #4a4d5f;
+}
+
+/* COLLAPSED State: The up-arrow button is above the prompt area */
+#prompt-container.collapsed #toggle-prompt-button {
+    top: -12px;
+    background-color: #1e1f2b;
+}
+
+#prompt-container.collapsed #toggle-prompt-button:hover {
+    background-color: #3c4043;
 }
 
 .prompt-input-wrapper {
@@ -455,7 +514,7 @@ body, html {
 
 #copy-last-output-button {
     flex-shrink: 0;
-    margin: 8px 4px 8px 8px;
+    margin: 8px 0 8px 8px;
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -485,10 +544,41 @@ body, html {
     opacity: 1;
 }
 
+#copy-markdown-button {
+    flex-shrink: 0;
+    margin: 8px 4px 8px 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: flex-end;
+}
+
+#copy-markdown-button:hover {
+    background-color: #4a4d5f;
+}
+
+#copy-markdown-button .material-symbols-outlined {
+    font-size: 20px;
+    font-weight: 300;
+    color: #e8eaed;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+#copy-markdown-button:hover .material-symbols-outlined {
+    opacity: 1;
+}
+
 #send-prompt-button {
     flex-shrink: 0;
-    margin: 8px;
-    margin-left: 0;
+    margin: 8px 8px 8px 0;
     width: 28px;
     height: 28px;
     border: none;
