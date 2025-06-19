@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearSelectionButton = document.getElementById('clear-selection-button');
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
-    const copyLastOutputButton = document.getElementById('copy-last-output-button');
     const copyMarkdownButton = document.getElementById('copy-markdown-button');
 
     let managedUrls = [];
@@ -593,50 +592,6 @@ document.addEventListener('DOMContentLoaded', function () {
             collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
         }
     });
-
-    if (copyLastOutputButton) {
-        copyLastOutputButton.addEventListener('click', () => {
-            collectedOutputs = [];
-            const activeIframes = iframeContainer.querySelectorAll('iframe');
-    
-            if (activeIframes.length === 0) {
-                showGlobalConfirmationMessage('No active panels to copy from.');
-                return;
-            }
-    
-            activeIframes.forEach(iframe => {
-                if (iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
-                }
-            });
-    
-            // Wait for async messages to be collected before processing.
-            setTimeout(() => {
-                if (collectedOutputs.length > 0) {
-                    const textToAppend = collectedOutputs.map(item => item.output).join('\n\n---\n\n');
-                    const isInputEmpty = promptInput.value.trim() === '';
-    
-                    if (isInputEmpty) {
-                        promptInput.value = textToAppend;
-                    } else {
-                        promptInput.value += '\n\n' + textToAppend;
-                    }
-    
-                    autoResizeTextarea(promptInput);
-                    promptInput.focus();
-                    
-                    setTimeout(() => {
-                        promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
-                        promptInput.scrollTop = promptInput.scrollHeight;
-                    }, 0);
-                    
-                    showGlobalConfirmationMessage(`Appended output from ${collectedOutputs.length} panel(s).`);
-                } else {
-                    showGlobalConfirmationMessage('Could not find any output to copy.');
-                }
-            }, 1500);
-        });
-    }
 
     if (copyMarkdownButton) {
         copyMarkdownButton.addEventListener('click', () => {
