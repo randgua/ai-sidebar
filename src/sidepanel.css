@@ -526,7 +526,7 @@ body, html {
 
 #copy-markdown-button {
     flex-shrink: 0;
-    margin: 8px 4px 8px 8px;
+    margin: 8px 8px 8px 0;
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -558,7 +558,7 @@ body, html {
 
 #send-prompt-button {
     flex-shrink: 0;
-    margin: 8px 8px 8px 0;
+    margin: 8px 4px 8px 8px;
     width: 28px;
     height: 28px;
     border: none;
