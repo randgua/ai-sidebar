@@ -42,18 +42,22 @@ function waitForElement(selector, timeout = 8000) {
 // A router to map hostnames to their specific prompt injection handlers.
 const siteHandlers = {
     'aistudio.google.com': handleAiStudio,
-    'chat.qwen.ai': handleQwen,
+    'gemini.google.com': handleGemini,
     'chatgpt.com': handleChatGPT,
     'claude.ai': handleClaude,
-    'gemini.google.com': handleGemini
+    'chat.deepseek.com': handleDeepSeek,
+    'chat.qwen.ai': handleQwen,
+
 };
 
 // A router to map hostnames to their specific output extraction handlers.
 const siteOutputHandlers = {
     'aistudio.google.com': getAIStudioOutput,
-    'chatgpt.com': getChatGPTOutput,
     'gemini.google.com': getGeminiOutput,
+    'chatgpt.com': getChatGPTOutput,
     'claude.ai': getClaudeOutput,
+    'chat.deepseek.com': getDeepSeekOutput,
+    'chat.qwen.ai': getQwenOutput,
 };
 
 /**
@@ -82,7 +86,6 @@ async function handleAiStudio(prompt) {
     inputArea.value = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // Find and click the send button instead of dispatching an Enter key event.
     const sendButton = await waitForElement('button[aria-label="Run"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
@@ -185,6 +188,32 @@ async function handleGemini(prompt) {
 }
 
 /**
+ * Site-specific handler for chat.deepseek.com.
+ * @param {string} prompt The text to be injected.
+ */
+async function handleDeepSeek(prompt) {
+    const inputArea = await waitForElement('textarea#chat-input');
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
+        return;
+    }
+
+    inputArea.focus();
+
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+    nativeInputValueSetter.call(inputArea, prompt);
+    inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const sendButton = await waitForElement('div[role="button"][aria-label="Send"]');
+
+    if (sendButton) {
+        sendButton.click();
+    } else {
+        console.warn('AI-Sidebar: DeepSeek send button not found or was disabled.');
+    }
+}
+
+/**
  * Generic handler for other websites using a heuristic-based approach.
  * @param {string} prompt The text to be injected.
  */
@@ -262,6 +291,38 @@ async function getClaudeOutput() {
         const lastGroup = messageGroups[messageGroups.length - 1];
         if (lastGroup) {
             return lastGroup.innerText;
+        }
+    }
+    return '';
+}
+
+/**
+ * Extracts the last response from Qwen.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getQwenOutput() {
+    const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
+    if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        const content = lastMessage.querySelector('.markdown-body');
+        if (content) {
+            return content.innerText;
+        }
+    }
+    return '';
+}
+
+/**
+ * Extracts the last response from DeepSeek.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getDeepSeekOutput() {
+    const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
+    if (assistantMessages.length > 0) {
+        const lastMessage = assistantMessages[assistantMessages.length - 1];
+        const content = lastMessage.querySelector('div.markdown-body');
+        if (content) {
+            return content.innerText;
         }
     }
     return '';
