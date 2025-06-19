@@ -90,7 +90,6 @@ body, html {
     height: 34px;
 }
 
-/* --- Main Content Layout --- */
 #main-content {
     flex-grow: 1;
     display: flex;
@@ -102,21 +101,17 @@ body, html {
     min-width: 0;
 }
 
-/* --- Collapse Sidebar Button --- */
 #collapse-sidebar-button {
     position: absolute;
     top: 50%; /* Vertically center the button. */
-    left: 0; /* Align to the left edge of the main content. */
+    left: 1px; /* Position the button slightly to the right from the edge. */
     transform: translate(-50%, -50%); /* Center the button on the boundary line. */
-    
     width: 24px;
     height: 24px;
-    /* Match the style of the prompt area toggle button. */
     background-color: #1e1f2b;
     border: 1px solid #5f6368;
     color: #8ab4f7;
     font-size: 20px;
-    
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -124,7 +119,6 @@ body, html {
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -141,11 +135,10 @@ body, html {
     transform: translate(-50%, -50%) rotate(180deg);
 }
 
-/* Handle active state when collapsed. */
 #left-sidebar.collapsed + #main-content #collapse-sidebar-button:active {
+    /* Handle active state when collapsed. */
     transform: translate(-50%, -50%) rotate(180deg) scale(0.9);
 }
-
 
 /* Position the controls bar to float over the content. */
 #controls-bar {
@@ -171,21 +164,18 @@ body, html {
     height: 32px;
 }
 
-/* Position the "Back to Panel" button. */
 #back-to-panel-container {
     position: absolute;
     top: 0;
     left: 0;
 }
 
-/* Position the Refresh button next to the back button. */
 #main-content #refresh-button-container {
     position: absolute;
     top: 0;
     left: 36px;
 }
 
-/* Position the Settings button at the far right. */
 #main-content #settings-container {
     position: absolute;
     top: 0;
