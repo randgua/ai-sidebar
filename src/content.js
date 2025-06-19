@@ -292,14 +292,18 @@ async function getClaudeOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getDeepSeekOutput() {
-    const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
-    if (assistantMessages.length > 0) {
-        const lastMessage = assistantMessages[assistantMessages.length - 1];
-        const content = lastMessage.querySelector('div.markdown-body');
-        if (content) {
-            return content.innerText;
+    // Directly find all content blocks rendered by DeepSeek's markdown component.
+    const contentBlocks = document.querySelectorAll('div.ds-markdown');
+    
+    // If any blocks are found, return the inner text of the very last one.
+    if (contentBlocks.length > 0) {
+        const lastBlock = contentBlocks[contentBlocks.length - 1];
+        if (lastBlock) {
+            return lastBlock.innerText;
         }
     }
+    
+    // Return an empty string if no content blocks were found.
     return '';
 }
 
