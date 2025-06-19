@@ -418,7 +418,7 @@ body, html {
     font-size: 22px;
     user-select: none;
     color: #8ab4f7;
-    z-index: 2; /* Ensure it's above the input wrapper */
+    z-index: 2;
     transition: transform 0.2s ease, top 0.2s ease, background-color 0.2s ease;
     transform: translateX(-50%);
 }
@@ -429,7 +429,7 @@ body, html {
 
 /* OPEN State: The down-arrow button is inside the prompt area */
 #prompt-container:not(.collapsed) #toggle-prompt-button {
-    top: 8px;
+    top: 0;
     background-color: #3c4043;
 }
 
@@ -439,7 +439,7 @@ body, html {
 
 /* COLLAPSED State: The up-arrow button is above the prompt area */
 #prompt-container.collapsed #toggle-prompt-button {
-    top: -12px;
+    top: -16px;
     background-color: #1e1f2b;
 }
 
