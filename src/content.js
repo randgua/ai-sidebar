@@ -223,11 +223,17 @@ async function handleGeneric(prompt) {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getAIStudioOutput() {
-    const responses = document.querySelectorAll('ms-text-chunk');
-    if (responses.length > 0) {
-        const lastResponse = responses[responses.length - 1];
-        if (lastResponse) {
-            return lastResponse.innerText;
+    // Find all chat turns and filter for those from the model.
+    const allTurns = document.querySelectorAll('ms-chat-turn');
+    const modelTurns = Array.from(allTurns).filter(turn => turn.querySelector('[data-turn-role="Model"]'));
+
+    if (modelTurns.length > 0) {
+        // Get the very last model turn.
+        const lastModelTurn = modelTurns[modelTurns.length - 1];
+        // The content is within a 'turn-content' div.
+        const contentContainer = lastModelTurn.querySelector('.turn-content');
+        if (contentContainer) {
+            return contentContainer.innerText;
         }
     }
     return '';
