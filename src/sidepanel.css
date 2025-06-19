@@ -16,7 +16,7 @@ body, html {
     height: 0;
 }
 
-/* Icon containers are absolutely positioned for overlay */
+/* Position icon containers as an overlay. */
 #full-page-chat-container {
     position: absolute;
     top: 1px;
@@ -27,7 +27,7 @@ body, html {
 #refresh-button-container {
     position: absolute;
     top: 1px;
-    left: 28px; /* Adjusted for the new icon */
+    left: 28px; /* Positioned next to the full-page icon. */
     z-index: 1000;
 }
 
@@ -43,7 +43,7 @@ body, html {
     align-items: center;
 }
 
-/* Styles for Material Symbols icons */
+/* Base styles for Material Symbols icons. */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -85,6 +85,13 @@ body, html {
     transform: scale(1.2);
     opacity: 1;
     color: #5472D3;
+}
+
+/* Custom size for the full-page chat icon. */
+#full-page-chat-icon.material-symbols-outlined {
+    font-size: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 #iframe-container {

@@ -164,6 +164,12 @@ body, html {
     height: 32px;
 }
 
+#back-to-panel-button {
+    font-size: 18px;
+    width: 28px;
+    height: 28px;
+}
+
 #back-to-panel-container {
     position: absolute;
     top: 0;
