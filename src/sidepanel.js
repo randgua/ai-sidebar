@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://www.perplexity.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.deepseek.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.qwen.ai/", selected: false },
-        { id: crypto.randomUUID(), url: "https://www.tongyi.com/qianwen/", selected: false },
         { id: crypto.randomUUID(), url: "https://chatglm.cn/", selected: false },
         { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
     ];
@@ -149,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function saveUrls() {
-        chrome.storage.local.set({ managedUrls: managedUrls });
+        chrome.storage.sync.set({ managedUrls: managedUrls });
     }
 
     // Validates and formats a URL, assuming https if no protocol is provided.
@@ -435,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadUrls() {
-        chrome.storage.local.get(['managedUrls'], function(result) {
+        chrome.storage.sync.get(['managedUrls'], function(result) {
             const loadedUrls = result.managedUrls;
             if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
                 if (chrome.runtime.lastError) {
@@ -589,7 +588,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     const textToAppend = collectedOutputs.join('\n\n---\n\n');
                     const isInputEmpty = promptInput.value.trim() === '';
     
-                    // Append the new content, adding newlines for separation if needed.
                     if (isInputEmpty) {
                         promptInput.value = textToAppend;
                     } else {
