@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: crypto.randomUUID(), url: "https://chatgpt.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://claude.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://grok.com/", selected: false },
-        { id: crypto.randomUUID(), url: "https://www.perplexity.ai/", selected: false },
+        { id: crypto.randomUUID(), url: "https://perplexity.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.deepseek.com/", selected: false },
         { id: crypto.randomUUID(), url: "https://chat.qwen.ai/", selected: false },
         { id: crypto.randomUUID(), url: "https://chatglm.cn/", selected: false },

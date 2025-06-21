@@ -43,6 +43,7 @@ const siteHandlers = {
     'chatgpt.com': handleChatGPT,
     'claude.ai': handleClaude,
     'grok.com': handleGeneric,
+    'perplexity.ai': handlePerplexity,
     'chat.deepseek.com': handleDeepSeek,
     'chat.qwen.ai': handleQwen,
 };
@@ -54,6 +55,7 @@ const siteOutputHandlers = {
     'chatgpt.com': getChatGPTOutput,
     'claude.ai': getClaudeOutput,
     'grok.com': getGrokOutput,
+    'perplexity.ai': getPerplexityOutput,
     'chat.deepseek.com': getDeepSeekOutput,
     'chat.qwen.ai': getQwenOutput,
 };
@@ -145,6 +147,33 @@ async function handleClaude(prompt) {
         sendButton.click();
     } else {
         console.warn('AI-Sidebar: Claude send button not found or was disabled.');
+    }
+}
+
+// This new function can be added after the handleClaude function in src/content.js
+
+/**
+ * Site-specific handler for www.perplexity.ai.
+ * @param {string} prompt The text to be injected.
+ */
+async function handlePerplexity(prompt) {
+    // Use the specific selector for Perplexity's input area
+    const inputArea = await waitForElement('div[contenteditable="true"][id="ask-input"]');
+    if (!inputArea) {
+        console.warn('AI-Sidebar: Could not find the input area on perplexity.ai.');
+        return;
+    }
+
+    // Set the prompt text
+    inputArea.textContent = prompt;
+    inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+
+    // Use the specific selector for Perplexity's send button
+    const sendButton = await waitForElement('button[data-testid="submit-button"]:not([disabled])');
+    if (sendButton) {
+        sendButton.click();
+    } else {
+        console.warn('AI-Sidebar: Perplexity send button not found or was disabled.');
     }
 }
 
@@ -302,6 +331,27 @@ async function getGrokOutput() {
             return lastResponse.innerText;
         }
     }
+    return '';
+}
+
+// Add this function in src/content.js, for example after getClaudeOutput
+
+/**
+ * Extracts the last response from Perplexity.ai.
+ * @returns {Promise<string>} The text of the last response.
+ */
+async function getPerplexityOutput() {
+    // Perplexity wraps its responses in a div with an ID that starts with "markdown-content-".
+    const responses = document.querySelectorAll('div[id^="markdown-content-"]');
+    if (responses.length > 0) {
+        // Get the very last response element on the page.
+        const lastResponse = responses[responses.length - 1];
+        if (lastResponse) {
+            // The innerText of this div contains the full formatted response.
+            return lastResponse.innerText;
+        }
+    }
+    // If no response is found, return an empty string.
     return '';
 }
 

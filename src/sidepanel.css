@@ -123,14 +123,17 @@ body, html {
 /* Container for controls on individual iframes */
 .iframe-controls-container {
     position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 8px;
+    left: 0;
+    width: 100%;
     z-index: 5;
     display: flex;
-    gap: 16px; /* Spacing between buttons */
+    justify-content: space-between; /* Positions children at either end */
+    padding: 0 8px; /* Adds padding on the left and right */
+    box-sizing: border-box; /* Ensures padding is included in the width */
     opacity: 0;
     transition: opacity 0.2s ease;
+    pointer-events: none; /* Allow clicks to pass through the container's empty space */
 }
 
 /* Show controls on wrapper hover */
@@ -155,6 +158,7 @@ body, html {
     align-items: center;
     justify-content: center;
     color: #e8eaed;
+    pointer-events: auto;
 }
 
 .selective-copy-button:hover,
@@ -451,7 +455,7 @@ body, html {
 
 /* COLLAPSED State: The up-arrow button is above the prompt area */
 #prompt-container.collapsed #toggle-prompt-button {
-    top: -16px;
+    top: -18px;
     background-color: #1e1f2b;
 }
 
