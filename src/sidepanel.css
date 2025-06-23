@@ -528,6 +528,38 @@ body, html {
     background-color: #9aa0a6;
 }
 
+#clear-prompt-button {
+    flex-shrink: 0;
+    margin: 8px 0 8px 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    align-self: flex-end;
+}
+
+#clear-prompt-button:hover {
+    background-color: #4a4d5f;
+}
+
+#clear-prompt-button .material-symbols-outlined {
+    font-size: 20px;
+    font-weight: 300;
+    color: #e8eaed;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+#clear-prompt-button:hover .material-symbols-outlined {
+    opacity: 1;
+}
+
 #copy-markdown-button {
     flex-shrink: 0;
     margin: 8px 8px 8px 0;

@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
     const copyMarkdownButton = document.getElementById('copy-markdown-button');
+    const promptInput = document.getElementById('prompt-input');
+    const promptContainer = document.getElementById('prompt-container');
+    const togglePromptButton = document.getElementById('toggle-prompt-button');
+    const sendPromptButton = document.getElementById('send-prompt-button');
+    const clearPromptButton = document.getElementById('clear-prompt-button');
 
     let managedUrls = [];
     const iframeCache = {};
@@ -151,7 +156,11 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.storage.sync.set({ managedUrls: managedUrls });
     }
 
-    // Validates and formats a URL, assuming https if no protocol is provided.
+    /**
+     * Validates and formats a URL, assuming https if no protocol is provided.
+     * @param {string} input The URL string to validate.
+     * @returns {string|null} The formatted URL or null if invalid.
+     */
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
     
@@ -431,11 +440,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
 
-            // Create a container for the buttons
             const controlsContainer = document.createElement('div');
             controlsContainer.className = 'iframe-controls-container';
 
-            // Create the new Selective Send Button
             const sendBtn = document.createElement('button');
             sendBtn.className = 'selective-send-button';
             sendBtn.title = 'Send prompt to this panel';
@@ -455,7 +462,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // Create the existing Selective Copy Button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = 'Output markdown format';
@@ -464,11 +470,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleSelectiveAppend(iframe, urlEntry.url);
             });
 
-            // Add buttons to the container
             controlsContainer.appendChild(sendBtn);
             controlsContainer.appendChild(copyBtn);
 
-            // Add the container and the iframe to the wrapper
             wrapper.appendChild(controlsContainer);
             wrapper.appendChild(iframe);
             iframeContainer.appendChild(wrapper);
@@ -604,11 +608,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const promptInput = document.getElementById('prompt-input');
-    const promptContainer = document.getElementById('prompt-container');
-    const togglePromptButton = document.getElementById('toggle-prompt-button');
-    const sendPromptButton = document.getElementById('send-prompt-button');
-
     // Collects outputs from iframes, including the source hostname.
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
@@ -695,9 +694,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         textarea.scrollTop = textarea.scrollHeight;
 
+        const hasText = textarea.value.trim() !== '';
         if (sendPromptButton) {
-            sendPromptButton.disabled = textarea.value.trim() === '';
+            sendPromptButton.disabled = !hasText;
         }
+        if (clearPromptButton) {
+            clearPromptButton.style.display = hasText ? 'flex' : 'none';
+        }
+    }
+
+    if (clearPromptButton) {
+        clearPromptButton.addEventListener('click', () => {
+            promptInput.value = '';
+            autoResizeTextarea(promptInput);
+            promptInput.focus();
+        });
     }
 
     promptInput.addEventListener('input', () => autoResizeTextarea(promptInput));

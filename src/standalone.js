@@ -1,4 +1,3 @@
-// This script manages the full-page view, reusing logic from sidepanel.js
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
 let popupNotificationTimeout = null;
@@ -24,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const backToPanelButton = document.getElementById('back-to-panel-button');
     const collapseButton = document.getElementById('collapse-sidebar-button');
     const leftSidebar = document.getElementById('left-sidebar');
+    const clearPromptButton = document.getElementById('clear-prompt-button');
 
     let managedUrls = [];
     const iframeCache = {};
@@ -125,6 +125,11 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.storage.sync.set({ managedUrls: managedUrls });
     }
 
+    /**
+     * Validates and formats a URL, assuming https if no protocol is provided.
+     * @param {string} input The URL string to validate.
+     * @returns {string|null} The formatted URL or null if invalid.
+     */
     function formatAndValidateUrl(input) {
         let urlString = input.trim();
         if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
@@ -353,11 +358,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
 
-            // Create a container for the buttons
             const controlsContainer = document.createElement('div');
             controlsContainer.className = 'iframe-controls-container';
 
-            // Create the new Selective Send Button
             const sendBtn = document.createElement('button');
             sendBtn.className = 'selective-send-button';
             sendBtn.title = 'Send prompt to this panel';
@@ -377,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // Create the existing Selective Copy Button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = '输出markdown格式';
@@ -386,11 +388,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleSelectiveAppend(iframe, urlEntry.url);
             });
             
-            // Add buttons to the container
             controlsContainer.appendChild(sendBtn);
             controlsContainer.appendChild(copyBtn);
 
-            // Add the container and the iframe to the wrapper
             wrapper.appendChild(controlsContainer);
             wrapper.appendChild(iframe);
             iframeContainer.appendChild(wrapper);
@@ -436,7 +436,14 @@ document.addEventListener('DOMContentLoaded', function () {
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
         textarea.scrollTop = textarea.scrollHeight;
-        if (sendPromptButton) sendPromptButton.disabled = textarea.value.trim() === '';
+
+        const hasText = textarea.value.trim() !== '';
+        if (sendPromptButton) {
+            sendPromptButton.disabled = !hasText;
+        }
+        if (clearPromptButton) {
+            clearPromptButton.style.display = hasText ? 'flex' : 'none';
+        }
     }
 
     function sendMessageToIframes(prompt) {
@@ -601,6 +608,14 @@ document.addEventListener('DOMContentLoaded', function () {
             togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
             togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
             if (!isCollapsed) autoResizeTextarea(promptInput);
+        });
+    }
+
+    if (clearPromptButton) {
+        clearPromptButton.addEventListener('click', () => {
+            promptInput.value = '';
+            autoResizeTextarea(promptInput);
+            promptInput.focus();
         });
     }
 
