@@ -128,12 +128,12 @@ body, html {
     width: 100%;
     z-index: 5;
     display: flex;
-    justify-content: space-between; /* Positions children at either end */
-    padding: 0 8px; /* Adds padding on the left and right */
-    box-sizing: border-box; /* Ensures padding is included in the width */
+    justify-content: space-between;
+    padding: 0 8px;
+    box-sizing: border-box;
     opacity: 0;
     transition: opacity 0.2s ease;
-    pointer-events: none; /* Allow clicks to pass through the container's empty space */
+    pointer-events: none;
 }
 
 /* Show controls on wrapper hover */
@@ -142,7 +142,7 @@ body, html {
 }
 
 .iframe-wrapper:hover .iframe-controls-container:hover {
-    opacity: 1; /* Make fully visible when hovering over the buttons themselves */
+    opacity: 1;
 }
 
 /* Shared styles for buttons inside the container */
@@ -632,13 +632,11 @@ body, html {
 }
 
 #prompt-container.collapsed {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding: 0;
     height: 0;
-    border-top-width: 0;
+    border: none;
 }
 
 #prompt-container.collapsed .prompt-input-wrapper {
-    opacity: 0;
-    visibility: hidden;
+    display: none;
 }

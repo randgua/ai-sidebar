@@ -490,7 +490,15 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
  * @param {HTMLButtonElement} clearPromptButton The clear button.
  */
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
-    if (!textarea || promptContainer.classList.contains('collapsed')) return;
+    if (!textarea) return;
+
+    // If the container is collapsed, ensure any inline height is removed and do nothing else.
+    // This prevents the container from becoming visible due to a lingering inline style
+    // triggered by resize events during iframe updates.
+    if (promptContainer.classList.contains('collapsed')) {
+        textarea.style.height = '';
+        return;
+    }
 
     // Save the cursor position before resizing, as changing the height can move it.
     const selection = textarea.selectionStart;
@@ -501,7 +509,6 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     textarea.style.height = `${textarea.scrollHeight}px`;
 
     // Defer restoring cursor and scroll position to after the layout has settled.
-    // This prevents the cursor from jumping on rapid input (e.g., pasting).
     setTimeout(() => {
         textarea.setSelectionRange(selection, selection);
         textarea.scrollTop = textarea.scrollHeight;
