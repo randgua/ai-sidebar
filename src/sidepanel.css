@@ -8,7 +8,7 @@ body, html {
     flex-direction: column;
     position: relative;
     background-color: #1e1f2b;
-    overflow: hidden;
+    /* Prevents pull-to-refresh behavior on touch devices */
     overscroll-behavior-y: contain;
 }
 
@@ -86,7 +86,6 @@ body, html {
     color: #5472D3;
 }
 
-/* Custom size for the full-page chat icon. */
 #full-page-chat-icon.material-symbols-outlined {
     font-size: 20px;
     width: 24px;
@@ -213,6 +212,7 @@ body, html {
     border-bottom: none;
 }
 
+/* Style for when an element is being dragged over a droppable target */
 .url-item.drag-over {
     background-color: #cccccc;
 }
@@ -411,14 +411,13 @@ body, html {
 }
 
 #prompt-container {
+    position: relative; /* Needed for absolute positioning of the button */
     flex-shrink: 0;
     padding: 8px;
     background-color: #1e1f2b;
     border-top: none;
-    position: relative;
 }
 
-/* Base style for the toggle button */
 #toggle-prompt-button {
     position: absolute;
     left: 50%;
@@ -453,7 +452,7 @@ body, html {
     background-color: #4a4d5f;
 }
 
-/* COLLAPSED State: The up-arrow button is above the prompt area */
+/* COLLAPSED State: The up-arrow button is positioned above the prompt area */
 #prompt-container.collapsed #toggle-prompt-button {
     top: -18px;
     background-color: #1e1f2b;
@@ -507,6 +506,7 @@ body, html {
     box-shadow: none;
 }
 
+/* Custom scrollbar for the prompt textarea */
 #prompt-input::-webkit-scrollbar {
     width: 16px;
     cursor: default;
@@ -631,12 +631,15 @@ body, html {
     opacity: 0.5;
 }
 
+/* Styles for when the prompt container is collapsed */
 #prompt-container.collapsed {
-    padding: 0;
     height: 0;
+    min-height: 0; /* Override flexbox's default min-height: auto to completely collapse */
+    padding: 0;
     border: none;
+    overflow: visible; /* Allow the absolutely positioned button to be visible */
 }
 
 #prompt-container.collapsed .prompt-input-wrapper {
-    display: none;
+    display: none; /* Hide the input wrapper completely */
 }
