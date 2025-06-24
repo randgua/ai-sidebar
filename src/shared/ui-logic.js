@@ -360,7 +360,6 @@ async function handleSelectiveAppend(iframe, url) {
         const promptInput = document.getElementById('prompt-input');
         promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
 
-        // We need to find the elements again here for this self-contained function
         const promptContainer = document.getElementById('prompt-container');
         const sendPromptButton = document.getElementById('send-prompt-button');
         const clearPromptButton = document.getElementById('clear-prompt-button');
@@ -493,11 +492,20 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
     if (!textarea || promptContainer.classList.contains('collapsed')) return;
 
+    // Save the cursor position before resizing, as changing the height can move it.
+    const selection = textarea.selectionStart;
+
     const maxHeight = Math.floor(window.innerHeight / 3);
     textarea.style.maxHeight = `${maxHeight}px`;
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
-    textarea.scrollTop = textarea.scrollHeight;
+
+    // Defer restoring cursor and scroll position to after the layout has settled.
+    // This prevents the cursor from jumping on rapid input (e.g., pasting).
+    setTimeout(() => {
+        textarea.setSelectionRange(selection, selection);
+        textarea.scrollTop = textarea.scrollHeight;
+    }, 0);
 
     const hasText = textarea.value.trim() !== '';
     if (sendPromptButton) sendPromptButton.disabled = !hasText;
