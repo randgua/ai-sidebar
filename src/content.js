@@ -113,6 +113,7 @@ async function handleGemini(prompt) {
  * @param {string} prompt The text to be injected.
  */
 async function handleChatGPT(prompt) {
+    // Note: ChatGPT selectors are known to change frequently.
     const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
     const inputArea = await waitForElement(selector);
     if (!inputArea) {
@@ -150,25 +151,18 @@ async function handleClaude(prompt) {
     }
 }
 
-// This new function can be added after the handleClaude function in src/content.js
-
 /**
- * Site-specific handler for www.perplexity.ai.
+ * Site-specific handler for perplexity.ai.
  * @param {string} prompt The text to be injected.
  */
 async function handlePerplexity(prompt) {
-    // Use the specific selector for Perplexity's input area
-    const inputArea = await waitForElement('div[contenteditable="true"][id="ask-input"]');
+    const inputArea = await waitForElement('textarea[placeholder*="Ask anything"]');
     if (!inputArea) {
         console.warn('AI-Sidebar: Could not find the input area on perplexity.ai.');
         return;
     }
-
-    // Set the prompt text
-    inputArea.textContent = prompt;
+    inputArea.value = prompt;
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
-    // Use the specific selector for Perplexity's send button
     const sendButton = await waitForElement('button[data-testid="submit-button"]:not([disabled])');
     if (sendButton) {
         sendButton.click();
@@ -251,14 +245,11 @@ async function handleGeneric(prompt) {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getAIStudioOutput() {
-    // Find all chat turns and filter for those from the model.
     const allTurns = document.querySelectorAll('ms-chat-turn');
     const modelTurns = Array.from(allTurns).filter(turn => turn.querySelector('[data-turn-role="Model"]'));
 
     if (modelTurns.length > 0) {
-        // Get the very last model turn.
         const lastModelTurn = modelTurns[modelTurns.length - 1];
-        // The content is within a 'turn-content' div.
         const contentContainer = lastModelTurn.querySelector('.turn-content');
         if (contentContainer) {
             return contentContainer.innerText;
@@ -272,16 +263,13 @@ async function getAIStudioOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getGeminiOutput() {
-    // Gemini uses a custom HTML element <model-response> to wrap each reply.
     const responses = document.querySelectorAll('model-response');
     if (responses.length > 0) {
         const lastResponse = responses[responses.length - 1];
-        // The actual text content is inside a child element with the 'markdown' class.
         const content = lastResponse.querySelector('.markdown');
         if (content) {
             return content.innerText;
         }
-        // Fallback if the '.markdown' element structure changes.
         return lastResponse.innerText;
     }
     return '';
@@ -292,6 +280,7 @@ async function getGeminiOutput() {
  * @returns {Promise<string>} The text of the last message.
  */
 async function getChatGPTOutput() {
+    // Note: ChatGPT selectors are known to change frequently.
     const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
     if (assistantMessages.length > 0) {
         const lastMessage = assistantMessages[assistantMessages.length - 1];
@@ -304,8 +293,8 @@ async function getChatGPTOutput() {
 }
 
 /**
- * Extracts the last message from Claude.
- * @returns {Promise<string>} The text of the last message.
+ * Extracts the text from the last message group from Claude, which may include the user's prompt.
+ * @returns {Promise<string>} The text of the last message group.
  */
 async function getClaudeOutput() {
     const messageGroups = document.querySelectorAll('[data-testid^="message-"]');
@@ -323,7 +312,6 @@ async function getClaudeOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getGrokOutput() {
-    // Grok wraps responses in a div with this specific class.
     const responses = document.querySelectorAll('div.response-content-markdown');
     if (responses.length > 0) {
         const lastResponse = responses[responses.length - 1];
@@ -334,24 +322,18 @@ async function getGrokOutput() {
     return '';
 }
 
-// Add this function in src/content.js, for example after getClaudeOutput
-
 /**
  * Extracts the last response from Perplexity.ai.
  * @returns {Promise<string>} The text of the last response.
  */
 async function getPerplexityOutput() {
-    // Perplexity wraps its responses in a div with an ID that starts with "markdown-content-".
     const responses = document.querySelectorAll('div[id^="markdown-content-"]');
     if (responses.length > 0) {
-        // Get the very last response element on the page.
         const lastResponse = responses[responses.length - 1];
         if (lastResponse) {
-            // The innerText of this div contains the full formatted response.
             return lastResponse.innerText;
         }
     }
-    // If no response is found, return an empty string.
     return '';
 }
 
@@ -360,7 +342,6 @@ async function getPerplexityOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getDeepSeekOutput() {
-    // Directly find all content blocks rendered by DeepSeek's markdown component.
     const contentBlocks = document.querySelectorAll('div.ds-markdown');
     if (contentBlocks.length > 0) {
         const lastBlock = contentBlocks[contentBlocks.length - 1];
@@ -376,10 +357,8 @@ async function getDeepSeekOutput() {
  * @returns {Promise<string>} The text of the last response.
  */
 async function getQwenOutput() {
-    // Find all markdown content containers.
     const responses = document.querySelectorAll('div.markdown-content-container');
     if (responses.length > 0) {
-        // Get the last response element on the page.
         const lastResponse = responses[responses.length - 1];
         if (lastResponse) {
             return lastResponse.innerText;

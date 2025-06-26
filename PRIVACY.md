@@ -1,6 +1,6 @@
 Privacy Policy for AI Sidebar Chrome Extension
 
-Last Updated: June 3, 2025
+Last Updated: June 26, 2025
 
 Thank you for using AI Sidebar (the "Extension"). This Privacy Policy explains how we handle information in relation to the Extension.
 
@@ -11,7 +11,7 @@ The AI Sidebar Extension allows users to configure and store the following infor
 *   **Selected URLs:** From these lists, users can select which URLs are to be loaded in the side panel.
 *   **URL Order:** The order of URLs within these lists, as arranged by the user (e.g., via drag-and-drop in settings), is stored.
 
-These custom URL lists, their selection state, and their order are actively provided or configured by the user and are stored locally within the user's own browser through the `chrome.storage.local` API.
+These custom URL lists, their selection state, and their order are actively provided or configured by the user and are stored using the `chrome.storage.sync` API, which syncs the data across your logged-in Chrome browsers.
 
 We DO NOT collect any other personally identifiable information (PII) apart from the URL lists (including their order and selection state) that the user voluntarily configures for the Extension's intended functionality. We do not collect names, email addresses, general browsing history (other than the specific URLs you explicitly manage within the Extension), or any other personal data.
 
@@ -24,11 +24,11 @@ The stored URL lists, their selection state, and URL order are used solely to en
 
 **3. Information Storage and Security**
 
-The custom URL lists, their selection state, and their order you provide are stored locally on your computer within your Chrome browser's storage area, managed by the `chrome.storage.local` API. This data is NOT synchronized across your signed-in Chrome browsers by this extension (unless you have enabled OS-level or browser-level profile syncing that might include local extension data) and it is NOT transmitted to any external servers controlled by the developer of this Extension, nor is it accessed by or shared with the developer of this Extension or any third parties. The security of this locally stored data is handled by your Chrome browser's security measures.
+The custom URL lists, their selection state, and their order you provide are stored using the `chrome.storage.sync` API. This data is automatically synchronized across all Chrome browsers where you are logged into the same Google account. This is a standard feature of the Chrome browser and is not controlled by any external servers belonging to the developer. The data is NOT transmitted to any external servers controlled by the developer of this Extension, nor is it accessed by or shared with the developer or any third parties. The security of this synced data is handled by Google's infrastructure and your Chrome browser's security measures.
 
 **4. Data Sharing**
 
-We do not sell, trade, or otherwise transfer the URL lists, their selection state, their order, or any other data you store in the Extension, to outside parties. The data remains local to your browser.
+We do not sell, trade, or otherwise transfer the URL lists, their selection state, their order, or any other data you store in the Extension, to outside parties. The data remains within your browser's synced storage.
 
 **5. User Control and Access**
 

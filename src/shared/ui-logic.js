@@ -128,7 +128,7 @@ function showCustomConfirm(message, onConfirm) {
 }
 
 /**
- * Saves the current list of URLs to chrome storage.
+ * Saves the current list of URLs to chrome.storage.sync.
  */
 function saveUrls() {
     chrome.storage.sync.set({ managedUrls: managedUrls });
@@ -326,7 +326,7 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
 }
 
 /**
- * Appends the last output from a single iframe to the prompt input.
+ * Appends the last output from a single iframe to the prompt input and copies it.
  * @param {HTMLIFrameElement} iframe The iframe to get output from.
  * @param {string} url The URL of the iframe for display purposes.
  */
@@ -359,6 +359,7 @@ async function handleSelectiveAppend(iframe, url) {
         
         const promptInput = document.getElementById('prompt-input');
         promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
+        navigator.clipboard.writeText(markdownString);
 
         const promptContainer = document.getElementById('prompt-container');
         const sendPromptButton = document.getElementById('send-prompt-button');
@@ -371,7 +372,7 @@ async function handleSelectiveAppend(iframe, url) {
             promptInput.scrollTop = promptInput.scrollHeight;
         }, 0);
 
-        showGlobalConfirmationMessage(`Appended output from ${result.source}`);
+        showGlobalConfirmationMessage(`Output from ${result.source} appended and copied to clipboard`);
     } else {
         showGlobalConfirmationMessage('Could not find any output to append from this panel.');
     }
@@ -379,7 +380,6 @@ async function handleSelectiveAppend(iframe, url) {
 
 /**
  * Renders iframes in the main container based on the current selection.
- * This function now preserves the collapsed state of the prompt area.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  * @param {HTMLElement} urlListManagementDiv The container for the URL list.
  */
@@ -387,7 +387,6 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
     const promptContainer = document.getElementById('prompt-container');
     const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
 
-    // Pre-emptively hide the prompt container to prevent reflow glitches.
     const originalDisplay = promptContainer.style.display;
     promptContainer.style.display = 'none';
 
@@ -434,7 +433,7 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
 
             const copyBtn = document.createElement('button');
             copyBtn.className = 'selective-copy-button';
-            copyBtn.title = 'Output markdown format';
+            copyBtn.title = 'Append output to prompt area and copy as Markdown';
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
             copyBtn.addEventListener('click', () => handleSelectiveAppend(iframe, urlEntry.url));
 
@@ -451,10 +450,8 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
         }
     }
 
-    // Restore the prompt container's state after a short delay.
-    // This gives the browser time to handle the iframe layout changes.
     setTimeout(() => {
-        promptContainer.style.display = originalDisplay || ''; // Restore original display property
+        promptContainer.style.display = originalDisplay || '';
 
         const togglePromptButton = document.getElementById('toggle-prompt-button');
         promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
@@ -467,7 +464,7 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
             const clearPromptButton = document.getElementById('clear-prompt-button');
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
         }
-    }, 100); // Using a 100ms delay for more reliability with iframe loading.
+    }, 100);
 }
 
 /**
@@ -662,6 +659,7 @@ function initializeSharedUI(elements) {
         }
     });
 
+    copyMarkdownButton.title = 'Append all outputs to prompt area and copy as Markdown';
     copyMarkdownButton.addEventListener('click', () => {
         collectedOutputs = [];
         const activeIframes = iframeContainer.querySelectorAll('iframe');
@@ -686,13 +684,14 @@ function initializeSharedUI(elements) {
                 }).join('\n\n---\n\n');
                 
                 promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
+                navigator.clipboard.writeText(markdownString);
                 autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
                 promptInput.focus();
                 setTimeout(() => {
                     promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
                     promptInput.scrollTop = promptInput.scrollHeight;
                 }, 0);
-                showGlobalConfirmationMessage(`Appended output from ${collectedOutputs.length} panel(s).`);
+                showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.length} panel(s).`);
             } else {
                 showGlobalConfirmationMessage('Could not find any output to copy.');
             }
