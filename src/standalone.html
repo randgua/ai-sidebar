@@ -52,19 +52,21 @@
             </div>
             <div id="iframe-container"></div>
 
-            <!-- Container for showing selected text from the page -->
-            <div id="context-container" style="display: none;">
-                <div id="context-header">
-                    <span>Text from your selection</span>
+            <!-- Prompt Input Area -->
+            <div id="prompt-container">
+                <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
+                
+                <!-- Container for showing selected text from the page -->
+                <div id="context-container" style="display: none;">
+                    <div id="context-header">
+                        <span>Text from your selection</span>
+                    </div>
+                    <div id="context-content"></div>
                     <button id="close-context-button" title="Remove selection">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
-                <div id="context-content"></div>
-            </div>
-
-            <div id="prompt-container">
-                <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
+                
                 <div class="prompt-input-wrapper">
                     <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
                     <button id="clear-prompt-button" title="Clear" style="display: none;">
@@ -78,6 +80,7 @@
                     </button>
                 </div>
             </div>
+
             <div id="custom-confirm-modal" class="modal-overlay">
                 <div class="modal-content">
                     <p id="custom-confirm-message"></p>

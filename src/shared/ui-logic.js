@@ -387,9 +387,6 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
     const promptContainer = document.getElementById('prompt-container');
     const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
 
-    const originalDisplay = promptContainer.style.display;
-    promptContainer.style.display = 'none';
-
     const selectedUrlEntries = managedUrls.filter(u => u.selected);
     iframeContainer.innerHTML = '';
 
@@ -450,21 +447,13 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
         }
     }
 
-    setTimeout(() => {
-        promptContainer.style.display = originalDisplay || '';
-
-        const togglePromptButton = document.getElementById('toggle-prompt-button');
-        promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
-        togglePromptButton.textContent = isCollapsedBeforeUpdate ? 'expand_less' : 'expand_more';
-        togglePromptButton.title = isCollapsedBeforeUpdate ? 'Expand prompt area' : 'Collapse prompt area';
-
-        if (!isCollapsedBeforeUpdate) {
-            const promptInput = document.getElementById('prompt-input');
-            const sendPromptButton = document.getElementById('send-prompt-button');
-            const clearPromptButton = document.getElementById('clear-prompt-button');
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-        }
-    }, 100);
+    promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
+    if (!isCollapsedBeforeUpdate) {
+        const promptInput = document.getElementById('prompt-input');
+        const sendPromptButton = document.getElementById('send-prompt-button');
+        const clearPromptButton = document.getElementById('clear-prompt-button');
+        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    }
 }
 
 /**
@@ -512,7 +501,7 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
  * @param {HTMLButtonElement} clearPromptButton The clear button.
  */
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
-    if (!textarea) return;
+    if (!textarea || !promptContainer) return;
 
     if (promptContainer.classList.contains('collapsed')) {
         textarea.style.height = '';
@@ -569,7 +558,6 @@ function initializeSharedUI(elements) {
         clearPromptButton
     } = elements;
 
-    // Get the DOM elements for the context feature.
     const contextContainer = document.getElementById('context-container');
     const contextContent = document.getElementById('context-content');
     const closeContextButton = document.getElementById('close-context-button');
@@ -578,7 +566,6 @@ function initializeSharedUI(elements) {
     const executeSend = () => {
         let promptText = promptInput.value.trim();
         
-        // Check if context is visible and has content.
         const isContextVisible = contextContainer.style.display === 'flex';
         if (isContextVisible) {
             const contextText = contextContent.textContent.trim();
@@ -591,6 +578,11 @@ function initializeSharedUI(elements) {
         if (promptText) {
             sendMessageToIframes(iframeContainer, promptText);
             promptInput.value = ''; // Clear input after sending.
+            
+            // Hide and clear the context container after sending.
+            contextContainer.style.display = 'none';
+            contextContent.textContent = '';
+
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             setTimeout(() => promptInput.focus(), 300);
         }
@@ -606,7 +598,6 @@ function initializeSharedUI(elements) {
         return true; // Indicate that the response may be sent asynchronously.
     });
 
-    // Add event listener to close/remove the context box.
     if (closeContextButton) {
         closeContextButton.addEventListener('click', () => {
             contextContainer.style.display = 'none';
@@ -738,7 +729,9 @@ function initializeSharedUI(elements) {
         const isCollapsed = promptContainer.classList.contains('collapsed');
         togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
         togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
-        if (!isCollapsed) autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+        if (!isCollapsed) {
+            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+        }
     });
 
     clearPromptButton.addEventListener('click', () => {

@@ -407,33 +407,35 @@ body, html {
     background-color: #e0e0e0;
 }
 
-/* Styles for the new context container */
+/* Styles for the context container */
 #context-container {
+    position: relative; /* Set as the positioning context for the close button */
     flex-shrink: 0;
     background-color: #3c4043;
     border: 1px solid #5f6368;
     border-radius: 8px;
-    margin: 0 8px 8px 8px; /* Margin to align with prompt container */
-    padding: 8px 12px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    max-height: 200px; /* Limit height */
+    max-height: 200px;
     overflow: hidden;
+    margin-bottom: 8px; /* Space between context and prompt input */
 }
 
 #context-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-    color: #bdc1c6;
-    font-size: 12px;
+    margin-bottom: 8px;
+    color: #e8eaed;
+    font-size: 14px;
+    padding-right: 28px; /* Add padding to prevent text from overlapping with the close button */
 }
 
 #close-context-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     background: none;
     border: none;
-    color: #bdc1c6;
+    color: #8ab4f7;
     cursor: pointer;
     padding: 0;
     display: flex;
@@ -449,13 +451,16 @@ body, html {
 }
 
 #close-context-button .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 18px;
+    /* Override default dimensions to allow for proper centering by the parent flex container */
+    width: auto;
+    height: auto;
 }
 
 #context-content {
     font-size: 13px;
     line-height: 1.4;
-    color: #e8eaed;
+    color: #9aa0a6; /* Dimmer color for the content */
     overflow-y: auto; /* Allow scrolling for long text */
     padding-right: 5px; /* Space for scrollbar */
     scrollbar-width: thin;
@@ -476,9 +481,8 @@ body, html {
     border: 2px solid #3c4043;
 }
 
-
 #prompt-container {
-    position: relative; /* Needed for absolute positioning of the button */
+    position: relative;
     flex-shrink: 0;
     padding: 8px;
     background-color: #1e1f2b;
@@ -509,9 +513,9 @@ body, html {
     transform: translateX(-50%) scale(0.9);
 }
 
-/* OPEN State: The down-arrow button is inside the prompt area */
+/* Expanded State: Button is at the top of the container */
 #prompt-container:not(.collapsed) #toggle-prompt-button {
-    top: 0;
+    top: -14px;
     background-color: #3c4043;
 }
 
@@ -519,9 +523,23 @@ body, html {
     background-color: #4a4d5f;
 }
 
-/* COLLAPSED State: The up-arrow button is positioned above the prompt area */
+/* Collapsed State: Container is hidden, button is visible */
+#prompt-container.collapsed {
+    height: 0;
+    min-height: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    flex-shrink: 1;
+    overflow: visible; /* Allow the absolutely positioned button to be visible */
+}
+
+#prompt-container.collapsed > *:not(#toggle-prompt-button) {
+    display: none;
+}
+
 #prompt-container.collapsed #toggle-prompt-button {
-    top: -18px;
+    top: -22px; /* Position above the collapsed container */
     background-color: #1e1f2b;
 }
 
@@ -618,9 +636,11 @@ body, html {
 #clear-prompt-button .material-symbols-outlined {
     font-size: 20px;
     font-weight: 300;
-    color: #e8eaed;
+    color: #8ab4f7;
     opacity: 0.7;
     transition: opacity 0.2s ease;
+    width: auto;
+    height: auto;
 }
 
 #clear-prompt-button:hover .material-symbols-outlined {
@@ -696,21 +716,4 @@ body, html {
 
 #send-prompt-button:disabled .material-symbols-outlined {
     opacity: 0.5;
-}
-
-/* Styles for when the prompt container is collapsed */
-#prompt-container.collapsed {
-    height: 0;
-    min-height: 0;
-    /* Forcefully remove any properties that could create space */
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    /* Allow the flex item to shrink completely */
-    flex-shrink: 1;
-    overflow: visible; /* Allow the absolutely positioned button to be visible */
-}
-
-#prompt-container.collapsed .prompt-input-wrapper {
-    display: none; /* Hide the input wrapper completely */
 }
