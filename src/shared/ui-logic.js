@@ -379,10 +379,18 @@ async function handleSelectiveAppend(iframe, url) {
 
 /**
  * Renders iframes in the main container based on the current selection.
+ * This function now preserves the collapsed state of the prompt area.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  * @param {HTMLElement} urlListManagementDiv The container for the URL list.
  */
 function updateIframes(iframeContainer, urlListManagementDiv) {
+    const promptContainer = document.getElementById('prompt-container');
+    const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
+
+    // Pre-emptively hide the prompt container to prevent reflow glitches.
+    const originalDisplay = promptContainer.style.display;
+    promptContainer.style.display = 'none';
+
     const selectedUrlEntries = managedUrls.filter(u => u.selected);
     iframeContainer.innerHTML = '';
 
@@ -393,49 +401,48 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
             'No websites available. Add some in Settings, or reload to load the default list.' :
             'No websites selected. Please select websites to display from Settings.';
         iframeContainer.appendChild(emptyMessage);
-        return;
-    }
-
-    selectedUrlEntries.forEach(urlEntry => {
-        let iframe = iframeCache[urlEntry.url];
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.src = urlEntry.url;
-            iframeCache[urlEntry.url] = iframe;
-        }
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'iframe-wrapper';
-
-        const controlsContainer = document.createElement('div');
-        controlsContainer.className = 'iframe-controls-container';
-
-        const sendBtn = document.createElement('button');
-        sendBtn.className = 'selective-send-button';
-        sendBtn.title = 'Send prompt to this panel';
-        sendBtn.innerHTML = '<span class="material-symbols-outlined">arrow_upward</span>';
-        sendBtn.addEventListener('click', () => {
-            const promptInput = document.getElementById('prompt-input');
-            const promptText = promptInput.value.trim();
-            if (promptText) {
-                iframe.contentWindow.postMessage({ action: 'injectPrompt', prompt: promptText }, '*');
-                const hostname = new URL(urlEntry.url).hostname;
-                showGlobalConfirmationMessage(`Prompt sent to ${hostname}`);
-            } else {
-                showGlobalConfirmationMessage('Prompt input is empty.');
+    } else {
+        selectedUrlEntries.forEach(urlEntry => {
+            let iframe = iframeCache[urlEntry.url];
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.src = urlEntry.url;
+                iframeCache[urlEntry.url] = iframe;
             }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'iframe-wrapper';
+
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'iframe-controls-container';
+
+            const sendBtn = document.createElement('button');
+            sendBtn.className = 'selective-send-button';
+            sendBtn.title = 'Send prompt to this panel';
+            sendBtn.innerHTML = '<span class="material-symbols-outlined">arrow_upward</span>';
+            sendBtn.addEventListener('click', () => {
+                const promptInput = document.getElementById('prompt-input');
+                const promptText = promptInput.value.trim();
+                if (promptText) {
+                    iframe.contentWindow.postMessage({ action: 'injectPrompt', prompt: promptText }, '*');
+                    const hostname = new URL(urlEntry.url).hostname;
+                    showGlobalConfirmationMessage(`Prompt sent to ${hostname}`);
+                } else {
+                    showGlobalConfirmationMessage('Prompt input is empty.');
+                }
+            });
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'selective-copy-button';
+            copyBtn.title = 'Output markdown format';
+            copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
+            copyBtn.addEventListener('click', () => handleSelectiveAppend(iframe, urlEntry.url));
+
+            controlsContainer.append(sendBtn, copyBtn);
+            wrapper.append(controlsContainer, iframe);
+            iframeContainer.appendChild(wrapper);
         });
-
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'selective-copy-button';
-        copyBtn.title = 'Output markdown format';
-        copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-        copyBtn.addEventListener('click', () => handleSelectiveAppend(iframe, urlEntry.url));
-
-        controlsContainer.append(sendBtn, copyBtn);
-        wrapper.append(controlsContainer, iframe);
-        iframeContainer.appendChild(wrapper);
-    });
+    }
 
     const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
     for (const urlInCache in iframeCache) {
@@ -443,6 +450,24 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
             delete iframeCache[urlInCache];
         }
     }
+
+    // Restore the prompt container's state after a short delay.
+    // This gives the browser time to handle the iframe layout changes.
+    setTimeout(() => {
+        promptContainer.style.display = originalDisplay || ''; // Restore original display property
+
+        const togglePromptButton = document.getElementById('toggle-prompt-button');
+        promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
+        togglePromptButton.textContent = isCollapsedBeforeUpdate ? 'expand_less' : 'expand_more';
+        togglePromptButton.title = isCollapsedBeforeUpdate ? 'Expand prompt area' : 'Collapse prompt area';
+
+        if (!isCollapsedBeforeUpdate) {
+            const promptInput = document.getElementById('prompt-input');
+            const sendPromptButton = document.getElementById('send-prompt-button');
+            const clearPromptButton = document.getElementById('clear-prompt-button');
+            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+        }
+    }, 100); // Using a 100ms delay for more reliability with iframe loading.
 }
 
 /**
@@ -492,15 +517,11 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
     if (!textarea) return;
 
-    // If the container is collapsed, ensure any inline height is removed and do nothing else.
-    // This prevents the container from becoming visible due to a lingering inline style
-    // triggered by resize events during iframe updates.
     if (promptContainer.classList.contains('collapsed')) {
         textarea.style.height = '';
         return;
     }
 
-    // Save the cursor position before resizing, as changing the height can move it.
     const selection = textarea.selectionStart;
 
     const maxHeight = Math.floor(window.innerHeight / 3);
@@ -508,7 +529,6 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     textarea.style.height = 'auto';
     textarea.style.height = `${textarea.scrollHeight}px`;
 
-    // Defer restoring cursor and scroll position to after the layout has settled.
     setTimeout(() => {
         textarea.setSelectionRange(selection, selection);
         textarea.scrollTop = textarea.scrollHeight;

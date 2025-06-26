@@ -42,7 +42,7 @@ body, html {
     align-items: center;
 }
 
-/* Base styles for Material Symbols icons. */
+/* Base styles for Material Symbols icons */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -102,7 +102,6 @@ body, html {
     gap: 1px;
 }
 
-/* Wrapper for each iframe and its controls */
 .iframe-wrapper {
     flex-grow: 1;
     flex-basis: 0;
@@ -119,7 +118,6 @@ body, html {
     border: none;
 }
 
-/* Container for controls on individual iframes */
 .iframe-controls-container {
     position: absolute;
     bottom: 8px;
@@ -144,7 +142,6 @@ body, html {
     opacity: 1;
 }
 
-/* Shared styles for buttons inside the container */
 .selective-copy-button,
 .selective-send-button {
     background-color: transparent;
@@ -634,9 +631,13 @@ body, html {
 /* Styles for when the prompt container is collapsed */
 #prompt-container.collapsed {
     height: 0;
-    min-height: 0; /* Override flexbox's default min-height: auto to completely collapse */
-    padding: 0;
-    border: none;
+    min-height: 0;
+    /* Forcefully remove any properties that could create space */
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    /* Allow the flex item to shrink completely */
+    flex-shrink: 1;
     overflow: visible; /* Allow the absolutely positioned button to be visible */
 }
 
