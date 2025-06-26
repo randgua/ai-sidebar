@@ -571,7 +571,7 @@ function initializeSharedUI(elements) {
             const contextText = contextContent.textContent.trim();
             if (contextText) {
                 // Combine context and prompt into a single message.
-                promptText = `Based on the following text:\n\n---\n${contextText}\n---\n\n${promptText}`;
+                promptText = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}\n\n`;
             }
         }
 
