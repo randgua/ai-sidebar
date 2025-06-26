@@ -113,7 +113,6 @@ async function handleGemini(prompt) {
  * @param {string} prompt The text to be injected.
  */
 async function handleChatGPT(prompt) {
-    // Note: ChatGPT selectors are known to change frequently.
     const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
     const inputArea = await waitForElement(selector);
     if (!inputArea) {
@@ -173,6 +172,7 @@ async function handlePerplexity(prompt) {
 
 /**
  * Site-specific handler for chat.deepseek.com.
+ * This site requires a more complex injection method.
  * @param {string} prompt The text to be injected.
  */
 async function handleDeepSeek(prompt) {
@@ -181,6 +181,9 @@ async function handleDeepSeek(prompt) {
         console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
         return;
     }
+    // Directly setting the 'value' property and dispatching an 'input' event
+    // is not sufficient for some web frameworks. We must use the native
+    // value setter and then simulate an Enter key press to submit.
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
     nativeInputValueSetter.call(inputArea, prompt);
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
@@ -280,7 +283,6 @@ async function getGeminiOutput() {
  * @returns {Promise<string>} The text of the last message.
  */
 async function getChatGPTOutput() {
-    // Note: ChatGPT selectors are known to change frequently.
     const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
     if (assistantMessages.length > 0) {
         const lastMessage = assistantMessages[assistantMessages.length - 1];

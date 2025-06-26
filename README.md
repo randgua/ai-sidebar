@@ -16,7 +16,7 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
     -   **Bulk Actions**: Quickly invert, select all, or clear all selections.
     -   **Delete & Open**: Remove URLs from the list or open any URL in a new tab.
 -   **Optimized Refresh**: A floating refresh button reloads all active websites in the side panel without affecting the main browser window.
--   **Embed Compatibility**: Automatically modifies HTTP response headers to allow most websites (e.g., `gemini.google.com`, `chatgpt.com`) to be embedded in iframes.
+-   **Embed Compatibility**: Automatically modifies HTTP headers to allow most websites (e.g., `gemini.google.com`, `chatgpt.com`) to be embedded in iframes.
 -   **Synced Storage**: Remembers your complete list of URLs, their selection state, and their custom order across all your Chrome browsers where you are logged in.
 -   **Intelligent Selection Handling**: If the only selected URL is deleted, the extension automatically selects the first URL in the list to prevent an empty panel.
 -   **Default URL Set**: Comes pre-loaded with a list of popular AI websites on first installation. If you delete all URLs, this default list will be restored on the next load.
@@ -60,6 +60,6 @@ Once enabled, you can add local file paths to the URL list, for example:
 
 The extension utilizes Chrome's Side Panel API to display web content. It employs an optimized rendering strategy for iframes, caching them to minimize reloads and DOM updates for smoother performance when changing selections or reordering the list. The settings popup dynamically renders and manages the URL list.
 
-It uses the `declarativeNetRequest` API to dynamically modify HTTP response headers. This action removes `x-frame-options` and `content-security-policy` headers from websites, allowing them to be embedded within an iframe in the side panel.
+To enable embedding of websites that would normally block it, the extension uses the `declarativeNetRequest` API to modify network headers. This action removes the `x-frame-options` and `content-security-policy` response headers, which are common mechanisms for preventing a site from being placed in an iframe. It also removes the `Sec-Fetch-Dest` request header, which can help bypass server-side checks that identify and block iframe requests.
 
 User preferences, including the list of custom URLs, their selection state, and their order, are stored using `chrome.storage.sync`. This allows your configured list of websites to be automatically synchronized across all Chrome browsers where you are logged into the same Google account. On first installation, or if the list becomes empty, the extension populates storage with a set of default AI service URLs.

@@ -1,7 +1,6 @@
 // Global state variables
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
-let popupNotificationTimeout = null;
 let isModalActive = false;
 let collectedOutputs = [];
 let managedUrls = [];
@@ -75,8 +74,8 @@ function showPopupMessage(settingsPopup, messageText, duration = 3000) {
     }
     messageElement.textContent = messageText;
     messageElement.style.display = 'block';
-    if (popupNotificationTimeout) clearTimeout(popupNotificationTimeout);
-    popupNotificationTimeout = setTimeout(() => {
+    if (messageElement.timeoutId) clearTimeout(messageElement.timeoutId);
+    messageElement.timeoutId = setTimeout(() => {
         messageElement.style.display = 'none';
     }, duration);
 }
@@ -326,7 +325,8 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
 }
 
 /**
- * Appends the last output from a single iframe to the prompt input and copies it.
+ * Gets the last output from a single iframe, appends it to the prompt input,
+ * and copies the appended text to the clipboard.
  * @param {HTMLIFrameElement} iframe The iframe to get output from.
  * @param {string} url The URL of the iframe for display purposes.
  */
@@ -697,6 +697,9 @@ function initializeSharedUI(elements) {
             if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
         });
 
+        // This is a "best effort" collection. It waits for a fixed period for iframes
+        // to respond. Slower iframes may be missed. This prevents the UI from
+        // getting stuck waiting for a non-responsive panel.
         setTimeout(() => {
             if (collectedOutputs.length > 0) {
                 const prettyNames = {
