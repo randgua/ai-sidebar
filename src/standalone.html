@@ -51,6 +51,18 @@
                 </div>
             </div>
             <div id="iframe-container"></div>
+
+            <!-- Container for showing selected text from the page -->
+            <div id="context-container" style="display: none;">
+                <div id="context-header">
+                    <span>Text from your selection</span>
+                    <button id="close-context-button" title="Remove selection">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="context-content"></div>
+            </div>
+
             <div id="prompt-container">
                 <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
                 <div class="prompt-input-wrapper">

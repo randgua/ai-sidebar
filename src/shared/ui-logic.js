@@ -569,15 +569,50 @@ function initializeSharedUI(elements) {
         clearPromptButton
     } = elements;
 
+    // Get the DOM elements for the context feature.
+    const contextContainer = document.getElementById('context-container');
+    const contextContent = document.getElementById('context-content');
+    const closeContextButton = document.getElementById('close-context-button');
+
+    // This function handles sending the prompt, combining context if available.
     const executeSend = () => {
-        const promptText = promptInput.value.trim();
+        let promptText = promptInput.value.trim();
+        
+        // Check if context is visible and has content.
+        const isContextVisible = contextContainer.style.display === 'flex';
+        if (isContextVisible) {
+            const contextText = contextContent.textContent.trim();
+            if (contextText) {
+                // Combine context and prompt into a single message.
+                promptText = `Based on the following text:\n\n---\n${contextText}\n---\n\n${promptText}`;
+            }
+        }
+
         if (promptText) {
             sendMessageToIframes(iframeContainer, promptText);
-            promptInput.value = '';
+            promptInput.value = ''; // Clear input after sending.
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             setTimeout(() => promptInput.focus(), 300);
         }
     };
+
+    // Listen for messages from content scripts (e.g., for selected text).
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === 'textSelected' && message.text) {
+            contextContent.textContent = message.text;
+            contextContainer.style.display = 'flex';
+            promptInput.focus();
+        }
+        return true; // Indicate that the response may be sent asynchronously.
+    });
+
+    // Add event listener to close/remove the context box.
+    if (closeContextButton) {
+        closeContextButton.addEventListener('click', () => {
+            contextContainer.style.display = 'none';
+            contextContent.textContent = '';
+        });
+    }
 
     addUrlButton.addEventListener('click', () => {
         const newUrlValue = newUrlInput.value.trim();

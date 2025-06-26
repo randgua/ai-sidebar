@@ -407,6 +407,76 @@ body, html {
     background-color: #e0e0e0;
 }
 
+/* Styles for the new context container */
+#context-container {
+    flex-shrink: 0;
+    background-color: #3c4043;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    margin: 0 8px 8px 8px; /* Margin to align with prompt container */
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: 200px; /* Limit height */
+    overflow: hidden;
+}
+
+#context-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    color: #bdc1c6;
+    font-size: 12px;
+}
+
+#close-context-button {
+    background: none;
+    border: none;
+    color: #bdc1c6;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+#close-context-button:hover {
+    background-color: #4a4d5f;
+}
+
+#close-context-button .material-symbols-outlined {
+    font-size: 16px;
+}
+
+#context-content {
+    font-size: 13px;
+    line-height: 1.4;
+    color: #e8eaed;
+    overflow-y: auto; /* Allow scrolling for long text */
+    padding-right: 5px; /* Space for scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #5f6368 #3c4043;
+}
+
+#context-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#context-content::-webkit-scrollbar-track {
+    background: #3c4043;
+}
+
+#context-content::-webkit-scrollbar-thumb {
+    background-color: #5f6368;
+    border-radius: 4px;
+    border: 2px solid #3c4043;
+}
+
+
 #prompt-container {
     position: relative; /* Needed for absolute positioning of the button */
     flex-shrink: 0;

@@ -404,3 +404,18 @@ window.addEventListener('message', (event) => {
         handleOutputExtraction();
     }
 });
+
+/**
+ * Listen for text selection and send it to the extension's runtime.
+ * This allows the side panel to pick up the selected text.
+ */
+document.addEventListener('mouseup', () => {
+    // Check if the event is happening inside an input or textarea to avoid conflicts.
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable) {
+        return;
+    }
+    const selectedText = window.getSelection().toString().trim();
+    if (selectedText) {
+        chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
+    }
+});
