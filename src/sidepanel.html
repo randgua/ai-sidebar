@@ -45,9 +45,8 @@
     <div id="prompt-container">
         <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
         
-        <!-- MODIFIED: The main wrapper now contains both the context box and the input row. -->
         <div class="prompt-input-wrapper">
-            <!-- Container for showing selected text from the page (moved inside) -->
+            <!-- Container for showing selected text from the page -->
             <div id="context-container" style="display: none;">
                 <div id="context-header">
                     <span>Text from your selection</span>
@@ -58,7 +57,7 @@
                 </button>
             </div>
             
-            <!-- NEW: A new row for the textarea and buttons -->
+            <!-- MODIFIED: This row is now the positioning context for the clear button -->
             <div class="prompt-input-row">
                 <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
                 <button id="clear-prompt-button" title="Clear" style="display: none;">

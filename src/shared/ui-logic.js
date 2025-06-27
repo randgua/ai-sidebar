@@ -494,7 +494,7 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
 }
 
 /**
- * Automatically resizes the prompt textarea based on its content.
+ * Automatically resizes the prompt textarea and manages button states.
  * @param {HTMLTextAreaElement} textarea The textarea element.
  * @param {HTMLElement} promptContainer The container for the prompt area.
  * @param {HTMLButtonElement} sendPromptButton The send button.
@@ -522,7 +522,18 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
 
     const hasText = textarea.value.trim() !== '';
     if (sendPromptButton) sendPromptButton.disabled = !hasText;
-    if (clearPromptButton) clearPromptButton.style.display = hasText ? 'flex' : 'none';
+    if (clearPromptButton) {
+        clearPromptButton.style.display = hasText ? 'flex' : 'none';
+        
+        if (hasText) {
+            const singleLineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+            // Add a small tolerance for floating point inaccuracies.
+            const isMultiLine = textarea.scrollHeight > singleLineHeight + 1;
+            clearPromptButton.classList.toggle('top-right', isMultiLine);
+        } else {
+            clearPromptButton.classList.remove('top-right');
+        }
+    }
 }
 
 /**
@@ -561,6 +572,8 @@ function initializeSharedUI(elements) {
     const contextContainer = document.getElementById('context-container');
     const contextContent = document.getElementById('context-content');
     const closeContextButton = document.getElementById('close-context-button');
+    // MODIFIED: Get the input row element for adding/removing the separator class.
+    const promptInputRow = document.querySelector('.prompt-input-row');
 
     const executeSend = () => {
         let promptText = promptInput.value.trim();
@@ -579,6 +592,8 @@ function initializeSharedUI(elements) {
             
             contextContainer.style.display = 'none';
             contextContent.textContent = '';
+            // MODIFIED: Hide the separator when context is cleared.
+            promptInputRow.classList.remove('with-context');
 
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             setTimeout(() => promptInput.focus(), 300);
@@ -589,6 +604,8 @@ function initializeSharedUI(elements) {
         if (message.action === 'textSelected' && message.text) {
             contextContent.textContent = message.text;
             contextContainer.style.display = 'flex';
+            // MODIFIED: Show the separator when context is added.
+            promptInputRow.classList.add('with-context');
             promptInput.focus();
         }
         return true;
@@ -598,6 +615,8 @@ function initializeSharedUI(elements) {
         closeContextButton.addEventListener('click', () => {
             contextContainer.style.display = 'none';
             contextContent.textContent = '';
+            // MODIFIED: Hide the separator when context is closed.
+            promptInputRow.classList.remove('with-context');
         });
     }
 
