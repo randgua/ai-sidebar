@@ -8,7 +8,6 @@ body, html {
     flex-direction: column;
     position: relative;
     background-color: #1e1f2b;
-    /* Prevents pull-to-refresh behavior on touch devices */
     overscroll-behavior-y: contain;
 }
 
@@ -42,7 +41,6 @@ body, html {
     align-items: center;
 }
 
-/* Base styles for Material Symbols icons */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -133,7 +131,6 @@ body, html {
     pointer-events: none;
 }
 
-/* Show controls on wrapper hover */
 .iframe-wrapper:hover .iframe-controls-container {
     opacity: 0.7;
 }
@@ -209,7 +206,6 @@ body, html {
     border-bottom: none;
 }
 
-/* Style for when an element is being dragged over a droppable target */
 .url-item.drag-over {
     background-color: #cccccc;
 }
@@ -257,14 +253,13 @@ body, html {
 }
 
 .url-item .open-url-icon {
-    /* Overrides for material-symbols-outlined in this context */
     color: #17a2b8;
     margin-left: 2px;
     padding: 6px;
     border-radius: 3px;
     font-size: 18px;
-    width: auto; /* override default 24px */
-    height: auto; /* override default 24px */
+    width: auto;
+    height: auto;
     opacity: 0.9;
     transition: background-color 0.2s ease, opacity 0.2s ease;
 }
@@ -416,9 +411,8 @@ body, html {
     background-color: #e0e0e0;
 }
 
-/* Styles for the context container */
 #context-container {
-    position: relative; /* Set as the positioning context for the close button */
+    position: relative;
     flex-shrink: 0;
     background-color: #3c4043;
     border: 1px solid #5f6368;
@@ -428,14 +422,14 @@ body, html {
     flex-direction: column;
     max-height: 200px;
     overflow: hidden;
-    margin-bottom: 8px; /* Space between context and prompt input */
+    margin-bottom: 8px;
 }
 
 #context-header {
     margin-bottom: 8px;
     color: #e8eaed;
     font-size: 14px;
-    padding-right: 28px; /* Add padding to prevent text from overlapping with the close button */
+    padding-right: 28px;
 }
 
 #close-context-button {
@@ -461,7 +455,6 @@ body, html {
 
 #close-context-button .material-symbols-outlined {
     font-size: 18px;
-    /* Override default dimensions to allow for proper centering by the parent flex container */
     width: auto;
     height: auto;
 }
@@ -469,9 +462,9 @@ body, html {
 #context-content {
     font-size: 13px;
     line-height: 1.4;
-    color: #9aa0a6; /* Dimmer color for the content */
-    overflow-y: auto; /* Allow scrolling for long text */
-    padding-right: 5px; /* Space for scrollbar */
+    color: #9aa0a6;
+    overflow-y: auto;
+    padding-right: 5px;
     scrollbar-width: thin;
     scrollbar-color: #5f6368 #3c4043;
 }
@@ -522,7 +515,6 @@ body, html {
     transform: translateX(-50%) scale(0.9);
 }
 
-/* Expanded State: Button is at the top of the container */
 #prompt-container:not(.collapsed) #toggle-prompt-button {
     top: -14px;
     background-color: #3c4043;
@@ -532,7 +524,6 @@ body, html {
     background-color: #4a4d5f;
 }
 
-/* Collapsed State: Container is hidden, button is visible */
 #prompt-container.collapsed {
     height: 0;
     min-height: 0;
@@ -540,7 +531,7 @@ body, html {
     margin: 0 !important;
     border: none !important;
     flex-shrink: 1;
-    overflow: visible; /* Allow the absolutely positioned button to be visible */
+    overflow: visible;
 }
 
 #prompt-container.collapsed > *:not(#toggle-prompt-button) {
@@ -548,7 +539,7 @@ body, html {
 }
 
 #prompt-container.collapsed #toggle-prompt-button {
-    top: -22px; /* Position above the collapsed container */
+    top: -22px;
     background-color: #1e1f2b;
 }
 
@@ -600,7 +591,6 @@ body, html {
     box-shadow: none;
 }
 
-/* Custom scrollbar for the prompt textarea */
 #prompt-input::-webkit-scrollbar {
     width: 16px;
     cursor: default;

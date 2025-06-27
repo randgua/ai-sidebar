@@ -172,7 +172,6 @@ async function handlePerplexity(prompt) {
 
 /**
  * Site-specific handler for chat.deepseek.com.
- * This site requires a more complex injection method.
  * @param {string} prompt The text to be injected.
  */
 async function handleDeepSeek(prompt) {
@@ -181,9 +180,6 @@ async function handleDeepSeek(prompt) {
         console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
         return;
     }
-    // Directly setting the 'value' property and dispatching an 'input' event
-    // is not sufficient for some web frameworks. We must use the native
-    // value setter and then simulate an Enter key press to submit.
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
     nativeInputValueSetter.call(inputArea, prompt);
     inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
@@ -295,7 +291,7 @@ async function getChatGPTOutput() {
 }
 
 /**
- * Extracts the text from the last message group from Claude, which may include the user's prompt.
+ * Extracts the text from the last message group from Claude.
  * @returns {Promise<string>} The text of the last message group.
  */
 async function getClaudeOutput() {
@@ -390,7 +386,6 @@ async function handleOutputExtraction() {
     }, '*');
 }
 
-// Main listener for messages from the sidepanel.
 window.addEventListener('message', (event) => {
     if (!event.data) return;
     if (event.data.action === 'injectPrompt') {
@@ -408,11 +403,26 @@ window.addEventListener('message', (event) => {
 });
 
 /**
- * Listen for text selection and send it to the extension's runtime.
- * This allows the side panel to pick up the selected text.
+ * A utility to delay function execution until after a specified wait time has passed
+ * without the function being called.
+ * @param {Function} func The function to debounce.
+ * @param {number} wait The debounce duration in milliseconds.
+ * @returns {Function} The debounced function.
  */
-document.addEventListener('mouseup', () => {
-    // Check if the event is happening inside an input or textarea to avoid conflicts.
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+/**
+ * Checks for selected text and sends it to the extension runtime.
+ */
+function handleSelection() {
+    // Avoid conflicts with text inputs.
     if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable) {
         return;
     }
@@ -420,4 +430,10 @@ document.addEventListener('mouseup', () => {
     if (selectedText) {
         chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
     }
-});
+}
+
+// Debounce the selection handler to avoid excessive firing during selection changes.
+const debouncedHandleSelection = debounce(handleSelection, 250);
+
+// Listen for any changes to the text selection, which covers mouse, keyboard, and other methods.
+document.addEventListener('selectionchange', debouncedHandleSelection);

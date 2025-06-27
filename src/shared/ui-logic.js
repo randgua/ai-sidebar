@@ -260,7 +260,6 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
         itemDiv.append(dragHandle, checkbox, urlInput, openIcon, removeButton);
         urlListManagementDiv.appendChild(itemDiv);
 
-        // Drag and drop event listeners
         itemDiv.addEventListener('dragstart', (e) => {
             if (managedUrls.some(u => u.selected)) {
                 iframeContainer.style.pointerEvents = 'none';
@@ -326,8 +325,7 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
 }
 
 /**
- * Gets the last output from a single iframe, appends it to the prompt input,
- * and copies the appended text to the clipboard.
+ * Gets the last output from a single iframe and appends it to the prompt input.
  * @param {HTMLIFrameElement} iframe The iframe to get output from.
  * @param {string} url The URL of the iframe for display purposes.
  */
@@ -563,7 +561,6 @@ function initializeSharedUI(elements) {
     const contextContent = document.getElementById('context-content');
     const closeContextButton = document.getElementById('close-context-button');
 
-    // This function handles sending the prompt, combining context if available.
     const executeSend = () => {
         let promptText = promptInput.value.trim();
         
@@ -571,16 +568,14 @@ function initializeSharedUI(elements) {
         if (isContextVisible) {
             const contextText = contextContent.textContent.trim();
             if (contextText) {
-                // Combine context and prompt into a single message.
                 promptText = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}\n\n`;
             }
         }
 
         if (promptText) {
             sendMessageToIframes(iframeContainer, promptText);
-            promptInput.value = ''; // Clear input after sending.
+            promptInput.value = '';
             
-            // Hide and clear the context container after sending.
             contextContainer.style.display = 'none';
             contextContent.textContent = '';
 
@@ -589,14 +584,13 @@ function initializeSharedUI(elements) {
         }
     };
 
-    // Listen for messages from content scripts (e.g., for selected text).
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             contextContent.textContent = message.text;
             contextContainer.style.display = 'flex';
             promptInput.focus();
         }
-        return true; // Indicate that the response may be sent asynchronously.
+        return true;
     });
 
     if (closeContextButton) {
@@ -698,9 +692,7 @@ function initializeSharedUI(elements) {
             if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
         });
 
-        // This is a "best effort" collection. It waits for a fixed period for iframes
-        // to respond. Slower iframes may be missed. This prevents the UI from
-        // getting stuck waiting for a non-responsive panel.
+        // This is a "best effort" collection. It waits for a fixed period for iframes to respond.
         setTimeout(() => {
             if (collectedOutputs.length > 0) {
                 const prettyNames = {
@@ -754,7 +746,6 @@ function initializeSharedUI(elements) {
         }
     });
 
-    // Initial load
     loadUrls(iframeContainer, urlListManagementDiv, settingsPopup);
     autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
 }
