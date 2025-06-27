@@ -214,8 +214,9 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
 
             const oldUrlKeyInCache = urlEntry.url;
             urlEntry.url = formattedUrl;
+            // When a URL is edited, remove the old iframe from the cache.
+            // This ensures a new iframe with the correct src is created on the next update.
             if (iframeCache[oldUrlKeyInCache]) {
-                iframeCache[formattedUrl] = iframeCache[oldUrlKeyInCache];
                 delete iframeCache[oldUrlKeyInCache];
             }
             saveUrls();
