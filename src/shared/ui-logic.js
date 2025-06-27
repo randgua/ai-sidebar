@@ -723,6 +723,9 @@ function initializeSharedUI(elements) {
     togglePromptButton.addEventListener('click', () => {
         promptContainer.classList.toggle('collapsed');
         const isCollapsed = promptContainer.classList.contains('collapsed');
+        // Add a class to the body to indicate the prompt area's collapsed state.
+        // This allows CSS to show/hide elements based on this state.
+        document.body.classList.toggle('prompt-collapsed', isCollapsed);
         togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
         togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
         if (!isCollapsed) {

@@ -131,11 +131,11 @@ body, html {
     pointer-events: none;
 }
 
-.iframe-wrapper:hover .iframe-controls-container {
+body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container {
     opacity: 0.7;
 }
 
-.iframe-wrapper:hover .iframe-controls-container:hover {
+body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hover {
     opacity: 1;
 }
 
