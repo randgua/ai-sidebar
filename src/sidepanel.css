@@ -411,18 +411,19 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #e0e0e0;
 }
 
+/* MODIFIED: Styles for the context container to be a bordered box. */
 #context-container {
     position: relative;
     flex-shrink: 0;
     background-color: #3c4043;
-    border: 1px solid #5f6368;
-    border-radius: 8px;
     padding: 12px;
     display: flex;
     flex-direction: column;
     max-height: 200px;
     overflow: hidden;
-    margin-bottom: 8px;
+    /* Replaced bottom border with a full, rounded border. */
+    border: 1px solid #5f6368;
+    border-radius: 8px;
 }
 
 #context-header {
@@ -547,21 +548,31 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #3c4043;
 }
 
+/* MODIFIED: The main prompt wrapper now uses padding and gap for internal spacing. */
 .prompt-input-wrapper {
     position: relative;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
     width: 100%;
-    min-height: 44px;
     background-color: #3c4043;
     border: 1px solid #5f6368;
     border-radius: 22px;
     box-sizing: border-box;
     transition: border-color 0.2s ease;
+    overflow: hidden;
+    padding: 8px;
+    gap: 8px;
 }
 
 .prompt-input-wrapper:focus-within {
     border-color: #bdc1c6;
+}
+
+/* A row container for the textarea and its adjacent buttons. */
+.prompt-input-row {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
 }
 
 #prompt-input {
@@ -625,7 +636,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    align-self: flex-end;
 }
 
 #clear-prompt-button:hover {
@@ -659,7 +669,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    align-self: flex-end;
 }
 
 #copy-markdown-button:hover {
@@ -695,7 +704,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #send-prompt-button:not(:disabled) {
     background-color: #87a9ff;
-    align-self: flex-end;
 }
 
 #send-prompt-button:hover:not(:disabled) {

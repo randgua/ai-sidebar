@@ -56,28 +56,32 @@
             <div id="prompt-container">
                 <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
                 
-                <!-- Container for showing selected text from the page -->
-                <div id="context-container" style="display: none;">
-                    <div id="context-header">
-                        <span>Text from your selection</span>
-                    </div>
-                    <div id="context-content"></div>
-                    <button id="close-context-button" title="Remove selection">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                
+                <!-- MODIFIED: The main wrapper now contains both the context box and the input row. -->
                 <div class="prompt-input-wrapper">
-                    <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
-                    <button id="clear-prompt-button" title="Clear" style="display: none;">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                    <button id="send-prompt-button" title="Send" disabled>
-                        <span class="material-symbols-outlined">arrow_upward</span>
-                    </button>
-                    <button id="copy-markdown-button" title="Append all outputs to prompt area and copy as Markdown">
-                        <span class="material-symbols-outlined">content_copy</span>
-                    </button>
+                    <!-- Container for showing selected text from the page (moved inside) -->
+                    <div id="context-container" style="display: none;">
+                        <div id="context-header">
+                            <span>Text from your selection</span>
+                        </div>
+                        <div id="context-content"></div>
+                        <button id="close-context-button" title="Remove selection">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    <!-- NEW: A new row for the textarea and buttons -->
+                    <div class="prompt-input-row">
+                        <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
+                        <button id="clear-prompt-button" title="Clear" style="display: none;">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                        <button id="send-prompt-button" title="Send" disabled>
+                            <span class="material-symbols-outlined">arrow_upward</span>
+                        </button>
+                        <button id="copy-markdown-button" title="Append all outputs to prompt area and copy as Markdown">
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
