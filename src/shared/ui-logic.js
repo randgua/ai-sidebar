@@ -228,10 +228,11 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
             else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); }
         });
 
-        const openButton = document.createElement('button');
-        openButton.textContent = 'Open';
-        openButton.className = 'open-url-button';
-        openButton.addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
+        const openIcon = document.createElement('span');
+        openIcon.textContent = 'open_in_new';
+        openIcon.className = 'material-symbols-outlined open-url-icon';
+        openIcon.title = 'Open in new tab';
+        openIcon.addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
 
         const removeButton = document.createElement('button');
         removeButton.textContent = 'Delete';
@@ -256,7 +257,7 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
             });
         });
 
-        itemDiv.append(dragHandle, checkbox, urlInput, openButton, removeButton);
+        itemDiv.append(dragHandle, checkbox, urlInput, openIcon, removeButton);
         urlListManagementDiv.appendChild(itemDiv);
 
         // Drag and drop event listeners

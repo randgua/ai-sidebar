@@ -241,7 +241,7 @@ body, html {
     padding: 6px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    margin-right: 8px;
+    margin-right: 4px;
     font-size: 13px;
 }
 
@@ -256,13 +256,22 @@ body, html {
     border: 1px solid transparent;
 }
 
-.url-item .open-url-button {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
+.url-item .open-url-icon {
+    /* Overrides for material-symbols-outlined in this context */
+    color: #17a2b8;
+    margin-left: 2px;
+    padding: 6px;
+    border-radius: 3px;
+    font-size: 18px;
+    width: auto; /* override default 24px */
+    height: auto; /* override default 24px */
+    opacity: 0.9;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
 }
-.url-item .open-url-button:hover {
-    background-color: #138496;
-    border-color: #117a8b;
+
+.url-item .open-url-icon:hover {
+    background-color: #e9ecef;
+    opacity: 1;
 }
 
 .url-item .remove-url-button {
