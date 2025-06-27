@@ -566,7 +566,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .prompt-input-row {
-    position: relative;
+    /* position: relative is removed to allow child absolute positioning relative to the wrapper */
     display: flex;
     align-items: flex-end;
     width: 100%;
@@ -580,7 +580,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 #prompt-input {
     flex-grow: 1;
     width: 100%;
-    padding: 12px 72px 12px 16px;
+    padding: 12px 16px;
     border: none;
     font-family: Arial, sans-serif;
     font-size: 14px;
@@ -591,9 +591,15 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     overflow-y: auto;
     background-color: transparent;
     color: #e8eaed;
-    transition: none;
+    transition: padding-right 0.2s ease; /* Smooth transition for padding change */
     overscroll-behavior: contain;
 }
+
+/* Adjust textarea padding when the clear button is moved to the top right */
+.prompt-input-wrapper.multi-line-input #prompt-input {
+    padding-right: 40px;
+}
+
 
 #prompt-input::placeholder {
     color: #9aa0a6;
@@ -626,8 +632,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 #clear-prompt-button {
-    position: absolute;
-    z-index: 1;
+    flex-shrink: 0;
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -637,20 +642,23 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: top 0.2s ease, bottom 0.2s ease, right 0.2s ease, background-color 0.2s ease;
-    bottom: 8px;
-    right: 76px;
+    /* Default layout for single-line: flex item in order */
+    margin: 8px 2px 8px 8px;
+    order: 1;
+    transition: background-color 0.2s ease;
 }
 
 #clear-prompt-button:hover {
     background-color: #4a4d5f;
 }
 
-/* MODIFIED: Top-right position is now aligned with the context close button. */
+/* Style for multi-line: position button in the top-right corner of the wrapper */
 #clear-prompt-button.top-right {
+    position: absolute;
     top: 8px;
     right: 8px;
-    bottom: auto;
+    margin: 0; 
+    z-index: 1;
 }
 
 #clear-prompt-button .material-symbols-outlined {
@@ -669,7 +677,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #copy-markdown-button {
     flex-shrink: 0;
-    margin: 8px 8px 8px 0;
+    margin: 8px 8px 8px 2px;
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -679,6 +687,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    order: 3;
     transition: background-color 0.2s ease;
 }
 
@@ -700,7 +709,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #send-prompt-button {
     flex-shrink: 0;
-    margin: 8px 4px 8px 8px;
+    margin: 8px 2px;
     width: 28px;
     height: 28px;
     border: none;
@@ -711,6 +720,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     transition: background-color 0.2s ease, border-radius 0.2s ease;
     border-radius: 50%;
     background-color: #4a4d5f;
+    order: 2;
 }
 
 #send-prompt-button:not(:disabled) {

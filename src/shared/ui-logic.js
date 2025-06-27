@@ -215,7 +215,6 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
             const oldUrlKeyInCache = urlEntry.url;
             urlEntry.url = formattedUrl;
             // When a URL is edited, remove the old iframe from the cache.
-            // This ensures a new iframe with the correct src is created on the next update.
             if (iframeCache[oldUrlKeyInCache]) {
                 delete iframeCache[oldUrlKeyInCache];
             }
@@ -522,16 +521,32 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
 
     const hasText = textarea.value.trim() !== '';
     if (sendPromptButton) sendPromptButton.disabled = !hasText;
+    
     if (clearPromptButton) {
         clearPromptButton.style.display = hasText ? 'flex' : 'none';
-        
-        if (hasText) {
-            const singleLineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
-            // Add a small tolerance for floating point inaccuracies.
-            const isMultiLine = textarea.scrollHeight > singleLineHeight + 1;
+        const promptInputWrapper = textarea.closest('.prompt-input-wrapper');
+
+        if (hasText && promptInputWrapper) {
+            // Get computed styles to correctly calculate content height.
+            const styles = getComputedStyle(textarea);
+            const singleLineHeight = parseFloat(styles.lineHeight);
+            const paddingTop = parseFloat(styles.paddingTop);
+            const paddingBottom = parseFloat(styles.paddingBottom);
+
+            // Calculate the actual height of the text content, excluding padding.
+            const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
+
+            // Check if the content height is greater than a single line's height.
+            // Use a small tolerance (e.g., 1) for floating point inaccuracies.
+            const isMultiLine = textContentHeight > singleLineHeight + 1;
+
+            // Toggle classes to switch between single-line and multi-line layouts.
             clearPromptButton.classList.toggle('top-right', isMultiLine);
-        } else {
+            promptInputWrapper.classList.toggle('multi-line-input', isMultiLine);
+        } else if (promptInputWrapper) {
+            // Ensure classes are removed when there is no text.
             clearPromptButton.classList.remove('top-right');
+            promptInputWrapper.classList.remove('multi-line-input');
         }
     }
 }
@@ -572,7 +587,6 @@ function initializeSharedUI(elements) {
     const contextContainer = document.getElementById('context-container');
     const contextContent = document.getElementById('context-content');
     const closeContextButton = document.getElementById('close-context-button');
-    // MODIFIED: Get the input row element for adding/removing the separator class.
     const promptInputRow = document.querySelector('.prompt-input-row');
 
     const executeSend = () => {
@@ -592,7 +606,6 @@ function initializeSharedUI(elements) {
             
             contextContainer.style.display = 'none';
             contextContent.textContent = '';
-            // MODIFIED: Hide the separator when context is cleared.
             promptInputRow.classList.remove('with-context');
 
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
@@ -604,7 +617,6 @@ function initializeSharedUI(elements) {
         if (message.action === 'textSelected' && message.text) {
             contextContent.textContent = message.text;
             contextContainer.style.display = 'flex';
-            // MODIFIED: Show the separator when context is added.
             promptInputRow.classList.add('with-context');
             promptInput.focus();
         }
@@ -615,7 +627,6 @@ function initializeSharedUI(elements) {
         closeContextButton.addEventListener('click', () => {
             contextContainer.style.display = 'none';
             contextContent.textContent = '';
-            // MODIFIED: Hide the separator when context is closed.
             promptInputRow.classList.remove('with-context');
         });
     }
@@ -744,7 +755,6 @@ function initializeSharedUI(elements) {
         promptContainer.classList.toggle('collapsed');
         const isCollapsed = promptContainer.classList.contains('collapsed');
         // Add a class to the body to indicate the prompt area's collapsed state.
-        // This allows CSS to show/hide elements based on this state.
         document.body.classList.toggle('prompt-collapsed', isCollapsed);
         togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
         togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
