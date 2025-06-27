@@ -553,7 +553,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     width: 100%;
     background-color: #3c4043;
     border: 1px solid #5f6368;
-    border-radius: 22px;
+    border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.2s ease;
     overflow: hidden;
