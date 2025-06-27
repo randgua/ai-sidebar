@@ -547,7 +547,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .prompt-input-wrapper {
-    position: relative;
+    /* position: relative; is removed to prevent it from being the positioning context */
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -566,7 +566,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .prompt-input-row {
-    /* position: relative is removed to allow child absolute positioning relative to the wrapper */
+    position: relative; /* Set as positioning context for the clear button */
     display: flex;
     align-items: flex-end;
     width: 100%;
@@ -596,7 +596,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 /* Adjust textarea padding when the clear button is moved to the top right */
-.prompt-input-wrapper.multi-line-input #prompt-input {
+.prompt-input-row.multi-line-input #prompt-input {
     padding-right: 40px;
 }
 
@@ -652,7 +652,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #4a4d5f;
 }
 
-/* Style for multi-line: position button in the top-right corner of the wrapper */
+/* Style for multi-line: position button in the top-right corner of the row */
 #clear-prompt-button.top-right {
     position: absolute;
     top: 8px;
