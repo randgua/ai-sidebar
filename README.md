@@ -12,12 +12,15 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
 -   **Advanced URL Management**: Control your website list via the settings popup (hover over the gear icon):
     -   **Add & Edit**: Add new web URLs or local file paths. Edit any existing URL directly in the list.
     -   **Select & Display**: Check or uncheck URLs to instantly show or hide them in the side panel.
-    -   **Drag-and-Drop Reordering**: Seamlessly reorder URLs. During the drag operation, active panels become semi-transparent and unresponsive to ensure a smooth experience and prevent accidental clicks.
+    -   **Drag-and-Drop Reordering**: Seamlessly reorder URLs. During the drag operation, active panels become semi-transparent and unresponsive to ensure a smooth experience.
     -   **Bulk Actions**: Quickly invert, select all, or clear all selections.
     -   **Delete & Open**: Remove URLs from the list or open any URL in a new tab.
 -   **Optimized Refresh**: A floating refresh button reloads all active websites in the side panel without affecting the main browser window.
+-   **Selective Output Handling**: Hover over any active panel to reveal controls. You can send the main prompt to just that panel, or append its latest output back into the prompt area (it will also be copied to your clipboard).
+-   **Aggregate Outputs**: A dedicated button next to the main prompt bar allows you to collect the latest outputs from all active panels, format them in Markdown, and append them to the prompt area for further use.
 -   **Embed Compatibility**: Automatically modifies HTTP headers to allow most websites (e.g., `gemini.google.com`, `chatgpt.com`) to be embedded in iframes.
 -   **Synced Storage**: Remembers your complete list of URLs, their selection state, and their custom order across all your Chrome browsers where you are logged in.
+-   **Standalone Full-Page Mode**: Open the entire interface in a full browser tab for more space, accessible via a button in the side panel or with the `Ctrl+Shift+Y` (or `Cmd+Shift+Y` on Mac) keyboard shortcut.
 -   **Intelligent Selection Handling**: If the only selected URL is deleted, the extension automatically selects the first URL in the list to prevent an empty panel.
 -   **Default URL Set**: Comes pre-loaded with a list of popular AI websites on first installation. If you delete all URLs, this default list will be restored on the next load.
 -   **Local File Support**: View local documents like PDFs and HTML files by adding their file paths (e.g., `file:///...`). This requires granting the extension permission to access file URLs.
@@ -32,6 +35,7 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
 ## Usage
 
 -   **Open the Sidebar:** Click the extension icon in the Chrome toolbar.
+-   **Open in a Full Tab:** Click the **"Full page chat"** icon in the top-left of the sidebar, or use the keyboard shortcut `Ctrl+Shift+Y` (`Cmd+Shift+Y` on Mac).
 -   **Manage URLs & Settings:**
     -   Inside the side panel, **hover your mouse over the settings area** in the top-right corner (marked with a gear icon) to reveal the settings popup.
     -   On the settings popup, you can manage your URL list:
@@ -42,7 +46,10 @@ A Chrome extension to open one or more user-configured websites side-by-side in 
         -   **Delete URLs** from the list using the "Delete" button.
         -   **Open a URL** from the list in a new tab using the "Open" button.
         -   Use **Invert Selection**, **Select All**, or **Clear All Selections** buttons for bulk management.
--   **Refresh Content:** Click the **refresh icon** (circular arrow) in the side panel to reload all currently active iframes.
+-   **Interact with Panels:**
+    -   **Refresh Content:** Click the **refresh icon** (circular arrow) to reload all currently active iframes.
+    -   **Hover over an active website panel** to see individual controls for sending the prompt or appending its output to the prompt area.
+    -   Use the **"Copy all outputs"** button next to the "Send" button to gather text from all active panels at once.
 
 ### Advanced Usage: Viewing Local Files
 
