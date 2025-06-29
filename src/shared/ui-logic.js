@@ -635,23 +635,6 @@ function resetContextualUI() {
 }
 
 /**
- * Aligns the context area's close button with the main copy button.
- */
-function alignContextCloseButton() {
-    const closeButton = document.getElementById('close-context-button');
-    const copyButton = document.getElementById('copy-markdown-button');
-    const wrapper = document.querySelector('.prompt-input-wrapper');
-
-    if (closeButton && copyButton && wrapper) {
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const copyButtonRect = copyButton.getBoundingClientRect();
-        const rightOffset = wrapperRect.right - copyButtonRect.right;
-        
-        closeButton.style.right = `${rightOffset}px`;
-    }
-}
-
-/**
  * Creates a single prompt button element.
  * @param {object} prompt The prompt data.
  * @param {string} selectedText The text to be used in the prompt.
@@ -800,7 +783,6 @@ async function displayContextualUI(selectedText) {
     contextContent.textContent = selectedText;
     contextContainer.style.display = 'flex';
     contextContainer.dataset.text = selectedText;
-    alignContextCloseButton();
 
     promptButtonsContainer.style.display = 'flex';
     // Show the divider when the contextual UI is displayed.
@@ -1042,7 +1024,6 @@ function initializeSharedUI(elements) {
                 renderResponsivePrompts(selectedText, visiblePrompts);
             }
         }
-        alignContextCloseButton();
     }, 100);
 
     window.addEventListener('resize', handleResize);
