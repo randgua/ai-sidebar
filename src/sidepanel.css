@@ -759,7 +759,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .more-prompts-wrapper {
-    position: relative;
+    position: relative; /* This is the positioning context for the popup menu. */
     flex-shrink: 0;
 }
 
@@ -781,8 +781,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #more-prompts-popup {
     position: absolute;
-    bottom: 100%;
-    right: 0;
+    bottom: 100%; /* Position the popup above its parent wrapper. */
+    right: 0; /* Align the popup's right edge with its parent wrapper's right edge. */
     background-color: #2d2d2d;
     border: 1px solid #5f6368;
     border-radius: 8px;

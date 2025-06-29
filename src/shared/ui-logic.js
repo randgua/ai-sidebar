@@ -666,7 +666,11 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
 
     promptButtonsContainer.innerHTML = '';
     morePromptsList.innerHTML = '';
-    if (morePromptsPopup) morePromptsPopup.style.display = 'none';
+    // Detach popup so it can be re-appended into the correct wrapper later
+    if (morePromptsPopup.parentElement) {
+        morePromptsPopup.parentElement.removeChild(morePromptsPopup);
+    }
+    morePromptsPopup.style.display = 'none';
 
     if (!visiblePrompts || visiblePrompts.length === 0) {
         return;
@@ -693,7 +697,10 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 promptButtonsContainer.removeChild(existingMoreWrapper);
             }
             morePromptsList.innerHTML = '';
-            if (morePromptsPopup) morePromptsPopup.style.display = 'none';
+            if (morePromptsPopup.parentElement) {
+                morePromptsPopup.parentElement.removeChild(morePromptsPopup);
+            }
+            morePromptsPopup.style.display = 'none';
 
             const promptsToShow = [];
             const promptsToHide = [];
@@ -704,9 +711,11 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
             tempContainer.style.visibility = 'hidden';
             tempContainer.style.position = 'absolute';
             document.body.appendChild(tempContainer);
-            const moreButton = createPromptButton({ name: '...' }, '', false);
-            tempContainer.appendChild(moreButton);
-            const moreButtonWidth = moreButton.offsetWidth;
+            const moreButtonTemplate = document.createElement('button');
+            moreButtonTemplate.textContent = '...';
+            moreButtonTemplate.className = 'prompt-button';
+            tempContainer.appendChild(moreButtonTemplate);
+            const moreButtonWidth = moreButtonTemplate.offsetWidth;
             tempContainer.innerHTML = '';
 
             for (let i = 0; i < allButtons.length; i++) {
@@ -745,8 +754,17 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
             if (promptsToHide.length > 0) {
                 const morePromptsWrapper = document.createElement('div');
                 morePromptsWrapper.className = 'more-prompts-wrapper';
-                const moreButton = createPromptButton({ name: '...' }, '', false);
+                
+                // Create a dedicated "..." button that does not send a prompt on click
+                const moreButton = document.createElement('button');
+                moreButton.textContent = '...';
+                moreButton.className = 'prompt-button';
+                
                 morePromptsWrapper.appendChild(moreButton);
+                
+                // Move the popup menu to be a child of the wrapper
+                morePromptsWrapper.appendChild(morePromptsPopup);
+                
                 promptButtonsContainer.appendChild(morePromptsWrapper);
 
                 promptsToHide.forEach(prompt => {
@@ -757,10 +775,9 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
                 const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
 
+                // Apply hover logic to the wrapper, which contains both the button and the now-child popup
                 morePromptsWrapper.addEventListener('mouseenter', showPopup);
                 morePromptsWrapper.addEventListener('mouseleave', hidePopup);
-                morePromptsPopup.addEventListener('mouseenter', showPopup);
-                morePromptsPopup.addEventListener('mouseleave', hidePopup);
             }
         });
     });
