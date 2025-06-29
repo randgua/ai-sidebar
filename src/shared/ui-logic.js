@@ -605,11 +605,16 @@ function resetContextualUI() {
         delete contextContainer.dataset.text;
     }
     
-    if(promptButtonsContainer) promptButtonsContainer.style.display = 'none';
-    if(promptButtonsContainer) promptButtonsContainer.innerHTML = '';
+    if(promptButtonsContainer) {
+        promptButtonsContainer.style.display = 'none';
+        promptButtonsContainer.innerHTML = '';
+    }
 
-    if(morePromptsPopup) morePromptsPopup.style.display = 'none';
+    if(morePromptsPopup) {
+        morePromptsPopup.style.display = 'none';
+    }
     
+    // Hide the divider when the contextual UI is reset.
     if (promptInputDivider) {
         promptInputDivider.style.display = 'none';
     }
@@ -784,7 +789,10 @@ async function displayContextualUI(selectedText) {
     alignContextCloseButton();
 
     promptButtonsContainer.style.display = 'flex';
-    if (promptInputDivider) promptInputDivider.style.display = 'block';
+    // Show the divider when the contextual UI is displayed.
+    if (promptInputDivider) {
+        promptInputDivider.style.display = 'block';
+    }
 
     let result = await chrome.storage.sync.get('prompts');
     let prompts = result.prompts;
