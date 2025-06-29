@@ -428,14 +428,16 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     margin-bottom: 8px;
     color: #e8eaed;
     font-size: 14px;
-    padding-right: 28px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
 }
 
 #close-context-button {
-    position: static;
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 1;
     background: none;
     border: none;
     color: #8ab4f7;
@@ -556,9 +558,10 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.2s ease;
-    overflow: hidden;
+    overflow: visible; /* Allow content like the 'more prompts' popup to be visible */
     padding: 8px;
     gap: 8px;
+    position: relative;
 }
 
 .prompt-input-wrapper:focus-within {
@@ -743,24 +746,18 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     opacity: 0.5;
 }
 
-/* MODIFIED: Styles for contextual prompt buttons and popup */
 #prompt-buttons-container {
     display: flex;
-    justify-content: space-between; /* Positions main buttons left, more button right */
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Ensure buttons stay on a single line */
     padding-top: 4px;
-}
-
-.main-prompt-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    overflow: hidden; /* Hide any buttons that overflow the container */
 }
 
 .more-prompts-wrapper {
     position: relative; /* Anchor for the absolute positioned popup */
+    flex-shrink: 0; /* Prevent the 'more' button from shrinking */
 }
 
 .prompt-button {
@@ -772,6 +769,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     font-size: 13px;
     cursor: pointer;
     transition: background-color 0.2s;
+    white-space: nowrap;
 }
 
 .prompt-button:hover {
