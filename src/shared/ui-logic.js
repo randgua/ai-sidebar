@@ -261,9 +261,10 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
         openIcon.title = 'Open in new tab';
         openIcon.addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
 
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'Delete';
-        removeButton.className = 'remove-url-button';
+        const removeButton = document.createElement('span');
+        removeButton.textContent = 'delete';
+        removeButton.className = 'material-symbols-outlined remove-url-button';
+        removeButton.title = 'Delete URL';
         removeButton.addEventListener('click', () => {
             showCustomConfirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`, () => {
                 if (iframeCache[urlEntry.url]) {

@@ -425,6 +425,15 @@ body, html {
     background-color: #444;
 }
 
+.url-item .remove-url-button {
+    color: #dc3545; /* Red color for delete icon */
+}
+
+.url-item .remove-url-button:hover {
+    color: #c82333; /* Darker red on hover */
+    background-color: rgba(220, 53, 69, 0.1); /* Faint red background on hover */
+}
+
 .add-url-section {
     display: flex;
     gap: 12px;
