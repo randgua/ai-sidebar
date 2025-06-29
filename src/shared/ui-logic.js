@@ -521,6 +521,7 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
 
 /**
  * Automatically resizes the prompt textarea and manages button states.
+ * This function prevents the unnecessary scrollbar and placeholder clipping.
  * @param {HTMLTextAreaElement} textarea The textarea element.
  * @param {HTMLElement} promptContainer The container for the prompt area.
  * @param {HTMLButtonElement} sendPromptButton The send button.
@@ -535,12 +536,27 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     }
 
     const selection = textarea.selectionStart;
-
     const maxHeight = Math.floor(window.innerHeight / 3);
     textarea.style.maxHeight = `${maxHeight}px`;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
 
+    // Reset height before calculating the new required height.
+    textarea.style.height = 'auto';
+
+    // Get the computed styles to account for border widths, which are part of the
+    // total height when box-sizing is border-box.
+    const computedStyle = window.getComputedStyle(textarea);
+    const borderTop = parseFloat(computedStyle.borderTopWidth);
+    const borderBottom = parseFloat(computedStyle.borderBottomWidth);
+
+    // Calculate the correct height.
+    // scrollHeight includes content and padding. For a border-box element, we must add
+    // the vertical border widths to the scrollHeight to get the final correct height.
+    // This prevents a ~1px overflow that causes the scrollbar to appear unnecessarily.
+    const newHeight = textarea.scrollHeight + borderTop + borderBottom;
+
+    textarea.style.height = `${newHeight}px`;
+
+    // Defer cursor and scroll position updates to after the resize has been rendered.
     setTimeout(() => {
         textarea.setSelectionRange(selection, selection);
         textarea.scrollTop = textarea.scrollHeight;
