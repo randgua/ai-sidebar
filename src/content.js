@@ -347,8 +347,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     });
 
-    // --- Start of new text selection logic ---
-
     // A utility to delay function execution.
     function debounce(func, wait) {
         let timeout;
@@ -367,8 +365,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
         const selectedText = window.getSelection().toString().trim();
         if (selectedText) {
-            // Send the selected text to the background script or side panel.
+            // Send the selected text to the side panel.
             chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
+        } else {
+            // When text is deselected, send a message to clear the context.
+            chrome.runtime.sendMessage({ action: 'textDeselected' });
         }
     }
 
@@ -380,5 +381,4 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     if (window.self === window.top) {
         document.addEventListener('selectionchange', debouncedHandleSelection);
     }
-    // --- End of new text selection logic ---
 }

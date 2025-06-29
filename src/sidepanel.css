@@ -582,8 +582,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #prompt-input {
     flex-grow: 1;
-    width: 100%;
-    padding: 12px 16px;
+    padding: 12px 80px 12px 16px;
     border: none;
     font-family: Arial, sans-serif;
     font-size: 14px;

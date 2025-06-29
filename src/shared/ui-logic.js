@@ -678,87 +678,89 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
     if (allButtons.length === 0) return;
 
     const observer = new ResizeObserver(entries => {
-        observer.disconnect();
-
-        const containerWidth = entries[0].contentRect.width;
-        
-        mainButtonsWrapper.innerHTML = '';
-        const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
-        if (existingMoreWrapper) {
-            promptButtonsContainer.removeChild(existingMoreWrapper);
-        }
-        morePromptsList.innerHTML = '';
-        if (morePromptsPopup) morePromptsPopup.style.display = 'none';
-
-        const promptsToShow = [];
-        const promptsToHide = [];
-        let accumulatedWidth = 0;
-        let hideStartIndex = -1;
-
-        const tempContainer = document.createElement('div');
-        tempContainer.style.visibility = 'hidden';
-        tempContainer.style.position = 'absolute';
-        document.body.appendChild(tempContainer);
-        const moreButton = createPromptButton({ name: '...' }, '', false);
-        tempContainer.appendChild(moreButton);
-        const moreButtonWidth = moreButton.offsetWidth;
-        tempContainer.innerHTML = '';
-
-        for (let i = 0; i < allButtons.length; i++) {
-            const button = allButtons[i];
-            tempContainer.appendChild(button);
-            const buttonWidth = button.offsetWidth;
-            const gap = 8;
-            
-            const spaceNeededForMore = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
-
-            if (accumulatedWidth + buttonWidth + gap + spaceNeededForMore <= containerWidth) {
-                accumulatedWidth += buttonWidth + gap;
-            } else {
-                hideStartIndex = i;
-                break;
+        // Defer the execution to the next animation frame to avoid ResizeObserver loop errors.
+        window.requestAnimationFrame(() => {
+            if (!entries || !entries.length) {
+                return;
             }
-        }
-        document.body.removeChild(tempContainer);
+            const containerWidth = entries[0].contentRect.width;
+            
+            mainButtonsWrapper.innerHTML = '';
+            const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
+            if (existingMoreWrapper) {
+                promptButtonsContainer.removeChild(existingMoreWrapper);
+            }
+            morePromptsList.innerHTML = '';
+            if (morePromptsPopup) morePromptsPopup.style.display = 'none';
 
-        if (hideStartIndex !== -1) {
-            visiblePrompts.forEach((prompt, i) => {
-                if (i < hideStartIndex) {
-                    promptsToShow.push(prompt);
-                } else {
-                    promptsToHide.push(prompt);
-                }
-            });
-        } else {
-            promptsToShow.push(...visiblePrompts);
-        }
+            const promptsToShow = [];
+            const promptsToHide = [];
+            let accumulatedWidth = 0;
+            let hideStartIndex = -1;
 
-        promptsToShow.forEach(prompt => {
-            mainButtonsWrapper.appendChild(createPromptButton(prompt, selectedText, false));
-        });
-
-        if (promptsToHide.length > 0) {
-            const morePromptsWrapper = document.createElement('div');
-            morePromptsWrapper.className = 'more-prompts-wrapper';
+            const tempContainer = document.createElement('div');
+            tempContainer.style.visibility = 'hidden';
+            tempContainer.style.position = 'absolute';
+            document.body.appendChild(tempContainer);
             const moreButton = createPromptButton({ name: '...' }, '', false);
-            morePromptsWrapper.appendChild(moreButton);
-            promptButtonsContainer.appendChild(morePromptsWrapper);
+            tempContainer.appendChild(moreButton);
+            const moreButtonWidth = moreButton.offsetWidth;
+            tempContainer.innerHTML = '';
 
-            promptsToHide.forEach(prompt => {
-                morePromptsList.appendChild(createPromptButton(prompt, selectedText, true));
+            for (let i = 0; i < allButtons.length; i++) {
+                const button = allButtons[i];
+                tempContainer.appendChild(button);
+                const buttonWidth = button.offsetWidth;
+                const gap = 8;
+                
+                const spaceNeededForMore = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
+
+                if (accumulatedWidth + buttonWidth + gap + spaceNeededForMore <= containerWidth) {
+                    accumulatedWidth += buttonWidth + gap;
+                } else {
+                    hideStartIndex = i;
+                    break;
+                }
+            }
+            document.body.removeChild(tempContainer);
+
+            if (hideStartIndex !== -1) {
+                visiblePrompts.forEach((prompt, i) => {
+                    if (i < hideStartIndex) {
+                        promptsToShow.push(prompt);
+                    } else {
+                        promptsToHide.push(prompt);
+                    }
+                });
+            } else {
+                promptsToShow.push(...visiblePrompts);
+            }
+
+            promptsToShow.forEach(prompt => {
+                mainButtonsWrapper.appendChild(createPromptButton(prompt, selectedText, false));
             });
 
-            let hidePopupTimeout;
-            const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
-            const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
+            if (promptsToHide.length > 0) {
+                const morePromptsWrapper = document.createElement('div');
+                morePromptsWrapper.className = 'more-prompts-wrapper';
+                const moreButton = createPromptButton({ name: '...' }, '', false);
+                morePromptsWrapper.appendChild(moreButton);
+                promptButtonsContainer.appendChild(morePromptsWrapper);
 
-            morePromptsWrapper.addEventListener('mouseenter', showPopup);
-            morePromptsWrapper.addEventListener('mouseleave', hidePopup);
-            morePromptsPopup.addEventListener('mouseenter', showPopup);
-            morePromptsPopup.addEventListener('mouseleave', hidePopup);
-        }
-        
-        observer.observe(promptButtonsContainer);
+                promptsToHide.forEach(prompt => {
+                    morePromptsList.appendChild(createPromptButton(prompt, selectedText, true));
+                });
+
+                let hidePopupTimeout;
+                const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
+                const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
+
+                morePromptsWrapper.addEventListener('mouseenter', showPopup);
+                morePromptsWrapper.addEventListener('mouseleave', hidePopup);
+                morePromptsPopup.addEventListener('mouseenter', showPopup);
+                morePromptsPopup.addEventListener('mouseleave', hidePopup);
+            }
+        });
     });
 
     observer.observe(promptButtonsContainer);
@@ -838,12 +840,20 @@ function initializeSharedUI(elements) {
         }
     };
 
+    // Listen for messages from content scripts (e.g., text selection).
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             displayContextualUI(message.text);
             sendResponse({status: "Context displayed in sidebar"});
+        } else if (message.action === 'textDeselected') {
+            const contextContainer = document.getElementById('context-container');
+            // Only reset if the UI is currently visible.
+            if (contextContainer && contextContainer.style.display !== 'none') {
+                resetContextualUI();
+                sendResponse({status: "Context cleared in sidebar"});
+            }
         }
-        return true;
+        return true; // Keep the message channel open for async responses.
     });
 
     if (closeContextButton) {
