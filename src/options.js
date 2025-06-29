@@ -325,8 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const section = urlParams.get('section');
 
-        // Default to 'general' unless 'prompt' is explicitly specified.
-        if (section === 'prompt') {
+        // Default to 'general' unless 'prompts' is explicitly specified.
+        if (section === 'prompts') {
             switchView('prompts');
         } else {
             switchView('general'); 

@@ -788,8 +788,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     z-index: 10;
-    padding: 8px;
-    width: 220px;
+    padding: 6px;
+    width: 180px;
     margin-bottom: 8px;
     display: none;
 }
@@ -798,9 +798,9 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 8px 8px 8px;
+    padding: 0 6px 6px 6px;
     border-bottom: 1px solid #5f6368;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-size: 14px;
     color: #bdc1c6;
 }
@@ -825,10 +825,10 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     color: #e8eaed;
     width: 100%;
     text-align: left;
-    padding: 8px;
+    padding: 6px 10px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .more-prompt-item:hover {
