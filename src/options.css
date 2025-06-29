@@ -338,6 +338,13 @@ body, html {
     width: 100%;
 }
 
+/* Prompts View Styles */
+#prompts-view {
+    max-width: 1024px; /* A comfortable width for two columns */
+    margin: 0 auto;     /* Center the container horizontally */
+    width: 100%;
+}
+
 #url-list-management-container {
     background-color: #1e1e1e;
     border: 1px solid #333;
