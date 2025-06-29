@@ -8,7 +8,7 @@ body, html {
     flex-direction: column;
     position: relative;
     background-color: #1e1f2b;
-    overscroll-behavior-y: contain;
+    overflow: hidden; /* Prevent vertical scrolling and bouncing */
 }
 
 #controls-bar {
@@ -96,7 +96,6 @@ body, html {
     display: flex;
     flex-direction: row;
     overflow: hidden;
-    overscroll-behavior-y: contain;
     gap: 1px;
 }
 
