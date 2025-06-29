@@ -590,7 +590,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     resize: none;
     box-sizing: border-box;
     outline: none;
-    overflow-y: auto;
+    overflow-y: hidden; /* Changed from 'auto' to 'hidden' */
     background-color: transparent;
     color: #e8eaed;
     transition: padding-right 0.2s ease;

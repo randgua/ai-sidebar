@@ -520,8 +520,8 @@ function syncUrlListCheckboxes(urlListManagementDiv) {
 }
 
 /**
- * Automatically resizes the prompt textarea and manages button states.
- * This function prevents the unnecessary scrollbar and placeholder clipping.
+ * Automatically resizes the prompt textarea and manages its scrollbar visibility.
+ * The scrollbar will only appear when the content exceeds the maximum height.
  * @param {HTMLTextAreaElement} textarea The textarea element.
  * @param {HTMLElement} promptContainer The container for the prompt area.
  * @param {HTMLButtonElement} sendPromptButton The send button.
@@ -539,22 +539,20 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     const maxHeight = Math.floor(window.innerHeight / 3);
     textarea.style.maxHeight = `${maxHeight}px`;
 
-    // Reset height before calculating the new required height.
+    // Reset height to auto to get the correct scrollHeight for the current content.
     textarea.style.height = 'auto';
+    
+    const scrollHeight = textarea.scrollHeight;
 
-    // Get the computed styles to account for border widths, which are part of the
-    // total height when box-sizing is border-box.
-    const computedStyle = window.getComputedStyle(textarea);
-    const borderTop = parseFloat(computedStyle.borderTopWidth);
-    const borderBottom = parseFloat(computedStyle.borderBottomWidth);
-
-    // Calculate the correct height.
-    // scrollHeight includes content and padding. For a border-box element, we must add
-    // the vertical border widths to the scrollHeight to get the final correct height.
-    // This prevents a ~1px overflow that causes the scrollbar to appear unnecessarily.
-    const newHeight = textarea.scrollHeight + borderTop + borderBottom;
-
-    textarea.style.height = `${newHeight}px`;
+    // If content is taller than max-height, fix height to max-height and show scrollbar.
+    if (scrollHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`;
+        textarea.style.overflowY = 'auto';
+    } else {
+        // Otherwise, fit height to content and hide scrollbar.
+        textarea.style.height = `${scrollHeight}px`;
+        textarea.style.overflowY = 'hidden';
+    }
 
     // Defer cursor and scroll position updates to after the resize has been rendered.
     setTimeout(() => {
@@ -1066,5 +1064,9 @@ function initializeSharedUI(elements) {
     });
 
     loadUrls(iframeContainer, urlListManagementDiv, settingsPopup);
-    autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    
+    // Delay the initial resize to ensure the browser has calculated the layout.
+    setTimeout(() => {
+        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    }, 10);
 }
