@@ -558,7 +558,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.2s ease;
-    overflow: visible; /* Allow content like the 'more prompts' popup to be visible */
+    overflow: visible;
     padding: 8px;
     gap: 8px;
     position: relative;
@@ -748,16 +748,21 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #prompt-buttons-container {
     display: flex;
+    justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
-    flex-wrap: nowrap; /* Ensure buttons stay on a single line */
     padding-top: 4px;
-    overflow: hidden; /* Hide any buttons that overflow the container */
+}
+
+.main-prompt-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
 }
 
 .more-prompts-wrapper {
-    position: relative; /* Anchor for the absolute positioned popup */
-    flex-shrink: 0; /* Prevent the 'more' button from shrinking */
+    position: relative;
+    flex-shrink: 0;
 }
 
 .prompt-button {
@@ -778,8 +783,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #more-prompts-popup {
     position: absolute;
-    bottom: 100%; /* Position above the trigger button */
-    right: 0; /* Align to the right of the wrapper */
+    bottom: 100%;
+    right: 0;
     background-color: #2d2d2d;
     border: 1px solid #5f6368;
     border-radius: 8px;
@@ -787,8 +792,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     z-index: 10;
     padding: 8px;
     width: 220px;
-    margin-bottom: 8px; /* Space between button and popup */
-    display: none; /* Initially hidden */
+    margin-bottom: 8px;
+    display: none;
 }
 
 .more-prompts-header {

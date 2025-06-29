@@ -602,7 +602,6 @@ function resetContextualUI() {
     if(contextContainer) {
         contextContainer.style.display = 'none';
         contextContainer.querySelector('#context-content').textContent = '';
-        // Clear the stored text data
         delete contextContainer.dataset.text;
     }
     
@@ -625,12 +624,10 @@ function alignContextCloseButton() {
     const wrapper = document.querySelector('.prompt-input-wrapper');
 
     if (closeButton && copyButton && wrapper) {
-        // Calculate the distance from the wrapper's right edge to the copy button's right edge.
         const wrapperRect = wrapper.getBoundingClientRect();
         const copyButtonRect = copyButton.getBoundingClientRect();
         const rightOffset = wrapperRect.right - copyButtonRect.right;
         
-        // Apply this offset to the close button.
         closeButton.style.right = `${rightOffset}px`;
     }
 }
@@ -665,7 +662,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
     const morePromptsPopup = document.getElementById('more-prompts-popup');
     const morePromptsList = morePromptsPopup.querySelector('#more-prompts-list');
 
-    // Clear previous state
     promptButtonsContainer.innerHTML = '';
     morePromptsList.innerHTML = '';
     if (morePromptsPopup) morePromptsPopup.style.display = 'none';
@@ -674,98 +670,98 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
         return;
     }
 
-    const containerWidth = promptButtonsContainer.clientWidth;
-    const gap = 8; // As defined in the CSS for the container's gap
+    const mainButtonsWrapper = document.createElement('div');
+    mainButtonsWrapper.className = 'main-prompt-buttons';
+    promptButtonsContainer.appendChild(mainButtonsWrapper);
 
-    // Use a temporary, off-screen container for measurements to avoid screen flicker
-    const measurementContainer = document.createElement('div');
-    Object.assign(measurementContainer.style, {
-        visibility: 'hidden',
-        position: 'absolute',
-        display: 'flex', // Ensure it behaves like the real container for accurate measurements
-        gap: `${gap}px`
-    });
-    document.body.appendChild(measurementContainer);
+    const allButtons = visiblePrompts.map(prompt => createPromptButton(prompt, selectedText, false));
+    if (allButtons.length === 0) return;
 
-    // Measure the "..." button first to reserve its space
-    const moreButtonForMeasurement = createPromptButton({ name: '...' }, '', false);
-    measurementContainer.appendChild(moreButtonForMeasurement);
-    const moreButtonWidth = moreButtonForMeasurement.offsetWidth;
-    measurementContainer.innerHTML = '';
+    const observer = new ResizeObserver(entries => {
+        observer.disconnect();
 
-    let accumulatedWidth = 0;
-    const promptsToShow = [];
-    const promptsToHide = [];
-
-    // Partition prompts into visible and hidden groups based on calculated widths
-    for (const prompt of visiblePrompts) {
-        const button = createPromptButton(prompt, selectedText, false);
-        measurementContainer.appendChild(button);
-        const buttonWidth = button.offsetWidth;
+        const containerWidth = entries[0].contentRect.width;
         
-        // Check if adding the next button would exceed the available width.
-        // We also check against the width *with* the "more" button if there are items to hide.
-        if (accumulatedWidth + buttonWidth + gap + moreButtonWidth <= containerWidth) {
-            promptsToShow.push(prompt);
-            accumulatedWidth += buttonWidth + gap;
-        } else {
-            promptsToHide.push(prompt);
+        mainButtonsWrapper.innerHTML = '';
+        const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
+        if (existingMoreWrapper) {
+            promptButtonsContainer.removeChild(existingMoreWrapper);
         }
-        measurementContainer.innerHTML = ''; // Clear for next measurement
-    }
-    
-    // If we have hidden items, but now all items fit with the "more" button, move the last visible item to hidden.
-    if (promptsToHide.length > 0) {
-         // This logic is complex. A simpler approach is to check total width.
-    } else if (accumulatedWidth > containerWidth) {
-        // This handles the case where all buttons fit initially, but their total width is too large.
-        while(accumulatedWidth > containerWidth && promptsToShow.length > 0) {
-            const lastPrompt = promptsToShow.pop();
-            promptsToHide.unshift(lastPrompt); // Add to the beginning of the hidden list
-            
-            // Recalculate width
-            measurementContainer.innerHTML = '';
-            promptsToShow.forEach(p => measurementContainer.appendChild(createPromptButton(p, selectedText, false)));
-            accumulatedWidth = measurementContainer.offsetWidth;
-        }
-    }
+        morePromptsList.innerHTML = '';
+        if (morePromptsPopup) morePromptsPopup.style.display = 'none';
 
-    document.body.removeChild(measurementContainer); // Clean up measurement container
+        const promptsToShow = [];
+        const promptsToHide = [];
+        let accumulatedWidth = 0;
+        let hideStartIndex = -1;
 
-    // Render the visible buttons
-    promptsToShow.forEach(prompt => {
-        promptButtonsContainer.appendChild(createPromptButton(prompt, selectedText, false));
-    });
-
-    // If there are prompts to hide, render the "more" button and populate its menu
-    if (promptsToHide.length > 0) {
-        const morePromptsWrapper = document.createElement('div');
-        morePromptsWrapper.className = 'more-prompts-wrapper';
+        const tempContainer = document.createElement('div');
+        tempContainer.style.visibility = 'hidden';
+        tempContainer.style.position = 'absolute';
+        document.body.appendChild(tempContainer);
         const moreButton = createPromptButton({ name: '...' }, '', false);
-        morePromptsWrapper.appendChild(moreButton);
-        promptButtonsContainer.appendChild(morePromptsWrapper);
+        tempContainer.appendChild(moreButton);
+        const moreButtonWidth = moreButton.offsetWidth;
+        tempContainer.innerHTML = '';
 
-        promptsToHide.forEach(prompt => {
-            morePromptsList.appendChild(createPromptButton(prompt, selectedText, true));
+        for (let i = 0; i < allButtons.length; i++) {
+            const button = allButtons[i];
+            tempContainer.appendChild(button);
+            const buttonWidth = button.offsetWidth;
+            const gap = 8;
+            
+            const spaceNeededForMore = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
+
+            if (accumulatedWidth + buttonWidth + gap + spaceNeededForMore <= containerWidth) {
+                accumulatedWidth += buttonWidth + gap;
+            } else {
+                hideStartIndex = i;
+                break;
+            }
+        }
+        document.body.removeChild(tempContainer);
+
+        if (hideStartIndex !== -1) {
+            visiblePrompts.forEach((prompt, i) => {
+                if (i < hideStartIndex) {
+                    promptsToShow.push(prompt);
+                } else {
+                    promptsToHide.push(prompt);
+                }
+            });
+        } else {
+            promptsToShow.push(...visiblePrompts);
+        }
+
+        promptsToShow.forEach(prompt => {
+            mainButtonsWrapper.appendChild(createPromptButton(prompt, selectedText, false));
         });
 
-        // Add hover logic for the popup
-        let hidePopupTimeout;
-        const showPopup = () => {
-            clearTimeout(hidePopupTimeout);
-            morePromptsPopup.style.display = 'block';
-        };
-        const hidePopup = () => {
-            hidePopupTimeout = setTimeout(() => {
-                morePromptsPopup.style.display = 'none';
-            }, 200);
-        };
+        if (promptsToHide.length > 0) {
+            const morePromptsWrapper = document.createElement('div');
+            morePromptsWrapper.className = 'more-prompts-wrapper';
+            const moreButton = createPromptButton({ name: '...' }, '', false);
+            morePromptsWrapper.appendChild(moreButton);
+            promptButtonsContainer.appendChild(morePromptsWrapper);
 
-        morePromptsWrapper.addEventListener('mouseenter', showPopup);
-        morePromptsWrapper.addEventListener('mouseleave', hidePopup);
-        morePromptsPopup.addEventListener('mouseenter', showPopup);
-        morePromptsPopup.addEventListener('mouseleave', hidePopup);
-    }
+            promptsToHide.forEach(prompt => {
+                morePromptsList.appendChild(createPromptButton(prompt, selectedText, true));
+            });
+
+            let hidePopupTimeout;
+            const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
+            const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
+
+            morePromptsWrapper.addEventListener('mouseenter', showPopup);
+            morePromptsWrapper.addEventListener('mouseleave', hidePopup);
+            morePromptsPopup.addEventListener('mouseenter', showPopup);
+            morePromptsPopup.addEventListener('mouseleave', hidePopup);
+        }
+        
+        observer.observe(promptButtonsContainer);
+    });
+
+    observer.observe(promptButtonsContainer);
 }
 
 
@@ -780,28 +776,23 @@ async function displayContextualUI(selectedText) {
     const promptInputDivider = document.querySelector('.prompt-input-divider');
     const openPromptSettings = document.querySelector('#open-prompt-settings');
     
-    // 1. Populate and show the context container
     contextContent.textContent = selectedText;
     contextContainer.style.display = 'flex';
-    contextContainer.dataset.text = selectedText; // Store text for resize handler.
+    contextContainer.dataset.text = selectedText;
     alignContextCloseButton();
 
-    // 2. Show the button container and divider so we can measure it
     promptButtonsContainer.style.display = 'flex';
     if (promptInputDivider) promptInputDivider.style.display = 'block';
 
-    // 3. Fetch prompts from storage, with a fallback to defaults.
     let result = await chrome.storage.sync.get('prompts');
     let prompts = result.prompts;
     if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
-        prompts = defaultPrompts; // Use the default list if storage is empty.
+        prompts = defaultPrompts;
     }
     const visiblePrompts = prompts.filter(p => p.showInMenu);
 
-    // 4. Render the buttons dynamically.
     renderResponsivePrompts(selectedText, visiblePrompts);
 
-    // 5. Add listener for the settings gear icon
     if (openPromptSettings && !openPromptSettings.listenerAdded) {
         openPromptSettings.addEventListener('click', () => {
             chrome.tabs.create({ url: 'options.html?section=prompts' });
@@ -832,16 +823,13 @@ function initializeSharedUI(elements) {
         if (isContextVisible) {
             const contextText = contextContainer.querySelector('#context-content').textContent.trim();
             if (contextText) {
-                // Prepend context to the user's prompt
                 const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
                 sendMessageToIframes(iframeContainer, finalPrompt);
             }
         } else if (promptText) {
-            // Send only the user's prompt if no context is active
             sendMessageToIframes(iframeContainer, promptText);
         }
 
-        // Reset UI after sending
         if (promptText || isContextVisible) {
             promptInput.value = '';
             resetContextualUI();
@@ -850,7 +838,6 @@ function initializeSharedUI(elements) {
         }
     };
 
-    // Listen for text selections from content scripts (main page).
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             displayContextualUI(message.text);
@@ -1001,7 +988,6 @@ function initializeSharedUI(elements) {
 
     promptInput.addEventListener('input', () => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
     
-    // Debounce function to limit how often a function gets called.
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -1011,7 +997,6 @@ function initializeSharedUI(elements) {
         };
     }
 
-    // This handler re-renders the prompt buttons on resize if the context UI is visible.
     const handleResize = debounce(async () => {
         if (contextContainer.style.display === 'flex') {
             const selectedText = contextContainer.dataset.text;
