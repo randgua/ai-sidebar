@@ -12,6 +12,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ status: "Side panel opening" });
     }
+    // The 'injectAndSend' action is no longer used and has been removed.
     return true; // Keep the message channel open for the response.
 });
 

@@ -429,12 +429,13 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     color: #e8eaed;
     font-size: 14px;
     padding-right: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #close-context-button {
-    position: absolute;
-    top: 8px;
-    right: 8px;
+    position: static;
     background: none;
     border: none;
     color: #8ab4f7;
@@ -547,7 +548,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .prompt-input-wrapper {
-    /* position: relative; is removed to prevent it from being the positioning context */
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -566,15 +566,15 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .prompt-input-row {
-    position: relative; /* Set as positioning context for the clear button */
+    position: relative;
     display: flex;
     align-items: flex-end;
     width: 100%;
 }
 
-.prompt-input-row.with-context {
+.prompt-input-divider {
     border-top: 1px solid #5f6368;
-    padding-top: 8px;
+    margin: -4px 0 4px 0;
 }
 
 #prompt-input {
@@ -591,11 +591,10 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     overflow-y: auto;
     background-color: transparent;
     color: #e8eaed;
-    transition: padding-right 0.2s ease; /* Smooth transition for padding change */
+    transition: padding-right 0.2s ease;
     overscroll-behavior: contain;
 }
 
-/* Adjust textarea padding when the clear button is moved to the top right */
 .prompt-input-row.multi-line-input #prompt-input {
     padding-right: 40px;
 }
@@ -642,7 +641,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* Default layout for single-line: flex item in order */
     margin: 8px 2px 8px 8px;
     order: 1;
     transition: background-color 0.2s ease;
@@ -652,7 +650,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #4a4d5f;
 }
 
-/* Style for multi-line: position button in the top-right corner of the row */
 #clear-prompt-button.top-right {
     position: absolute;
     top: 8px;
@@ -744,4 +741,95 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #send-prompt-button:disabled .material-symbols-outlined {
     opacity: 0.5;
+}
+
+/* MODIFIED: Styles for contextual prompt buttons and popup */
+#prompt-buttons-container {
+    display: flex;
+    justify-content: space-between; /* Positions main buttons left, more button right */
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+.main-prompt-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.more-prompts-wrapper {
+    position: relative; /* Anchor for the absolute positioned popup */
+}
+
+.prompt-button {
+    background-color: #4a4d5f;
+    color: #e8eaed;
+    border: 1px solid #5f6368;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.prompt-button:hover {
+    background-color: #5f6368;
+}
+
+#more-prompts-popup {
+    position: absolute;
+    bottom: 100%; /* Position above the trigger button */
+    right: 0; /* Align to the right of the wrapper */
+    background-color: #2d2d2d;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10;
+    padding: 8px;
+    width: 220px;
+    margin-bottom: 8px; /* Space between button and popup */
+    display: none; /* Initially hidden */
+}
+
+.more-prompts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px 8px 8px;
+    border-bottom: 1px solid #5f6368;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #bdc1c6;
+}
+
+#open-prompt-settings {
+    font-size: 20px;
+    cursor: pointer;
+    color: #9aa0a6;
+}
+#open-prompt-settings:hover {
+    color: #e8eaed;
+}
+
+#more-prompts-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.more-prompt-item {
+    background: none;
+    border: none;
+    color: #e8eaed;
+    width: 100%;
+    text-align: left;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.more-prompt-item:hover {
+    background-color: #4a4d5f;
 }

@@ -1,15 +1,8 @@
 // Check if the runtime is available. If not, this content script is a "zombie"
 // from a previous version of the extension that has been updated or disabled.
-// In that case, we should not add any listeners or try to communicate.
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-    // This script runs inside each iframe to receive prompts and interact with the page.
 
-    /**
-     * Waits for an element to appear in the DOM.
-     * @param {string} selector The CSS selector for the element.
-     * @param {number} timeout The maximum time to wait in milliseconds.
-     * @returns {Promise<Element|null>} A promise that resolves with the element or null if not found.
-     */
+    // Waits for an element to appear in the DOM.
     function waitForElement(selector, timeout = 8000) {
         return new Promise(resolve => {
             const initialElement = document.querySelector(selector);
@@ -64,20 +57,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         'chat.qwen.ai': getQwenOutput,
     };
 
-    /**
-     * Routes the prompt to a site-specific handler.
-     * @param {string} prompt The text to be injected.
-     */
+    // Routes the prompt to a site-specific handler.
     async function handlePromptInjection(prompt) {
         const hostname = window.location.hostname;
         const handler = siteHandlers[hostname] || handleGeneric;
         await handler(prompt);
     }
 
-    /**
-     * Site-specific handler for aistudio.google.com.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for aistudio.google.com.
     async function handleAiStudio(prompt) {
         const selector = 'textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Start typing a prompt"]';
         const inputArea = await waitForElement(selector);
@@ -95,10 +82,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Site-specific handler for gemini.google.com.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for gemini.google.com.
     async function handleGemini(prompt) {
         const inputArea = await waitForElement('div[role="textbox"][contenteditable="true"]');
         if (!inputArea) return;
@@ -112,10 +96,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Site-specific handler for chatgpt.com.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for chatgpt.com.
     async function handleChatGPT(prompt) {
         const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
         const inputArea = await waitForElement(selector);
@@ -137,10 +118,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Site-specific handler for claude.ai.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for claude.ai.
     async function handleClaude(prompt) {
         const inputArea = await waitForElement('div[contenteditable="true"][aria-label="Send a message"]');
         if (!inputArea) return;
@@ -154,10 +132,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Site-specific handler for perplexity.ai.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for perplexity.ai.
     async function handlePerplexity(prompt) {
         const inputArea = await waitForElement('textarea[placeholder*="Ask anything"]');
         if (!inputArea) {
@@ -174,10 +149,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Site-specific handler for chat.deepseek.com.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for chat.deepseek.com.
     async function handleDeepSeek(prompt) {
         const inputArea = await waitForElement('textarea#chat-input');
         if (!inputArea) {
@@ -199,10 +171,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         inputArea.dispatchEvent(enterEvent);
     }
 
-    /**
-     * Site-specific handler for chat.qwen.ai.
-     * @param {string} prompt The text to be injected.
-     */
+    // Site-specific handler for chat.qwen.ai.
     async function handleQwen(prompt) {
         const inputArea = await waitForElement('textarea[placeholder*="How can I help you"]');
         if (!inputArea) {
@@ -221,10 +190,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Generic handler for other websites.
-     * @param {string} prompt The text to be injected.
-     */
+    // Generic handler for other websites.
     async function handleGeneric(prompt) {
         const inputArea = await waitForElement('textarea, [role="textbox"]');
         if (!inputArea) return;
@@ -243,10 +209,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    /**
-     * Extracts the last response from AI Studio.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from AI Studio.
     async function getAIStudioOutput() {
         const allTurns = document.querySelectorAll('ms-chat-turn');
         const modelTurns = Array.from(allTurns).filter(turn => turn.querySelector('[data-turn-role="Model"]'));
@@ -261,10 +224,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last response from Gemini.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from Gemini.
     async function getGeminiOutput() {
         const responses = document.querySelectorAll('model-response');
         if (responses.length > 0) {
@@ -278,10 +238,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last assistant message from ChatGPT.
-     * @returns {Promise<string>} The text of the last message.
-     */
+    // Extracts the last assistant message from ChatGPT.
     async function getChatGPTOutput() {
         const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
         if (assistantMessages.length > 0) {
@@ -294,10 +251,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the text from the last message group from Claude.
-     * @returns {Promise<string>} The text of the last message group.
-     */
+    // Extracts the text from the last message group from Claude.
     async function getClaudeOutput() {
         const messageGroups = document.querySelectorAll('[data-testid^="message-"]');
         if (messageGroups.length > 0) {
@@ -309,10 +263,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last response from Grok.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from Grok.
     async function getGrokOutput() {
         const responses = document.querySelectorAll('div.response-content-markdown');
         if (responses.length > 0) {
@@ -324,10 +275,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last response from Perplexity.ai.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from Perplexity.ai.
     async function getPerplexityOutput() {
         const responses = document.querySelectorAll('div[id^="markdown-content-"]');
         if (responses.length > 0) {
@@ -339,10 +287,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last response from DeepSeek.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from DeepSeek.
     async function getDeepSeekOutput() {
         const contentBlocks = document.querySelectorAll('div.ds-markdown');
         if (contentBlocks.length > 0) {
@@ -354,10 +299,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Extracts the last response from Qwen.
-     * @returns {Promise<string>} The text of the last response.
-     */
+    // Extracts the last response from Qwen.
     async function getQwenOutput() {
         const responses = document.querySelectorAll('div.markdown-content-container');
         if (responses.length > 0) {
@@ -369,9 +311,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         return '';
     }
 
-    /**
-     * Routes the output extraction to a site-specific handler.
-     */
+    // Routes the output extraction to a site-specific handler.
     async function handleOutputExtraction() {
         const hostname = window.location.hostname;
         const handler = siteOutputHandlers[hostname];
@@ -390,6 +330,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }, '*');
     }
 
+    // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
         if (event.data.action === 'injectPrompt') {
@@ -406,13 +347,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     });
 
-    /**
-     * A utility to delay function execution until after a specified wait time has passed
-     * without the function being called.
-     * @param {Function} func The function to debounce.
-     * @param {number} wait The debounce duration in milliseconds.
-     * @returns {Function} The debounced function.
-     */
+    // --- Start of new text selection logic ---
+
+    // A utility to delay function execution.
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -422,9 +359,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         };
     }
 
-    /**
-     * Checks for selected text and sends it to the extension runtime.
-     */
+    // Checks for selected text and sends it to the side panel.
     function handleSelection() {
         // Avoid conflicts with text inputs.
         if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable) {
@@ -432,13 +367,18 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
         const selectedText = window.getSelection().toString().trim();
         if (selectedText) {
+            // Send the selected text to the background script or side panel.
             chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
         }
     }
 
-    // Debounce the selection handler to avoid excessive firing during selection changes.
+    // Debounce the selection handler to avoid excessive firing.
     const debouncedHandleSelection = debounce(handleSelection, 250);
 
-    // Listen for any changes to the text selection.
-    document.addEventListener('selectionchange', debouncedHandleSelection);
+    // Listen for selection changes in the document.
+    // This will only run in the top-level frame, not in the extension's iframes.
+    if (window.self === window.top) {
+        document.addEventListener('selectionchange', debouncedHandleSelection);
+    }
+    // --- End of new text selection logic ---
 }

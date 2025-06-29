@@ -20,6 +20,42 @@ const defaultUrls = [
     { id: crypto.randomUUID(), url: "https://www.doubao.com/chat/", selected: false }
 ];
 
+// --- MODIFICATION START ---
+// Default prompts to be used if none are found in storage.
+const defaultPrompts = [
+    { id: crypto.randomUUID(), name: 'Explain', content: 'Please explain clearly and concisely in ${lang}: """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Summarize', content: 'Summarize the following text into three key points: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Translate', content: 'Translate the following text into ${lang}: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Explain codes', content: 'Explain the following code snippet, describing its purpose, inputs, and outputs: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Web Search', content: 'Perform a web search for: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Outline...', content: 'Create an outline for the following topic: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Simplify language', content: 'Simplify the language of the following text to make it easier to understand: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More engaging', content: 'Rewrite the following text to be more engaging: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More apologetic', content: 'Rewrite the following text to be more apologetic: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add humor', content: 'Add some humor to the following text: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add statistics', content: 'Enhance the following text by adding relevant (placeholder) statistics: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add details', content: '# Role: Detail Enhancer\n\nYou are a highly skilled AI trained in language understanding and detail enhancement. You will read the original text and add some details to make it more believable.\n\n## Rules\n- Retain the original meaning and structure.\n- Enhance the text with additional details to make it more believable.\n- Only provide the output and nothing else.\n- Do not wrap responses in quotes.\n- Respond in the same language as the original text.\n\n# Original Text """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More persuasive', content: 'Make the following text more persuasive: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Sales email...', content: 'Write a sales email about the following: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Meeting agenda...', content: 'Create a meeting agenda for the following topic: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'To-do list...', content: 'Create a to-do list based on the following: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Creative story', content: 'Write a creative story based on the following prompt: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Press release', content: 'Write a press release about the following: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Social media post...', content: 'Write a social media post about the following: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Paragraph about...', content: 'Write a paragraph about the following: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Improve writing', content: 'Improve the writing of the following text: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Fix spelling & grammar', content: 'Fix the spelling and grammar of the following text: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Answer this question', content: 'Answer the following question: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Find action items', content: 'Identify the action items from the following text: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Make shorter', content: 'Make the following text shorter: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Make longer', content: 'Make the following text longer: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Change tone', content: 'Change the tone of the following text to be more ${tone}: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Brainstorm about...', content: 'Brainstorm ideas about the following topic: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Blog post...', content: 'Write a blog post about the following topic: "${input}"', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Continue writing', content: 'Continue writing from the following text.', showInMenu: false },
+];
+// --- MODIFICATION END ---
+
 /**
  * Displays a short-lived confirmation message at the bottom of the screen.
  * @param {string} message The message to display.
@@ -34,18 +70,12 @@ function showGlobalConfirmationMessage(message, duration = 3000) {
             borderRadius: '5px', zIndex: '2000', opacity: '0',
             transition: 'opacity 0.3s ease-in-out'
         });
-        confirmationMessageElement.addEventListener('transitionend', () => {
-            if (confirmationMessageElement.style.opacity === '0') {
-                confirmationMessageElement.style.visibility = 'hidden';
-            }
-        });
         document.body.appendChild(confirmationMessageElement);
     }
 
     if (confirmationMessageElement.timeoutId) clearTimeout(confirmationMessageElement.timeoutId);
 
     confirmationMessageElement.textContent = message;
-    confirmationMessageElement.style.visibility = 'visible';
     confirmationMessageElement.style.opacity = '1';
 
     confirmationMessageElement.timeoutId = setTimeout(() => {
@@ -214,7 +244,6 @@ function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
 
             const oldUrlKeyInCache = urlEntry.url;
             urlEntry.url = formattedUrl;
-            // When a URL is edited, remove the old iframe from the cache.
             if (iframeCache[oldUrlKeyInCache]) {
                 delete iframeCache[oldUrlKeyInCache];
             }
@@ -527,24 +556,15 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
         const promptInputWrapper = textarea.closest('.prompt-input-wrapper');
 
         if (hasText && promptInputWrapper) {
-            // Get computed styles to correctly calculate content height.
             const styles = getComputedStyle(textarea);
             const singleLineHeight = parseFloat(styles.lineHeight);
             const paddingTop = parseFloat(styles.paddingTop);
             const paddingBottom = parseFloat(styles.paddingBottom);
-
-            // Calculate the actual height of the text content, excluding padding.
             const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
-
-            // Check if the content height is greater than a single line's height.
-            // Use a small tolerance (e.g., 1) for floating point inaccuracies.
             const isMultiLine = textContentHeight > singleLineHeight + 1;
-
-            // Toggle classes to switch between single-line and multi-line layouts.
             clearPromptButton.classList.toggle('top-right', isMultiLine);
             promptInputWrapper.classList.toggle('multi-line-input', isMultiLine);
         } else if (promptInputWrapper) {
-            // Ensure classes are removed when there is no text.
             clearPromptButton.classList.remove('top-right');
             promptInputWrapper.classList.remove('multi-line-input');
         }
@@ -573,6 +593,136 @@ function sendMessageToIframes(iframeContainer, prompt) {
 }
 
 /**
+ * Resets the contextual UI elements to their default hidden state.
+ */
+function resetContextualUI() {
+    const contextContainer = document.getElementById('context-container');
+    const promptButtonsContainer = document.getElementById('prompt-buttons-container');
+    const morePromptsPopup = document.getElementById('more-prompts-popup');
+    const promptInputDivider = document.querySelector('.prompt-input-divider');
+
+    if(contextContainer) contextContainer.style.display = 'none';
+    if(contextContainer) contextContainer.querySelector('#context-content').textContent = '';
+    
+    if(promptButtonsContainer) promptButtonsContainer.style.display = 'none';
+    if(promptButtonsContainer) promptButtonsContainer.innerHTML = '';
+
+    if(morePromptsPopup) morePromptsPopup.style.display = 'none';
+    
+    if (promptInputDivider) {
+        promptInputDivider.style.display = 'none';
+    }
+}
+
+/**
+ * Displays the contextual UI with the selected text and prompt buttons.
+ * @param {string} selectedText The text selected by the user on the webpage.
+ */
+async function displayContextualUI(selectedText) {
+    const iframeContainer = document.getElementById('iframe-container');
+    const contextContainer = document.getElementById('context-container');
+    const contextContent = contextContainer.querySelector('#context-content');
+    const promptButtonsContainer = document.getElementById('prompt-buttons-container');
+    const morePromptsPopup = document.getElementById('more-prompts-popup');
+    
+    if (!morePromptsPopup) {
+        console.error("AI Sidebar: #more-prompts-popup element not found. Cannot display contextual UI.");
+        return;
+    }
+
+    const morePromptsList = morePromptsPopup.querySelector('#more-prompts-list');
+    const openPromptSettings = morePromptsPopup.querySelector('#open-prompt-settings');
+    const promptInputDivider = document.querySelector('.prompt-input-divider');
+
+    // 1. Populate and show the context container
+    contextContent.textContent = selectedText;
+    contextContainer.style.display = 'flex';
+
+    // 2. Fetch prompts from storage, with a fallback to defaults.
+    // --- MODIFICATION START ---
+    let result = await chrome.storage.sync.get('prompts');
+    let prompts = result.prompts;
+    if (!prompts || prompts.length === 0) {
+        prompts = defaultPrompts; // Use the default list if storage is empty.
+    }
+    const visiblePrompts = prompts.filter(p => p.showInMenu);
+    // --- MODIFICATION END ---
+
+    // 3. Clear previous buttons and generate new ones
+    promptButtonsContainer.innerHTML = '';
+    morePromptsList.innerHTML = '';
+
+    if (visiblePrompts.length > 0) {
+        promptButtonsContainer.style.display = 'flex';
+        if (promptInputDivider) promptInputDivider.style.display = 'block';
+
+        const mainPrompts = visiblePrompts.slice(0, 3);
+        const morePrompts = visiblePrompts.slice(3);
+
+        // Function to create a prompt button and its click handler
+        const createPromptButton = (prompt, isMoreMenuItem = false) => {
+            const button = document.createElement('button');
+            button.textContent = prompt.name;
+            button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
+            button.addEventListener('click', () => {
+                const fullPrompt = `Based on the following text:\n\n------\n${selectedText}\n------\n\n${prompt.content}`;
+                sendMessageToIframes(iframeContainer, fullPrompt);
+                resetContextualUI();
+            });
+            return button;
+        };
+
+        const mainButtonsWrapper = document.createElement('div');
+        mainButtonsWrapper.className = 'main-prompt-buttons';
+        mainPrompts.forEach(prompt => {
+            mainButtonsWrapper.appendChild(createPromptButton(prompt));
+        });
+        promptButtonsContainer.appendChild(mainButtonsWrapper);
+
+        if (morePrompts.length > 0) {
+            const morePromptsWrapper = document.createElement('div');
+            morePromptsWrapper.className = 'more-prompts-wrapper';
+
+            const moreButton = document.createElement('button');
+            moreButton.textContent = '...';
+            moreButton.className = 'prompt-button';
+            
+            morePromptsWrapper.appendChild(moreButton);
+            promptButtonsContainer.appendChild(morePromptsWrapper);
+
+            let hidePopupTimeout;
+            const showPopup = () => {
+                clearTimeout(hidePopupTimeout);
+                morePromptsPopup.style.display = 'block';
+            };
+            const hidePopup = () => {
+                hidePopupTimeout = setTimeout(() => {
+                    morePromptsPopup.style.display = 'none';
+                }, 200);
+            };
+
+            morePromptsWrapper.addEventListener('mouseenter', showPopup);
+            morePromptsWrapper.addEventListener('mouseleave', hidePopup);
+            morePromptsPopup.addEventListener('mouseenter', showPopup);
+            morePromptsPopup.addEventListener('mouseleave', hidePopup);
+
+            morePrompts.forEach(prompt => {
+                morePromptsList.appendChild(createPromptButton(prompt, true));
+            });
+        }
+    } else {
+        // Hide containers if no prompts are available
+        promptButtonsContainer.style.display = 'none';
+        if (promptInputDivider) promptInputDivider.style.display = 'none';
+    }
+
+    // Add listener for the settings gear icon
+    openPromptSettings.addEventListener('click', () => {
+        chrome.tabs.create({ url: 'options.html?section=prompts' });
+    });
+}
+
+/**
  * Main function to initialize all shared UI logic and event listeners.
  * @param {object} elements A dictionary of DOM elements required by the functions.
  */
@@ -585,50 +735,44 @@ function initializeSharedUI(elements) {
     } = elements;
 
     const contextContainer = document.getElementById('context-container');
-    const contextContent = document.getElementById('context-content');
     const closeContextButton = document.getElementById('close-context-button');
-    const promptInputRow = document.querySelector('.prompt-input-row');
 
     const executeSend = () => {
         let promptText = promptInput.value.trim();
         
         const isContextVisible = contextContainer.style.display === 'flex';
         if (isContextVisible) {
-            const contextText = contextContent.textContent.trim();
+            const contextText = contextContainer.querySelector('#context-content').textContent.trim();
             if (contextText) {
-                promptText = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}\n\n`;
+                // Prepend context to the user's prompt
+                const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
+                sendMessageToIframes(iframeContainer, finalPrompt);
             }
+        } else if (promptText) {
+            // Send only the user's prompt if no context is active
+            sendMessageToIframes(iframeContainer, promptText);
         }
 
-        if (promptText) {
-            sendMessageToIframes(iframeContainer, promptText);
+        // Reset UI after sending
+        if (promptText || isContextVisible) {
             promptInput.value = '';
-            
-            contextContainer.style.display = 'none';
-            contextContent.textContent = '';
-            promptInputRow.classList.remove('with-context');
-
+            resetContextualUI();
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-            setTimeout(() => promptInput.focus(), 300);
+            setTimeout(() => promptInput.focus(), 100);
         }
     };
 
+    // Listen for text selections from content scripts (main page).
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
-            contextContent.textContent = message.text;
-            contextContainer.style.display = 'flex';
-            promptInputRow.classList.add('with-context');
-            promptInput.focus();
+            displayContextualUI(message.text);
+            sendResponse({status: "Context displayed in sidebar"});
         }
         return true;
     });
 
     if (closeContextButton) {
-        closeContextButton.addEventListener('click', () => {
-            contextContainer.style.display = 'none';
-            contextContent.textContent = '';
-            promptInputRow.classList.remove('with-context');
-        });
+        closeContextButton.addEventListener('click', resetContextualUI);
     }
 
     addUrlButton.addEventListener('click', () => {
@@ -723,7 +867,6 @@ function initializeSharedUI(elements) {
             if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
         });
 
-        // This is a "best effort" collection. It waits for a fixed period for iframes to respond.
         setTimeout(() => {
             if (collectedOutputs.length > 0) {
                 const prettyNames = {
@@ -754,7 +897,6 @@ function initializeSharedUI(elements) {
     togglePromptButton.addEventListener('click', () => {
         promptContainer.classList.toggle('collapsed');
         const isCollapsed = promptContainer.classList.contains('collapsed');
-        // Add a class to the body to indicate the prompt area's collapsed state.
         document.body.classList.toggle('prompt-collapsed', isCollapsed);
         togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
         togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
@@ -776,6 +918,14 @@ function initializeSharedUI(elements) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             executeSend();
+        }
+    });
+
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'sync' && changes.managedUrls) {
+            managedUrls = changes.managedUrls.newValue;
+            renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup);
+            updateIframes(iframeContainer, urlListManagementDiv);
         }
     });
 

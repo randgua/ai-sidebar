@@ -1,0 +1,30 @@
+/* Styling for the prompt menu injected into web pages */
+#ai-sidebar-prompt-menu {
+    position: absolute;
+    z-index: 2147483647;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: Arial, sans-serif;
+}
+
+.ai-sidebar-prompt-item {
+    background-color: transparent;
+    border: none;
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.ai-sidebar-prompt-item:hover {
+    background-color: #f0f0f0;
+}

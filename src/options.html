@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sidebar Settings</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div id="app-container">
+        <div id="left-sidebar">
+            <div class="sidebar-header">
+                <img id="extension-logo" src="icons/icon48.png" alt="Extension Logo">
+                <span class="menu-text">AI Sidebar</span>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item" data-view="general">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span class="menu-text">General</span>
+                </div>
+                <div class="menu-item active" data-view="prompts">
+                    <span class="material-symbols-outlined">style</span>
+                    <span class="menu-text">Prompts</span>
+                </div>
+            </div>
+        </div>
+        <div id="main-content">
+            <!-- General Settings View -->
+            <div id="general-view" class="view-container" style="display: none;">
+                 <div class="main-header">
+                    <h1>General Settings</h1>
+                </div>
+                <div id="url-list-management-container">
+                    <h3>Manage Website Panels</h3>
+                    <p class="settings-description">Add, remove, or reorder the websites that appear in your sidebar. Check the box to show a website panel.</p>
+                    <div id="url-list-management"></div>
+                    <div class="add-url-section">
+                        <input type="text" id="new-url-input" placeholder="Enter new URL (e.g., https://example.com)">
+                        <button id="add-url-button" class="action-button">Add URL</button>
+                    </div>
+                    <div class="popup-actions-section">
+                        <button id="invert-selection-button" class="secondary-button">Invert Selection</button>
+                        <button id="select-all-button" class="secondary-button">Select All</button>
+                        <button id="clear-selection-button" class="secondary-button">Clear All Selections</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompts View -->
+            <div id="prompts-view" class="view-container">
+                <div class="main-header">
+                    <h1>Prompts</h1>
+                    <button id="new-prompt-button" class="action-button">+ New Prompt</button>
+                </div>
+                <div class="prompts-area">
+                    <div class="prompt-column">
+                        <div class="column-header">
+                            <span class="material-symbols-outlined">visibility</span>
+                            <span>Show in list</span>
+                        </div>
+                        <div id="shown-prompts-list" class="prompt-list-container">
+                            <!-- Draggable prompts shown in the menu will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="prompt-column">
+                        <div class="column-header">
+                            <span class="material-symbols-outlined">visibility_off</span>
+                            <span>Hide from list</span>
+                        </div>
+                        <div id="hidden-prompts-list" class="prompt-list-container">
+                            <!-- Draggable prompts hidden from the menu will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing prompts -->
+    <div id="prompt-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">New Prompt</h2>
+                <button id="close-modal-button" class="close-button">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="prompt-form">
+                    <input type="hidden" id="prompt-id">
+                    <div class="form-group">
+                        <label for="prompt-name">Prompt Name</label>
+                        <input type="text" id="prompt-name" placeholder="e.g., Summarize" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prompt-content">Prompt Content</label>
+                        <textarea id="prompt-content" placeholder="e.g., Summarize the following text into three key points." rows="6" required></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="cancel-button" class="secondary-button">Cancel</button>
+                        <button type="submit" id="save-prompt-button" class="action-button">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Confirmation Modal -->
+    <div id="custom-confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <p id="custom-confirm-message"></p>
+            <div class="modal-actions">
+                <button id="confirm-yes-button">Delete</button>
+                <button id="confirm-no-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>

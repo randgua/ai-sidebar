@@ -1,0 +1,442 @@
+/* General Body and App Container Styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: #121212; /* Dark background */
+    color: #e0e0e0; /* Light text */
+    overflow: hidden;
+}
+
+#app-container {
+    display: flex;
+    height: 100%;
+}
+
+/* Sidebar Styles */
+#left-sidebar {
+    width: 240px;
+    background-color: #1e1e1e; /* Slightly lighter dark for sidebar */
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0f0f0;
+}
+
+#extension-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 12px;
+}
+
+.sidebar-menu .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #a0a0a0;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-menu .menu-item:hover {
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+.sidebar-menu .menu-item.active {
+    background-color: #3a3a3a;
+    color: #ffffff;
+}
+
+.sidebar-menu .menu-item .material-symbols-outlined {
+    margin-right: 16px;
+    font-size: 20px;
+}
+
+/* Main Content Styles */
+#main-content {
+    flex-grow: 1;
+    padding: 24px 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+}
+
+.main-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.action-button {
+    padding: 8px 16px;
+    border: none;
+    background-color: #7f56d9;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #6941c6;
+}
+
+/* View Container Styles */
+.view-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Prompts Area Layout */
+.prompts-area {
+    display: flex;
+    gap: 24px;
+    flex-grow: 1;
+    min-height: 0; /* Important for flex children with overflow */
+}
+
+.prompt-column {
+    flex: 1;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Contains the list */
+}
+
+.column-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #c0c0c0;
+}
+
+.column-header .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.prompt-list-container {
+    padding: 8px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.prompt-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #282828;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: grab;
+    border: 1px solid #383838;
+    transition: background-color 0.2s;
+}
+
+.prompt-item:hover {
+    background-color: #333;
+}
+
+.prompt-item.dragging {
+    opacity: 0.5;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #777;
+    margin-right: 10px;
+}
+
+.prompt-item-icon {
+    color: #aaa;
+    margin-right: 10px;
+}
+
+.prompt-item-name {
+    flex-grow: 1;
+    color: #e0e0e0;
+}
+
+.prompt-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0; /* Hide actions by default */
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+}
+
+.prompt-item:hover .prompt-item-actions {
+    opacity: 1; /* Show actions on hover */
+    pointer-events: auto;
+}
+
+.prompt-item-actions button {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.prompt-item-actions button:hover {
+    color: #fff;
+    background-color: #444;
+}
+
+.prompt-item-actions .material-symbols-outlined {
+    font-size: 18px;
+}
+
+
+/* Modal Styles (Dark Theme) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #f0f0f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    color: #aaa;
+}
+.close-button:hover {
+    background-color: #444;
+    color: #fff;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #c0c0c0;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background-color: #222;
+    color: #e0e0e0;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #7f56d9;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.secondary-button {
+    padding: 8px 16px;
+    border: 1px solid #555;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.secondary-button:hover {
+    background-color: #444;
+}
+
+/* General Settings Styles */
+#general-view {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+#url-list-management-container {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.settings-description {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-top: 4px;
+    margin-bottom: 20px;
+}
+
+#url-list-management {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.url-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #383838;
+    background-color: #282828;
+}
+
+.url-item .drag-handle {
+    cursor: grab;
+    color: #777;
+    margin-right: 12px;
+    font-size: 22px;
+}
+
+.url-item input[type="checkbox"] {
+    margin-right: 12px;
+    width: 16px;
+    height: 16px;
+}
+
+.url-item input[type="text"] {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #222;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.url-item input[type="text"]:focus {
+    outline: none;
+    border-color: #7f56d9;
+}
+
+.url-item .url-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.url-item .url-actions button {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+}
+
+.url-item .url-actions button:hover {
+    color: #fff;
+    background-color: #444;
+}
+
+.add-url-section {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.add-url-section input {
+    flex-grow: 1;
+    padding: 10px 14px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #222;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.popup-actions-section {
+    display: flex;
+    gap: 12px;
+    border-top: 1px solid #333;
+    padding-top: 16px;
+}

@@ -8,7 +8,6 @@
 </head>
 <body>
     <div id="app-container">
-        <!-- The "collapsed" class can be toggled via JS. -->
         <div id="left-sidebar" class="collapsed">
             <div class="sidebar-header">
                 <img id="extension-logo" src="icons/icon48.png" alt="Extension Logo">
@@ -20,11 +19,10 @@
                 </div>
             </div>
             <div class="sidebar-footer">
-                 <!-- Placeholder, button has been moved to main-content. -->
             </div>
         </div>
         <div id="main-content">
-            <!-- The collapse button is now inside main-content for stable positioning. -->
+            <!-- The collapse button is positioned relative to this container. -->
             <span id="collapse-sidebar-button" class="material-symbols-outlined" title="Toggle Sidebar">chevron_left</span>
             
             <div id="controls-bar">
@@ -61,15 +59,31 @@
                     <div id="context-container" style="display: none;">
                         <div id="context-header">
                             <span>Text from your selection</span>
+                            <button id="close-context-button" title="Remove selection">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
                         </div>
                         <div id="context-content"></div>
-                        <button id="close-context-button" title="Remove selection">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
                     </div>
 
-                    <!-- MODIFIED: The order of buttons is changed to Clear -> Send -> Copy. -->
+                    <!-- Container for contextual prompt buttons -->
+                    <div id="prompt-buttons-container" style="display: none;">
+                        <!-- Prompt buttons are dynamically inserted here by ui-logic.js -->
+                    </div>
+
+                    <!-- Popup for additional prompts -->
+                    <div id="more-prompts-popup" style="display: none;">
+                        <div class="more-prompts-header">
+                            <span>Select prompt</span>
+                            <span id="open-prompt-settings" class="material-symbols-outlined" title="Manage Prompts">settings</span>
+                        </div>
+                        <div id="more-prompts-list">
+                            <!-- Additional prompt items are inserted here by ui-logic.js -->
+                        </div>
+                    </div>
+                    
                     <div class="prompt-input-row">
+                        <div class="prompt-input-divider" style="display: none;"></div>
                         <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
                         <button id="clear-prompt-button" title="Clear" style="display: none;">
                             <span class="material-symbols-outlined">close</span>
@@ -84,6 +98,7 @@
                 </div>
             </div>
 
+            <!-- Custom Confirmation Modal -->
             <div id="custom-confirm-modal" class="modal-overlay">
                 <div class="modal-content">
                     <p id="custom-confirm-message"></p>
