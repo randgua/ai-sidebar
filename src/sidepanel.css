@@ -398,7 +398,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 .prompt-input-row {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     width: 100%;
 }
 
@@ -409,7 +409,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #prompt-input {
     flex-grow: 1;
-    padding: 12px 80px 12px 16px;
+    /* Default padding for single-line view, leaving space for all buttons. */
+    padding: 12px 112px 12px 16px;
     border: none;
     font-family: Arial, sans-serif;
     font-size: 14px;
@@ -419,16 +420,16 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     outline: none;
     background-color: transparent;
     color: #e8eaed;
-    transition: padding-right 0.2s ease;
     overscroll-behavior: contain;
-    /* ADDED: Set a minimum height to ensure the input box is large enough for one line of text plus padding. This prevents the scrollbar from appearing when the input is empty or has only one line. */
     min-height: 48px;
+    overflow-y: hidden; /* JS will manage scrollbar visibility. */
+    transition: padding-right 0.2s ease;
 }
 
-.prompt-input-row.multi-line-input #prompt-input {
-    padding-right: 40px;
+/* When in multi-line mode, reduce right padding as clear button is now absolute. */
+.prompt-input-wrapper.multi-line-input #prompt-input {
+    padding-right: 72px;
 }
-
 
 #prompt-input::placeholder {
     color: #9aa0a6;
@@ -460,6 +461,11 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #9aa0a6;
 }
 
+.prompt-input-row > button {
+    /* Align buttons to the bottom of the flex container in single-line mode. */
+    margin-bottom: 8px;
+}
+
 #clear-prompt-button {
     flex-shrink: 0;
     width: 28px;
@@ -471,7 +477,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin: 8px 2px 8px 8px;
+    margin-left: 8px;
+    margin-right: 4px;
     order: 1;
     transition: background-color 0.2s ease;
 }
@@ -504,7 +511,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #copy-markdown-button {
     flex-shrink: 0;
-    margin: 8px 8px 8px 2px;
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -514,6 +520,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    margin-right: 8px;
     order: 3;
     transition: background-color 0.2s ease;
 }
@@ -536,7 +543,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #send-prompt-button {
     flex-shrink: 0;
-    margin: 8px 2px;
     width: 28px;
     height: 28px;
     border: none;
@@ -547,6 +553,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     transition: background-color 0.2s ease, border-radius 0.2s ease;
     border-radius: 50%;
     background-color: #4a4d5f;
+    margin-right: 4px;
     order: 2;
 }
 

@@ -253,6 +253,9 @@ function loadUrls(iframeContainer) {
 /**
  * Automatically resizes the prompt textarea and manages its scrollbar visibility.
  * @param {HTMLTextAreaElement} textarea The textarea element.
+ * @param {HTMLElement} promptContainer The container for the prompt area.
+ * @param {HTMLButtonElement} sendPromptButton The send button.
+ * @param {HTMLButtonElement} clearPromptButton The clear button.
  */
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
     if (!textarea || !promptContainer) return;
@@ -266,24 +269,18 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     const maxHeight = Math.floor(window.innerHeight / 3);
     textarea.style.maxHeight = `${maxHeight}px`;
 
-    // Reset height to auto to get the correct scrollHeight.
+    // Reset height to auto to get the correct scrollHeight for the current content.
     textarea.style.height = 'auto';
     
     const scrollHeight = textarea.scrollHeight;
-    
-    // Get the min-height from CSS to ensure it's respected.
-    const computedStyle = getComputedStyle(textarea);
-    const minHeight = parseFloat(computedStyle.minHeight) || 0;
 
     // If content is taller than max-height, fix height to max-height and show scrollbar.
     if (scrollHeight > maxHeight) {
         textarea.style.height = `${maxHeight}px`;
         textarea.style.overflowY = 'auto';
     } else {
-        // Set height to the larger of scrollHeight or the CSS min-height.
-        // This prevents the scrollbar from appearing on initial load or with a single line of text.
-        const newHeight = Math.max(scrollHeight, minHeight);
-        textarea.style.height = `${newHeight}px`;
+        // Otherwise, fit height to content and hide scrollbar.
+        textarea.style.height = `${scrollHeight}px`;
         textarea.style.overflowY = 'hidden';
     }
 
@@ -307,14 +304,19 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
             const paddingBottom = parseFloat(styles.paddingBottom);
             const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
             const isMultiLine = textContentHeight > singleLineHeight + 1;
+            
+            // Position the clear button absolutely only when it's multi-line.
             clearPromptButton.classList.toggle('top-right', isMultiLine);
+            // Add a class to the wrapper to adjust textarea padding via CSS.
             promptInputWrapper.classList.toggle('multi-line-input', isMultiLine);
         } else if (promptInputWrapper) {
+            // Ensure classes are removed when there is no text.
             clearPromptButton.classList.remove('top-right');
             promptInputWrapper.classList.remove('multi-line-input');
         }
     }
 }
+
 
 /**
  * Sends a prompt to all active iframes.
