@@ -26,10 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const invertSelectionButton = document.getElementById('invert-selection-button');
     const selectAllButton = document.getElementById('select-all-button');
     const clearSelectionButton = document.getElementById('clear-selection-button');
-    const confirmModal = document.getElementById('custom-confirm-modal');
-    const confirmMessage = document.getElementById('custom-confirm-message');
-    const confirmYesButton = document.getElementById('confirm-yes-button');
-    const confirmNoButton = document.getElementById('confirm-no-button');
 
     // Appearance-specific DOM elements
     const languageSelect = document.getElementById('display-language-select');
@@ -57,6 +53,40 @@ document.addEventListener('DOMContentLoaded', () => {
         { code: 'Italian', name: 'Italian', native: 'Italiano' },
         { code: 'Dutch', name: 'Dutch', native: 'Nederlands' },
     ];
+
+    // --- CUSTOM CONFIRM MODAL LOGIC ---
+    /**
+     * Displays a custom confirmation modal.
+     * @param {string} message The message to display in the modal.
+     * @param {Function} onConfirm The callback function to execute if the user confirms.
+     */
+    function showCustomConfirm(message, onConfirm) {
+        const confirmModal = document.getElementById('custom-confirm-modal');
+        const confirmMessage = document.getElementById('custom-confirm-message');
+        const confirmYesButton = document.getElementById('confirm-yes-button');
+        const confirmNoButton = document.getElementById('confirm-no-button');
+
+        confirmMessage.textContent = message;
+        confirmModal.style.display = 'flex';
+
+        const yesHandler = () => {
+            hide();
+            onConfirm();
+        };
+
+        const noHandler = () => {
+            hide();
+        };
+
+        const hide = () => {
+            confirmModal.style.display = 'none';
+            confirmYesButton.removeEventListener('click', yesHandler);
+            confirmNoButton.removeEventListener('click', noHandler);
+        };
+
+        confirmYesButton.addEventListener('click', yesHandler);
+        confirmNoButton.addEventListener('click', noHandler);
+    }
 
     // --- VIEW SWITCHING LOGIC ---
     const switchView = (viewName) => {
@@ -141,12 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(item);
     };
 
-    const deletePrompt = async (prompt) => {
-        if (confirm(`Are you sure you want to delete "${prompt.name}"?`)) {
+    const deletePrompt = (prompt) => {
+        showCustomConfirm(`Are you sure you want to delete "${prompt.name}"?`, async () => {
             const updatedPrompts = prompts.filter(p => p.id !== prompt.id);
             await savePrompts(updatedPrompts);
             renderPrompts();
-        }
+        });
     };
 
     const togglePromptVisibility = async (promptId) => {
@@ -195,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveUrls();
             });
 
-            // FIX: Add event listener for the text input to save changes.
             itemDiv.querySelector('input[type="text"]').addEventListener('input', (e) => {
                 const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
                 if (urlToUpdate) {
@@ -215,11 +244,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const deleteUrl = (urlEntry) => {
-        if (confirm(`Are you sure you want to delete "${urlEntry.url}"?`)) {
+        showCustomConfirm(`Are you sure you want to delete "${urlEntry.url}"?`, async () => {
             managedUrls = managedUrls.filter(u => u.id !== urlEntry.id);
-            saveUrls();
+            await saveUrls();
             renderUrlList();
-        }
+        });
     };
 
     // --- DRAG & DROP LOGIC (for both lists) ---
