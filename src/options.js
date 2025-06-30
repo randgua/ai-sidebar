@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             itemDiv.addEventListener('dragstart', handleDragStart);
             itemDiv.addEventListener('dragend', handleDragEnd);
             itemDiv.addEventListener('dragover', handleDragOver);
-            itemDiv.addEventListener('drop', handleDrop);
+            // The 'drop' event is handled by the container for robustness.
         });
     };
     
@@ -248,7 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DRAG & DROP LOGIC (for both lists) ---
     function handleDragStart(e) {
         draggedItem = this;
-        this.classList.add('dragging');
+        // Use a timeout to avoid issues with the drag image.
+        setTimeout(() => {
+            this.classList.add('dragging');
+        }, 0);
     }
 
     function handleDragEnd() {
@@ -260,8 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragOver(e) {
         e.preventDefault();
-        const isItem = this.classList.contains('url-item') || this.classList.contains('prompt-item');
-        const container = isItem ? this.parentElement : this;
+        const container = this.classList.contains('prompt-list-container') || this.id === 'url-list-management' ? this : this.parentElement;
         const currentlyDragged = document.querySelector('.dragging');
 
         if (!currentlyDragged) return;
@@ -273,10 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const isTargetUrlContainer = container.id === 'url-list-management';
         const isTargetPromptContainer = container.classList.contains('prompt-list-container');
 
-        // If the dragged item is a URL, prevent dropping it outside the URL container.
-        if (isDraggedItemUrl && !isTargetUrlContainer) return;
-        // If the dragged item is a prompt, prevent dropping it outside a prompt container.
-        if (isDraggedItemPrompt && !isTargetPromptContainer) return;
+        if ((isDraggedItemUrl && !isTargetUrlContainer) || (isDraggedItemPrompt && !isTargetPromptContainer)) {
+            return;
+        }
 
         const afterElement = getDragAfterElement(container, e.clientY);
         if (afterElement == null) {
@@ -302,32 +303,43 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleDrop(e) {
         e.preventDefault();
         if (!draggedItem) return;
-
-        const isItem = this.classList.contains('url-item') || this.classList.contains('prompt-item');
-        const container = isItem ? this.parentElement : this;
-
-        // Update prompt visibility if it was moved between prompt lists.
+    
+        const container = this;
+    
         if (draggedItem.classList.contains('prompt-item')) {
-            const showInMenu = container.id === 'shown-prompts-list';
             const promptId = draggedItem.dataset.id;
             const prompt = prompts.find(p => p.id === promptId);
+    
             if (prompt) {
-                prompt.showInMenu = showInMenu;
+                const newShowInMenu = container.id === 'shown-prompts-list';
+                if (prompt.showInMenu !== newShowInMenu) {
+                    prompt.showInMenu = newShowInMenu;
+                    // Update the icon for immediate feedback without a full re-render.
+                    const toggleButton = draggedItem.querySelector('.toggle-show-button');
+                    const icon = toggleButton.querySelector('.material-symbols-outlined');
+                    toggleButton.title = newShowInMenu ? 'Hide' : 'Show';
+                    icon.textContent = newShowInMenu ? 'visibility_off' : 'visibility';
+                }
             }
+    
+            // Get the new order of IDs from the DOM.
+            const newOrder = [
+                ...Array.from(shownPromptsList.querySelectorAll('.prompt-item')),
+                ...Array.from(hiddenPromptsList.querySelectorAll('.prompt-item'))
+            ].map(item => item.dataset.id);
+    
+            // Reorder the source-of-truth array.
+            prompts.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+            await savePrompts(prompts);
+    
+        } else if (draggedItem.classList.contains('url-item')) {
+            // Get the new order of IDs from the DOM.
+            const newOrder = Array.from(urlListManagementDiv.querySelectorAll('.url-item')).map(item => item.dataset.id);
+            
+            // Reorder the source-of-truth array.
+            managedUrls.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+            await saveUrls();
         }
-        
-        // Resync data arrays based on the new DOM order.
-        const newPromptsOrder = [...shownPromptsList.querySelectorAll('.prompt-item'), ...hiddenPromptsList.querySelectorAll('.prompt-item')].map(item => prompts.find(p => p.id === item.dataset.id));
-        prompts = newPromptsOrder.filter(Boolean);
-        await savePrompts(prompts);
-
-        const newUrlsOrder = [...urlListManagementDiv.querySelectorAll('.url-item')].map(item => managedUrls.find(u => u.id === item.dataset.id));
-        managedUrls = newUrlsOrder.filter(Boolean);
-        await saveUrls();
-        
-        // Re-render to ensure UI is perfectly in sync with data.
-        renderPrompts();
-        renderUrlList();
     }
 
     // --- LANGUAGE DROPDOWN LOGIC ---
@@ -459,13 +471,11 @@ document.addEventListener('DOMContentLoaded', () => {
             populateLanguageDropdown(e.target.value);
         });
 
-        // Attach listeners only to the containers that allow items to be dropped into them.
-        [shownPromptsList, hiddenPromptsList].forEach(container => {
+        [shownPromptsList, hiddenPromptsList, urlListManagementDiv].forEach(container => {
             container.addEventListener('dragover', handleDragOver);
             container.addEventListener('drop', handleDrop);
         });
 
-        // Listen for changes in storage and update the UI accordingly.
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'local') {
                 if (changes.managedUrls) {
