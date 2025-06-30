@@ -263,7 +263,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 #close-context-button {
     position: absolute;
     top: 14px;
-    right: 8px; /* Corrected value for alignment */
+    right: 8px;
     z-index: 1;
     background: none;
     border: none;
@@ -398,7 +398,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 .prompt-input-row {
     position: relative;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     width: 100%;
 }
 
@@ -417,11 +417,12 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     resize: none;
     box-sizing: border-box;
     outline: none;
-    overflow-y: hidden; /* Changed from 'auto' to 'hidden' */
     background-color: transparent;
     color: #e8eaed;
     transition: padding-right 0.2s ease;
     overscroll-behavior: contain;
+    /* ADDED: Set a minimum height to ensure the input box is large enough for one line of text plus padding. This prevents the scrollbar from appearing when the input is empty or has only one line. */
+    min-height: 48px;
 }
 
 .prompt-input-row.multi-line-input #prompt-input {
@@ -439,7 +440,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 #prompt-input::-webkit-scrollbar {
-    width: 16px;
+    width: 8px;
     cursor: default;
 }
 
@@ -450,8 +451,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #prompt-input::-webkit-scrollbar-thumb {
     background-color: #5f6368;
-    border-radius: 8px;
-    border: 4px solid #3c4043;
+    border-radius: 4px;
+    border: 2px solid #3c4043;
     cursor: default;
 }
 
@@ -586,7 +587,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .more-prompts-wrapper {
-    position: relative; /* This is the positioning context for the popup menu. */
+    position: relative;
     flex-shrink: 0;
 }
 
@@ -606,14 +607,12 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #5f6368;
 }
 
-/* Style for the 'more prompts' button to be a square icon button */
 .prompt-button.more-button {
     padding: 4px;
     border-radius: 8px;
     line-height: 1;
 }
 
-/* Style for the icon inside the 'more prompts' button */
 .prompt-button.more-button .material-symbols-outlined {
     font-size: 13px;
     margin: 0;
@@ -624,8 +623,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #more-prompts-popup {
     position: absolute;
-    bottom: 100%; /* Position the popup above its parent wrapper. */
-    right: 0; /* Align the popup's right edge with its parent wrapper's right edge. */
+    bottom: 100%;
+    right: 0;
     background-color: #2d2d2d;
     border: 1px solid #5f6368;
     border-radius: 8px;

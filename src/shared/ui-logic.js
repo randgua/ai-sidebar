@@ -93,9 +93,7 @@ function saveUrls() {
 function handleSelectiveCopy(iframe, url) {
     const source = new URL(url).hostname;
     
-    // Define a one-time listener for the response
     const listener = (event) => {
-        // Check if the message is the one we're waiting for
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.source === source && event.data.output) {
             const output = event.data.output.trim();
             const promptInput = document.getElementById('prompt-input');
@@ -117,25 +115,21 @@ function handleSelectiveCopy(iframe, url) {
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${title}.`);
             
-            // Clean up this specific listener
             window.removeEventListener('message', listener);
         }
     };
 
     window.addEventListener('message', listener);
     
-    // Request the output from the specific iframe
     if (iframe.contentWindow) {
         iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
     }
 
-    // Fallback to remove the listener after a timeout, preventing memory leaks
     setTimeout(() => window.removeEventListener('message', listener), 3000);
 }
 
 /**
  * Renders iframes in the main container based on the current selection.
- * This version avoids reloading iframes by surgically updating the DOM.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function updateIframes(iframeContainer) {
@@ -150,9 +144,8 @@ function updateIframes(iframeContainer) {
         return iframe && iframe.src ? [iframe.src, wrapper] : [null, wrapper];
     }));
 
-    // 1. Handle the empty case
     if (selectedUrlEntries.length === 0) {
-        iframeContainer.innerHTML = ''; // Clear everything
+        iframeContainer.innerHTML = '';
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'empty-message';
         emptyMessage.textContent = managedUrls.length === 0 ?
@@ -166,14 +159,12 @@ function updateIframes(iframeContainer) {
         }
     }
 
-    // 2. Remove wrappers that are no longer selected
     for (const [url, wrapper] of wrappersMap.entries()) {
         if (url && !selectedUrlsSet.has(url)) {
             iframeContainer.removeChild(wrapper);
         }
     }
 
-    // 3. Add new wrappers and reorder existing ones
     let lastPlacedWrapper = null;
     for (const urlEntry of selectedUrlEntries) {
         let wrapper = wrappersMap.get(urlEntry.url);
@@ -216,10 +207,9 @@ function updateIframes(iframeContainer) {
 
             controlsContainer.append(sendBtn, copyBtn);
             wrapper.append(controlsContainer, iframe);
-            wrappersMap.set(urlEntry.url, wrapper); // Add the new wrapper to the map
+            wrappersMap.set(urlEntry.url, wrapper);
         }
 
-        // Place the wrapper in the correct order
         const expectedNextSibling = lastPlacedWrapper ? lastPlacedWrapper.nextSibling : iframeContainer.firstChild;
         if (wrapper !== expectedNextSibling) {
             iframeContainer.insertBefore(wrapper, expectedNextSibling);
@@ -228,7 +218,6 @@ function updateIframes(iframeContainer) {
         lastPlacedWrapper = wrapper;
     }
 
-    // 4. Clean up the iframe cache
     const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
     for (const urlInCache in iframeCache) {
         if (!currentManagedUrlsSet.has(urlInCache)) {
@@ -236,7 +225,6 @@ function updateIframes(iframeContainer) {
         }
     }
 
-    // 5. Restore UI state
     promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
     if (!isCollapsedBeforeUpdate) {
         const promptInput = document.getElementById('prompt-input');
@@ -251,7 +239,6 @@ function updateIframes(iframeContainer) {
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function loadUrls(iframeContainer) {
-    // Defaults are now set on install, so we just read what's in storage.
     chrome.storage.local.get('managedUrls', function(result) {
         if (chrome.runtime.lastError) {
             console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
@@ -279,18 +266,24 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
     const maxHeight = Math.floor(window.innerHeight / 3);
     textarea.style.maxHeight = `${maxHeight}px`;
 
-    // Reset height to auto to get the correct scrollHeight for the current content.
+    // Reset height to auto to get the correct scrollHeight.
     textarea.style.height = 'auto';
     
     const scrollHeight = textarea.scrollHeight;
+    
+    // Get the min-height from CSS to ensure it's respected.
+    const computedStyle = getComputedStyle(textarea);
+    const minHeight = parseFloat(computedStyle.minHeight) || 0;
 
     // If content is taller than max-height, fix height to max-height and show scrollbar.
     if (scrollHeight > maxHeight) {
         textarea.style.height = `${maxHeight}px`;
         textarea.style.overflowY = 'auto';
     } else {
-        // Otherwise, fit height to content and hide scrollbar.
-        textarea.style.height = `${scrollHeight}px`;
+        // Set height to the larger of scrollHeight or the CSS min-height.
+        // This prevents the scrollbar from appearing on initial load or with a single line of text.
+        const newHeight = Math.max(scrollHeight, minHeight);
+        textarea.style.height = `${newHeight}px`;
         textarea.style.overflowY = 'hidden';
     }
 
@@ -368,7 +361,6 @@ function resetContextualUI() {
         morePromptsPopup.style.display = 'none';
     }
     
-    // Hide the divider when the contextual UI is reset.
     if (promptInputDivider) {
         promptInputDivider.style.display = 'none';
     }
@@ -389,9 +381,8 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
     button.addEventListener('click', async () => {
         let fullPrompt;
         const { displayLanguage } = await chrome.storage.local.get('displayLanguage');
-        const lang = displayLanguage || 'English'; // Default to English if not set
+        const lang = displayLanguage || 'English';
 
-        // Replace placeholders
         let promptContent = prompt.content.replace(/\${lang}/g, lang);
         if (promptContent.includes('${input}')) {
             fullPrompt = promptContent.replace('${input}', selectedText);
@@ -417,7 +408,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
 
     promptButtonsContainer.innerHTML = '';
     morePromptsList.innerHTML = '';
-    // Detach popup so it can be re-appended into the correct wrapper later
     if (morePromptsPopup.parentElement) {
         morePromptsPopup.parentElement.removeChild(morePromptsPopup);
     }
@@ -435,7 +425,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
     if (allButtons.length === 0) return;
 
     const observer = new ResizeObserver(entries => {
-        // Defer the execution to the next animation frame to avoid ResizeObserver loop errors.
         window.requestAnimationFrame(() => {
             if (!entries || !entries.length) {
                 return;
@@ -506,14 +495,12 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 const morePromptsWrapper = document.createElement('div');
                 morePromptsWrapper.className = 'more-prompts-wrapper';
                 
-                // Create a dedicated "..." button that does not send a prompt on click
                 const moreButton = document.createElement('button');
                 moreButton.className = 'prompt-button more-button';
                 moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
                 
                 morePromptsWrapper.appendChild(moreButton);
                 
-                // Move the popup menu to be a child of the wrapper
                 morePromptsWrapper.appendChild(morePromptsPopup);
                 
                 promptButtonsContainer.appendChild(morePromptsWrapper);
@@ -526,7 +513,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
                 const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
 
-                // Apply hover logic to the wrapper, which contains both the button and the now-child popup
                 morePromptsWrapper.addEventListener('mouseenter', showPopup);
                 morePromptsWrapper.addEventListener('mouseleave', hidePopup);
             }
@@ -553,13 +539,13 @@ async function displayContextualUI(selectedText) {
     contextContainer.dataset.text = selectedText;
 
     promptButtonsContainer.style.display = 'flex';
-    // Show the divider when the contextual UI is displayed.
+    
     if (promptInputDivider) {
         promptInputDivider.style.display = 'block';
     }
 
     let result = await chrome.storage.local.get('prompts');
-    let prompts = result.prompts || []; // Defaults are set on install.
+    let prompts = result.prompts || [];
     const visiblePrompts = prompts.filter(p => p.showInMenu);
 
     renderResponsivePrompts(selectedText, visiblePrompts);
@@ -608,20 +594,18 @@ function initializeSharedUI(elements) {
         }
     };
 
-    // Listen for messages from content scripts (e.g., text selection).
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             displayContextualUI(message.text);
             sendResponse({status: "Context displayed in sidebar"});
         } else if (message.action === 'textDeselected') {
             const contextContainer = document.getElementById('context-container');
-            // Only reset if the UI is currently visible.
             if (contextContainer && contextContainer.style.display !== 'none') {
                 resetContextualUI();
                 sendResponse({status: "Context cleared in sidebar"});
             }
         }
-        return true; // Keep the message channel open for async responses.
+        return true;
     });
 
     if (closeContextButton) {
@@ -645,17 +629,13 @@ function initializeSharedUI(elements) {
         chrome.tabs.create({ url: chrome.runtime.getURL('options.html?section=general') });
     });
 
-    // --- START: MODIFIED SECTION FOR RELIABLE COPY ---
     let expectedResponses = 0;
     let receivedResponses = 0;
     let copyFallbackTimeout = null;
     let collectedOutputs = [];
 
     const processCollectedOutputs = () => {
-        // Ensure the operation is still active before proceeding.
-        if (!copyFallbackTimeout) {
-            return;
-        }
+        if (!copyFallbackTimeout) return;
         clearTimeout(copyFallbackTimeout);
         copyFallbackTimeout = null;
 
@@ -686,11 +666,9 @@ function initializeSharedUI(elements) {
 
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
-            // Only process if a copy operation is active.
             if (copyFallbackTimeout) {
                 collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
                 receivedResponses++;
-                // If all expected iframes have responded, process the results immediately.
                 if (receivedResponses >= expectedResponses) {
                     processCollectedOutputs();
                 }
@@ -700,10 +678,7 @@ function initializeSharedUI(elements) {
 
     copyMarkdownButton.title = 'Append all outputs to prompt area and copy as Markdown';
     copyMarkdownButton.addEventListener('click', () => {
-        // Clear any previous operation that might be lingering.
-        if (copyFallbackTimeout) {
-            clearTimeout(copyFallbackTimeout);
-        }
+        if (copyFallbackTimeout) clearTimeout(copyFallbackTimeout);
 
         collectedOutputs = [];
         const activeIframes = iframeContainer.querySelectorAll('iframe');
@@ -715,19 +690,15 @@ function initializeSharedUI(elements) {
             return;
         }
 
-        // Request output from all active iframes.
         activeIframes.forEach(iframe => {
             if (iframe.contentWindow) {
                 iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
             }
         });
 
-        // Set a fallback timeout to process whatever has been received.
-        // This prevents the function from getting stuck if an iframe fails to respond.
         copyFallbackTimeout = setTimeout(processCollectedOutputs, 3000);
     });
-    // --- END: MODIFIED SECTION FOR RELIABLE COPY ---
-
+    
     togglePromptButton.addEventListener('click', () => {
         promptContainer.classList.toggle('collapsed');
         const isCollapsed = promptContainer.classList.contains('collapsed');
@@ -761,7 +732,7 @@ function initializeSharedUI(elements) {
             const selectedText = contextContainer.dataset.text;
             if (selectedText) {
                 let result = await chrome.storage.local.get('prompts');
-                let prompts = result.prompts || []; // Defaults are set on install
+                let prompts = result.prompts || [];
                 const visiblePrompts = prompts.filter(p => p.showInMenu);
                 renderResponsivePrompts(selectedText, visiblePrompts);
             }
@@ -787,7 +758,6 @@ function initializeSharedUI(elements) {
 
     loadUrls(iframeContainer);
     
-    // Delay the initial resize to ensure the browser has calculated the layout.
     setTimeout(() => {
         autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
     }, 10);
