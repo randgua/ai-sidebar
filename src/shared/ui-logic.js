@@ -648,7 +648,15 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
     button.textContent = prompt.name;
     button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
     button.addEventListener('click', () => {
-        const fullPrompt = `Based on the following text:\n\n------\n${selectedText}\n------\n\n${prompt.content}`;
+        let fullPrompt;
+        // Check if the prompt content contains the placeholder
+        if (prompt.content.includes('${input}')) {
+            // Replace the placeholder with the selected text
+            fullPrompt = prompt.content.replace('${input}', selectedText);
+        } else {
+            // Fallback for prompts without the placeholder (like 'Continue writing')
+            fullPrompt = `${prompt.content}\n\n"""\n${selectedText}\n"""`;
+        }
         sendMessageToIframes(iframeContainer, fullPrompt);
         resetContextualUI();
     });
