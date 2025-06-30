@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- SHARED DOM ELEMENTS ---
+    // --- DOM ELEMENTS ---
     const menuItems = document.querySelectorAll('.sidebar-menu .menu-item');
     const views = {
         general: document.getElementById('general-view'),
         prompts: document.getElementById('prompts-view')
     };
 
-    // --- PROMPTS-SPECIFIC DOM ELEMENTS ---
+    // Prompts-specific DOM elements
     const newPromptButton = document.getElementById('new-prompt-button');
     const promptModal = document.getElementById('prompt-modal');
     const closeModalButton = document.getElementById('close-modal-button');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptNameInput = document.getElementById('prompt-name');
     const promptContentInput = document.getElementById('prompt-content');
 
-    // --- GENERAL (URLS) -SPECIFIC DOM ELEMENTS ---
+    // General (URLs) specific DOM elements
     const urlListManagementDiv = document.getElementById('url-list-management');
     const newUrlInput = document.getElementById('new-url-input');
     const addUrlButton = document.getElementById('add-url-button');
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmYesButton = document.getElementById('confirm-yes-button');
     const confirmNoButton = document.getElementById('confirm-no-button');
 
-    // --- APPEARANCE-SPECIFIC DOM ELEMENTS ---
+    // Appearance-specific DOM elements
     const languageSelect = document.getElementById('display-language-select');
     const languageSelectTrigger = languageSelect.querySelector('.custom-select-trigger');
     const languageSearchInput = document.getElementById('language-search-input');
@@ -194,10 +194,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 urlEntry.selected = e.target.checked;
                 saveUrls();
             });
+
+            // FIX: Add event listener for the text input to save changes.
+            itemDiv.querySelector('input[type="text"]').addEventListener('input', (e) => {
+                const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
+                if (urlToUpdate) {
+                    urlToUpdate.url = e.target.value;
+                    saveUrls();
+                }
+            });
+
             itemDiv.querySelector('.remove-url-button').addEventListener('click', () => deleteUrl(urlEntry));
             itemDiv.querySelector('.open-url-button').addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
             
-            // Attach drag-and-drop listeners directly to the item
             itemDiv.addEventListener('dragstart', handleDragStart);
             itemDiv.addEventListener('dragend', handleDragEnd);
             itemDiv.addEventListener('dragover', handleDragOver);
@@ -234,10 +243,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!currentlyDragged) return;
         
-        // Prevent dropping items into the wrong type of list
+        // Prevent dropping items into the wrong type of list.
         const isDraggedItemUrl = currentlyDragged.classList.contains('url-item');
-        const isContainerForUrls = container.id === 'url-list-management';
-        if (isDraggedItemUrl !== isContainerForUrls) return;
+        const isDraggedItemPrompt = currentlyDragged.classList.contains('prompt-item');
+
+        const isTargetUrlContainer = container.id === 'url-list-management';
+        const isTargetPromptContainer = container.classList.contains('prompt-list-container');
+
+        // If the dragged item is a URL, prevent dropping it outside the URL container.
+        if (isDraggedItemUrl && !isTargetUrlContainer) return;
+        // If the dragged item is a prompt, prevent dropping it outside a prompt container.
+        if (isDraggedItemPrompt && !isTargetPromptContainer) return;
 
         const afterElement = getDragAfterElement(container, e.clientY);
         if (afterElement == null) {
@@ -267,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isItem = this.classList.contains('url-item') || this.classList.contains('prompt-item');
         const container = isItem ? this.parentElement : this;
 
-        // Update prompt visibility if it was moved between prompt lists
+        // Update prompt visibility if it was moved between prompt lists.
         if (draggedItem.classList.contains('prompt-item')) {
             const showInMenu = container.id === 'shown-prompts-list';
             const promptId = draggedItem.dataset.id;
@@ -277,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Resync data arrays based on the new DOM order
+        // Resync data arrays based on the new DOM order.
         const newPromptsOrder = [...shownPromptsList.querySelectorAll('.prompt-item'), ...hiddenPromptsList.querySelectorAll('.prompt-item')].map(item => prompts.find(p => p.id === item.dataset.id));
         prompts = newPromptsOrder.filter(Boolean);
         await savePrompts(prompts);
@@ -286,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         managedUrls = newUrlsOrder.filter(Boolean);
         await saveUrls();
         
-        // Re-render to ensure UI is perfectly in sync with data
+        // Re-render to ensure UI is perfectly in sync with data.
         renderPrompts();
         renderUrlList();
     }
@@ -332,11 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION ---
     const init = async () => {
-        // Load data
         await getPrompts();
         await getUrls();
 
-        // Render initial views
         renderPrompts();
         renderUrlList();
         populateLanguageDropdown();
@@ -353,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
             switchView('general'); 
         }
 
-        // Add event listeners
         newPromptButton.addEventListener('click', () => openPromptModal());
         closeModalButton.addEventListener('click', closePromptModal);
         cancelPromptButton.addEventListener('click', closePromptModal);
@@ -415,7 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUrlList();
         });
 
-        // Language dropdown listeners
         languageSelectTrigger.addEventListener('click', () => {
             languageSelect.classList.toggle('open');
         });
