@@ -723,7 +723,7 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 const button = allButtons[i];
                 tempContainer.appendChild(button);
                 const buttonWidth = button.offsetWidth;
-                const gap = 8;
+                const gap = 4;
                 
                 const spaceNeededForMore = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
 
