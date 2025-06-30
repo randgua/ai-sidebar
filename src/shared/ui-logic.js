@@ -82,33 +82,6 @@ function showGlobalConfirmationMessage(message, duration = 3000) {
 }
 
 /**
- * Displays a message inside the settings popup.
- * @param {HTMLElement} settingsPopup The popup element to show the message in.
- * @param {string} messageText The message to display.
- * @param {number} duration How long to display the message in milliseconds.
- */
-function showPopupMessage(settingsPopup, messageText, duration = 3000) {
-    if (!settingsPopup) return;
-    let messageElement = settingsPopup.querySelector('.popup-message-area');
-    if (!messageElement) {
-        messageElement = document.createElement('div');
-        messageElement.className = 'popup-message-area';
-        Object.assign(messageElement.style, {
-            padding: '10px', marginTop: '10px', backgroundColor: '#e9f5fe',
-            color: '#0d6efd', border: '1px solid #b6d4fe', borderRadius: '4px',
-            textAlign: 'center', fontSize: '13px', display: 'none'
-        });
-        settingsPopup.appendChild(messageElement);
-    }
-    messageElement.textContent = messageText;
-    messageElement.style.display = 'block';
-    if (messageElement.timeoutId) clearTimeout(messageElement.timeoutId);
-    messageElement.timeoutId = setTimeout(() => {
-        messageElement.style.display = 'none';
-    }, duration);
-}
-
-/**
  * Displays a custom confirmation modal dialog.
  * @param {string} message The confirmation message.
  * @param {Function} onConfirm The callback function to execute if confirmed.
@@ -162,255 +135,10 @@ function saveUrls() {
 }
 
 /**
- * Validates and formats a URL, assuming https if no protocol is provided.
- * @param {string} input The URL string to validate.
- * @returns {string|null} The formatted URL or null if invalid.
- */
-function formatAndValidateUrl(input) {
-    let urlString = input.trim();
-    if (/^([a-zA-Z]:\\|\/)/.test(urlString) && !urlString.startsWith('file:///')) {
-        urlString = 'file:///' + urlString.replace(/\\/g, '/');
-    }
-    try {
-        new URL(urlString);
-        return urlString;
-    } catch (error) {
-        if (!/^[a-zA-Z]+:\/\//.test(urlString) && !/^[a-zA-Z]+:/.test(urlString)) {
-            const assumedUrl = 'https://' + urlString;
-            try { new URL(assumedUrl); return assumedUrl; } catch (e) { return null; }
-        }
-        return null;
-    }
-}
-
-/**
- * Renders the list of manageable URLs in the settings popup.
- * @param {HTMLElement} urlListManagementDiv The container for the URL list.
- * @param {HTMLElement} iframeContainer The container for the iframes.
- * @param {HTMLElement} settingsPopup The settings popup element.
- */
-function renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup) {
-    urlListManagementDiv.innerHTML = '';
-
-    managedUrls.forEach(urlEntry => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'url-item';
-        itemDiv.setAttribute('draggable', true);
-        itemDiv.dataset.id = urlEntry.id.toString();
-
-        const dragHandle = document.createElement('span');
-        dragHandle.className = 'drag-handle';
-        dragHandle.innerHTML = '☰';
-        dragHandle.title = 'Drag to reorder';
-        itemDiv.appendChild(dragHandle);
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = urlEntry.selected;
-        checkbox.addEventListener('change', () => {
-            urlEntry.selected = checkbox.checked;
-            saveUrls();
-            updateIframes(iframeContainer, urlListManagementDiv);
-        });
-
-        const urlInput = document.createElement('input');
-        urlInput.type = 'text';
-        urlInput.value = urlEntry.url;
-        let originalUrlOnFocus = urlEntry.url;
-
-        urlInput.addEventListener('focus', () => {
-            originalUrlOnFocus = urlInput.value;
-            itemDiv.draggable = false;
-        });
-
-        urlInput.addEventListener('blur', () => {
-            itemDiv.draggable = true;
-            const newUrlValue = urlInput.value.trim();
-            if (newUrlValue === originalUrlOnFocus) return;
-
-            const formattedUrl = formatAndValidateUrl(newUrlValue);
-            if (!formattedUrl) {
-                showPopupMessage(settingsPopup, 'Invalid URL format.');
-                urlInput.value = originalUrlOnFocus;
-                return;
-            }
-            if (managedUrls.some(u => u.url === formattedUrl && u.id !== urlEntry.id)) {
-                showPopupMessage(settingsPopup, 'This URL already exists in the list.');
-                urlInput.value = originalUrlOnFocus;
-                return;
-            }
-
-            const oldUrlKeyInCache = urlEntry.url;
-            urlEntry.url = formattedUrl;
-            if (iframeCache[oldUrlKeyInCache]) {
-                delete iframeCache[oldUrlKeyInCache];
-            }
-            saveUrls();
-            showPopupMessage(settingsPopup, 'URL updated successfully!');
-            updateIframes(iframeContainer, urlListManagementDiv);
-        });
-
-        urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
-            else if (e.key === 'Escape') { e.preventDefault(); urlInput.value = originalUrlOnFocus; e.target.blur(); }
-        });
-
-        const openIcon = document.createElement('span');
-        openIcon.textContent = 'open_in_new';
-        openIcon.className = 'material-symbols-outlined open-url-icon';
-        openIcon.title = 'Open in new tab';
-        openIcon.addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
-
-        const removeButton = document.createElement('span');
-        removeButton.textContent = 'delete';
-        removeButton.className = 'material-symbols-outlined remove-url-button';
-        removeButton.title = 'Delete URL';
-        removeButton.addEventListener('click', () => {
-            showCustomConfirm(`Are you sure you want to delete this URL: ${urlEntry.url}?`, () => {
-                if (iframeCache[urlEntry.url]) {
-                    if (iframeCache[urlEntry.url].parentNode) {
-                        iframeContainer.removeChild(iframeCache[urlEntry.url]);
-                    }
-                    delete iframeCache[urlEntry.url];
-                }
-                const wasSelected = urlEntry.selected;
-                managedUrls = managedUrls.filter(u => u.id.toString() !== urlEntry.id.toString());
-                if (managedUrls.length > 0 && wasSelected && !managedUrls.some(u => u.selected)) {
-                    managedUrls[0].selected = true;
-                }
-                saveUrls();
-                renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup);
-                updateIframes(iframeContainer, urlListManagementDiv);
-                showPopupMessage(settingsPopup, 'URL removed.');
-            });
-        });
-
-        itemDiv.append(dragHandle, checkbox, urlInput, openIcon, removeButton);
-        urlListManagementDiv.appendChild(itemDiv);
-
-        itemDiv.addEventListener('dragstart', (e) => {
-            if (managedUrls.some(u => u.selected)) {
-                iframeContainer.style.pointerEvents = 'none';
-                iframeContainer.style.opacity = '0.7';
-            }
-            draggedDOMElement = itemDiv;
-            e.dataTransfer.setData('text/plain', itemDiv.dataset.id);
-            e.dataTransfer.effectAllowed = 'move';
-            setTimeout(() => { if (draggedDOMElement) draggedDOMElement.style.opacity = '0.5'; }, 0);
-        });
-
-        itemDiv.addEventListener('dragend', () => {
-            iframeContainer.style.pointerEvents = 'auto';
-            iframeContainer.style.opacity = '1';
-            if (draggedDOMElement) draggedDOMElement.style.opacity = '1';
-            else itemDiv.style.opacity = '1';
-            draggedDOMElement = null;
-            document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
-        });
-
-        itemDiv.addEventListener('dragover', (e) => {
-            if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            document.querySelectorAll('.url-item.drag-over').forEach(el => el.classList.remove('drag-over'));
-            itemDiv.classList.add('drag-over');
-        });
-
-        itemDiv.addEventListener('dragleave', () => itemDiv.classList.remove('drag-over'));
-
-        itemDiv.addEventListener('drop', (e) => {
-            if (!draggedDOMElement || draggedDOMElement === itemDiv) return;
-            e.preventDefault();
-            itemDiv.classList.remove('drag-over');
-            const draggedId = e.dataTransfer.getData('text/plain');
-            const targetId = itemDiv.dataset.id;
-
-            const draggedItemIndex = managedUrls.findIndex(u => u.id.toString() === draggedId);
-            if (draggedItemIndex === -1) return;
-
-            const [draggedUrlEntry] = managedUrls.splice(draggedItemIndex, 1);
-            let targetItemIndex = managedUrls.findIndex(u => u.id.toString() === targetId);
-            if (targetItemIndex === -1) {
-                managedUrls.splice(draggedItemIndex, 0, draggedUrlEntry);
-                return;
-            }
-
-            const rect = itemDiv.getBoundingClientRect();
-            const isAfter = e.clientY > rect.top + rect.height / 2;
-            managedUrls.splice(isAfter ? targetItemIndex + 1 : targetItemIndex, 0, draggedUrlEntry);
-
-            saveUrls();
-            const parent = urlListManagementDiv;
-            if (isAfter) {
-                parent.insertBefore(draggedDOMElement, itemDiv.nextSibling);
-            } else {
-                parent.insertBefore(draggedDOMElement, itemDiv);
-            }
-            updateIframes(iframeContainer, urlListManagementDiv);
-            showPopupMessage(settingsPopup, 'List order updated successfully.');
-        });
-    });
-}
-
-/**
- * Gets the last output from a single iframe and appends it to the prompt input.
- * @param {HTMLIFrameElement} iframe The iframe to get output from.
- * @param {string} url The URL of the iframe for display purposes.
- */
-async function handleSelectiveAppend(iframe, url) {
-    const outputPromise = new Promise(resolve => {
-        const listener = (event) => {
-            if (event.data && event.data.action === 'receiveLastOutput' && event.source === iframe.contentWindow) {
-                window.removeEventListener('message', listener);
-                resolve({ output: event.data.output, source: new URL(url).hostname });
-            }
-        };
-        window.addEventListener('message', listener);
-        setTimeout(() => {
-            window.removeEventListener('message', listener);
-            resolve(null);
-        }, 1500);
-    });
-
-    iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
-    const result = await outputPromise;
-
-    if (result && result.output && result.output.trim()) {
-        const prettyNames = {
-            'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
-            'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
-            'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
-        };
-        const title = prettyNames[result.source] || result.source;
-        const markdownString = `## ${title}\n\n${result.output.trim()}`;
-        
-        const promptInput = document.getElementById('prompt-input');
-        promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
-        navigator.clipboard.writeText(markdownString);
-
-        const promptContainer = document.getElementById('prompt-container');
-        const sendPromptButton = document.getElementById('send-prompt-button');
-        const clearPromptButton = document.getElementById('clear-prompt-button');
-        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-        
-        promptInput.focus();
-        setTimeout(() => {
-            promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
-            promptInput.scrollTop = promptInput.scrollHeight;
-        }, 0);
-
-        showGlobalConfirmationMessage(`Output from ${result.source} appended and copied to clipboard`);
-    } else {
-        showGlobalConfirmationMessage('Could not find any output to append from this panel.');
-    }
-}
-
-/**
  * Renders iframes in the main container based on the current selection.
  * @param {HTMLElement} iframeContainer The container for the iframes.
- * @param {HTMLElement} urlListManagementDiv The container for the URL list.
  */
-function updateIframes(iframeContainer, urlListManagementDiv) {
+function updateIframes(iframeContainer) {
     const promptContainer = document.getElementById('prompt-container');
     const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
 
@@ -486,10 +214,8 @@ function updateIframes(iframeContainer, urlListManagementDiv) {
 /**
  * Loads URLs from storage or uses defaults, then renders the UI.
  * @param {HTMLElement} iframeContainer The container for the iframes.
- * @param {HTMLElement} urlListManagementDiv The container for the URL list.
- * @param {HTMLElement} settingsPopup The settings popup element.
  */
-function loadUrls(iframeContainer, urlListManagementDiv, settingsPopup) {
+function loadUrls(iframeContainer) {
     chrome.storage.sync.get(['managedUrls'], function(result) {
         const loadedUrls = result.managedUrls;
         if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
@@ -499,24 +225,7 @@ function loadUrls(iframeContainer, urlListManagementDiv, settingsPopup) {
             managedUrls = loadedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
         }
         saveUrls();
-        renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup);
-        updateIframes(iframeContainer, urlListManagementDiv);
-    });
-}
-
-/**
- * Ensures checkboxes in the URL list match the state in managedUrls.
- * @param {HTMLElement} urlListManagementDiv The container for the URL list.
- */
-function syncUrlListCheckboxes(urlListManagementDiv) {
-    urlListManagementDiv.querySelectorAll('.url-item').forEach(item => {
-        const urlEntry = managedUrls.find(u => u.id.toString() === item.dataset.id);
-        if (urlEntry) {
-            const checkbox = item.querySelector('input[type="checkbox"]');
-            if (checkbox && checkbox.checked !== urlEntry.selected) {
-                checkbox.checked = urlEntry.selected;
-            }
-        }
+        updateIframes(iframeContainer);
     });
 }
 
@@ -839,8 +548,7 @@ async function displayContextualUI(selectedText) {
  */
 function initializeSharedUI(elements) {
     const {
-        iframeContainer, refreshIcon, settingsContainer, settingsPopup, urlListManagementDiv,
-        newUrlInput, addUrlButton, clearSelectionButton, invertSelectionButton, selectAllButton,
+        iframeContainer, refreshIcon, settingsContainer,
         copyMarkdownButton, promptInput, promptContainer, togglePromptButton, sendPromptButton,
         clearPromptButton
     } = elements;
@@ -890,28 +598,6 @@ function initializeSharedUI(elements) {
         closeContextButton.addEventListener('click', resetContextualUI);
     }
 
-    addUrlButton.addEventListener('click', () => {
-        const newUrlValue = newUrlInput.value.trim();
-        if (newUrlValue) {
-            const formattedUrl = formatAndValidateUrl(newUrlValue);
-            if (!formattedUrl) {
-                showPopupMessage(settingsPopup, 'Please enter a valid URL or local file path.');
-                return;
-            }
-            if (managedUrls.some(entry => entry.url === formattedUrl)) {
-                showPopupMessage(settingsPopup, 'This URL already exists in the list.');
-                return;
-            }
-            managedUrls.push({ id: crypto.randomUUID(), url: formattedUrl, selected: false });
-            saveUrls();
-            renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup);
-            updateIframes(iframeContainer, urlListManagementDiv);
-            newUrlInput.value = '';
-            showPopupMessage(settingsPopup, 'URL added successfully!');
-        }
-    });
-    newUrlInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addUrlButton.click(); });
-
     refreshIcon.addEventListener('click', function () {
         refreshIcon.classList.add('clicked');
         let refreshedCount = 0;
@@ -925,44 +611,9 @@ function initializeSharedUI(elements) {
         setTimeout(() => refreshIcon.classList.remove('clicked'), 200);
     });
 
-    invertSelectionButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage(settingsPopup, 'No URLs available in the list to invert selection.'); return; }
-        managedUrls.forEach(urlEntry => urlEntry.selected = !urlEntry.selected);
-        saveUrls();
-        syncUrlListCheckboxes(urlListManagementDiv);
-        updateIframes(iframeContainer, urlListManagementDiv);
-        showPopupMessage(settingsPopup, 'Selection inverted.');
+    settingsContainer.addEventListener('click', () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('options.html?section=general') });
     });
-
-    selectAllButton.addEventListener('click', () => {
-        if (managedUrls.length === 0) { showPopupMessage(settingsPopup, 'No URLs available in the list to select.'); return; }
-        let newlySelectedCount = 0;
-        managedUrls.forEach(urlEntry => { if (!urlEntry.selected) { urlEntry.selected = true; newlySelectedCount++; } });
-        if (newlySelectedCount > 0) {
-            saveUrls();
-            syncUrlListCheckboxes(urlListManagementDiv);
-            updateIframes(iframeContainer, urlListManagementDiv);
-            showPopupMessage(settingsPopup, 'All URLs selected.');
-        } else {
-            showPopupMessage(settingsPopup, 'All URLs were already selected; no changes made.');
-        }
-    });
-
-    clearSelectionButton.addEventListener('click', () => {
-        let deselectedCount = 0;
-        managedUrls.forEach(urlEntry => { if (urlEntry.selected) { urlEntry.selected = false; deselectedCount++; } });
-        if (deselectedCount > 0) {
-            saveUrls();
-            syncUrlListCheckboxes(urlListManagementDiv);
-            updateIframes(iframeContainer, urlListManagementDiv);
-            showPopupMessage(settingsPopup, 'All selections cleared.');
-        } else {
-            showPopupMessage(settingsPopup, 'No URLs were selected to clear; no changes made.');
-        }
-    });
-
-    settingsContainer.addEventListener('mouseenter', () => settingsPopup.classList.add('show'));
-    settingsContainer.addEventListener('mouseleave', () => { if (!isModalActive) settingsPopup.classList.remove('show'); });
 
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
@@ -1065,12 +716,11 @@ function initializeSharedUI(elements) {
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (namespace === 'sync' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
-            renderUrlList(urlListManagementDiv, iframeContainer, settingsPopup);
-            updateIframes(iframeContainer, urlListManagementDiv);
+            updateIframes(iframeContainer);
         }
     });
 
-    loadUrls(iframeContainer, urlListManagementDiv, settingsPopup);
+    loadUrls(iframeContainer);
     
     // Delay the initial resize to ensure the browser has calculated the layout.
     setTimeout(() => {
