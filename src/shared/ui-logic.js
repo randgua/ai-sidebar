@@ -22,36 +22,36 @@ const defaultUrls = [
 
 // Default prompts to be used if none are found in storage.
 const defaultPrompts = [
-    { id: crypto.randomUUID(), name: 'Explain', content: 'Please explain clearly and concisely in ${lang}:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Summarize', content: 'Summarize the following text into three key points:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Translate', content: 'Translate the following text into ${lang}:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Explain codes', content: 'Explain the following code snippet, describing its purpose, inputs, and outputs:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Web Search', content: 'Perform a web search for:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Outline...', content: 'Create an outline for the following topic:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Simplify language', content: 'Simplify the language of the following text to make it easier to understand:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'More engaging', content: 'Rewrite the following text to be more engaging:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'More apologetic', content: 'Rewrite the following text to be more apologetic:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Add humor', content: 'Add some humor to the following text:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Add statistics', content: 'Enhance the following text by adding relevant (placeholder) statistics:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Add details', content: '# Role: Detail Enhancer\n\nYou are a highly skilled AI trained in language understanding and detail enhancement. You will read the original text and add some details to make it more believable.\n\n## Rules\n- Retain the original meaning and structure.\n- Enhance the text with additional details to make it more believable.\n- Only provide the output and nothing else.\n- Do not wrap responses in quotes.\n- Respond in the same language as the original text.\n\n# Original Text\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'More persuasive', content: 'Make the following text more persuasive:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Sales email...', content: 'Write a sales email about the following:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Meeting agenda...', content: 'Create a meeting agenda for the following topic:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'To-do list...', content: 'Create a to-do list based on the following:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Creative story', content: 'Write a creative story based on the following prompt:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Press release', content: 'Write a press release about the following:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Social media post...', content: 'Write a social media post about the following:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Paragraph about...', content: 'Write a paragraph about the following:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Improve writing', content: 'Improve the writing of the following text:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Fix spelling & grammar', content: 'Fix the spelling and grammar of the following text:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Answer this question', content: 'Answer the following question:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Find action items', content: 'Identify the action items from the following text:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Make shorter', content: 'Make the following text shorter:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Make longer', content: 'Make the following text longer:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Change tone', content: 'Change the tone of the following text to be more ${tone}:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Brainstorm about...', content: 'Brainstorm ideas about the following topic:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Blog post...', content: 'Write a blog post about the following topic:\n"""\n${input}\n"""', showInMenu: true },
-    { id: crypto.randomUUID(), name: 'Continue writing', content: 'Continue writing from the following text.', showInMenu: false },
+    { id: crypto.randomUUID(), name: 'Explain', content: 'Please explain clearly and concisely in ${lang} : """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Summarize', content: 'You are a highly skilled AI trained in language comprehension and summarization. I would like you to read the text delimited by triple quotes and summarize it into a concise abstract paragraph. Aim to retain the most important points, providing a coherent and readable summary that could help a person understand the main points of the discussion without needing to read the entire text. Please avoid unnecessary details or tangential points. Only give me the output and nothing else. Do not wrap responses in quotes. Respond in the ${lang} language. """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Translate', content: 'Rewrite the text in triple quotes in ${lang}. """ ${input} """ Only give me the translation and nothing else. Do not wrap responses in quotes.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Explain codes', content: 'Explain the following codes and give me a clear, concise and readable explanation.Respond in the ${lang} language. """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Web Search', content: 'Use the Internet search to extract key points. Carefully analyze the following content. Respond in the ${lang} language. """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Outline…', content: 'Please use the following topics or keywords to generate an outline that includes titles, chapters, and subsections. Output it in Markdown format. Only give me the output and nothing else. The outline should be in the ${lang} language. Topics or keywords: """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Simplify language', content: 'Rewrite the text delimited by triple quotes to be clearer, easier to comprehend, and less confusing. Only give me the output and nothing else. Do not wrap responses in quotes. # Respond in the same language of the text delimited by triple quote: """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More engaging', content: 'Here is the original text to be rewritten: """ ${input} """ Please rewrite this text to make it more engaging and compelling to the reader. Use more vivid language, vary the sentence structure, and make the prose more dynamic overall. However, it\'s critical that you retain the core meaning and key points of the original text. Output only the rewritten text itself, without any quotes or other commentary. Write the output in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More apologetic', content: 'Here is the original text: """${input}""" Please rewrite the text above to sound more apologetic and regretful in tone, while keeping the core meaning and intent the same. Use softening language, take responsibility where appropriate, and convey a sense of remorse or acknowledgement of wrongdoing if applicable to the context. Output only the rewritten text. Do not wrap your rewrite in quotes or tags. Respond in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add humor', content: '# Role: Humor Enhancer You are a highly skilled AI trained in language understanding and humor enhancement. Your task is to read the original text and make the text more engaging and entertaining, not to completely alter its essence. Strive to seamlessly integrate the humorous bits so they feel natural rather than forced. ## Rules - Retain the original meaning and structure. - Enhance by strategically adding humorous elements to make the text more engaging and entertaining. - Only provide the output and nothing else. - Do not wrap responses in quotes. - Respond in the same language as the original text. # Original Text """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add statistics', content: 'Add some statistics to the text delimited by triple quotes to make it more believable. Ensure output in the same language variety or dialect of the text - in other words don\'t change the language ,and only give me the output and nothing else. Do not wrap responses in quotes. """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Add details', content: '# Role: Detail Enhancer You are a highly skilled AI trained in language understanding and detail enhancement. You will read the original text and add some details to make it more believable. ## Rules - Retain the original meaning and structure. - Enhance the text with additional details to make it more believable. - Only provide the output and nothing else. - Do not wrap responses in quotes. - Respond in the same language as the original text. # Original Text """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'More persuasive', content: 'Here is the original text to make more persuasive: """ ${input} """ Please rewrite the text to make it more persuasive and compelling to the reader. Use persuasive language and techniques like appealing to emotions, using strong words, highlighting benefits, and ending with a clear call-to-action. The meaning and core message of the text should remain the same. Output only the rewritten text itself, without any quotes or other commentary. Write the output in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Sales email…', content: '"""${input}"""" Follow the steps below: Step 1: Create an intriguing subject line based on the product; Step 2: Address the recipient personally; Step 3: Introduce the product briefly and state its value proposition; Step 4: Describe the benefits of the product for the recipient; Step 5: Incorporate a compelling call to action; Step 6: Sign off in a professional manner; Step 7: Plan for a follow-up action; The sales email should be in ${lang}. It should not include the step information and should follow this format: Subject: <Intriguing subject line related to the product> Dear <Recipient\'s name>, I hope this email finds you well. I am reaching out today to introduce <a simple description of your product>. Our product offers <value proposition>. <Details about the benefits of the product to the recipient>. <Compelling call to action>. Thank you for your time and consideration. We will follow up with you <timeframe for follow-up action>. Best Regards, <Your name>', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Meeting agenda…', content: '"""${input}""" Following the steps below: Step 1: Identify the main topic of the meeting; Step 2: Break down the main topic into key points or items to be discussed; Step 3: Organize the key points in a logical and efficient order to form the meeting agenda; Do not return anything other than the meeting agenda. Do not include step information. The to-do list should be in ${lang}. Based on the meeting topic provided, please create a comprehensive meeting agenda using the following format(markdown): ## <Meeting Objective> ## <Agenda> 1. <agenda item> 3. <agenda item> 3. <agenda item> ## <Meeting Time and Place> Time: [Please fill in the meeting time] Place: [Please fill in the meeting location] ## <Attendees> - [Please fill in attendee\'s name and position] - [Please fill in attendee\'s name and position] - [Please fill in attendee\'s name and position] - [Please fill in attendee\'s name and position] - [Please fill in attendee\'s name and position] ## <Meeting Recorder > - [Please fill in the recorder\'s name]', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'To-do list…', content: '"""${input}""" Follow the steps below: Step 1: Identify the main goal or outcome of the task or idea; Step 2: Break down the main task or idea into a series of smaller, actionable steps; Step 3: Organize the steps in a logical and efficient order to form the to-do list; Do not return anything other than the to-do list. Do not include step information. The to-do list should be in ${lang}. Write a todo list of action items from my notes using the following format: # <main goal or outcome of the task or idea> - [ ] <first action item> - [ ] <second action item> - [ ] <third action item> - [ ] <fourth action item> ...', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Creative story', content: '"""${input}""" Turn my idea into a full creative story: Do not return anything other than the creative story. Do not include step information. The story should be in ${lang}. Based on the story idea provided, please create a comprehensive creative story using the following format(markdown): # <Story Title> <story content>', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Press release', content: 'You are a professional press release writing expert, please generate a professional press release based on the input content in the following format:u2028 ## < an eye-catching press release headline based on the input content > < an engaging lead > < detailed body content > < relevant quotes > ### < the company profile at the end >u2028 ## Rules - Do not return anything other than the press release. - Do not include step information in your outputs. - The press release should be in ${lang}. - Do not include any additional commentary outside of the required information outlined above. ## Input content """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Social media post…', content: 'I want you to act as a topic authority and social media influencer. Write a social media post description or caption using a few sentences for the post about """${input}""". Only give me the output and nothing else. Do not wrap responses in quotes. The post should be in the ${lang} language.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Paragraph about…', content: '"""${input}""" Rewrite the above content into a longer paragraph. Only give me the output and nothing else. Do not wrap responses in quotes. Respond in the {lang} language.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Improve writing', content: 'Rewrite the following text, which will be delimited by triple quotes, to be more concise and well-written while preserving the original meaning: """${input}""" Provide only the rewritten text as your output, without any quotes or tags. Respond in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Fix spelling & grammar', content: 'Correct any spelling, syntax, or grammar mistakes in the text delimited by triple quotes without making any improvements or changes to the original meaning or style. In other words, only correct spelling, syntax, or grammar mistakes, do not make improvements. If the original text has no mistake, just output the original text and nothing else. Do not wrap responses in quotes. """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Answer this question', content: 'Use simple and clear language to answer the following question. Do not translate the question. Do not wrap responses in quotes. """ ${input} """ Respond in ${lang}', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Find action items', content: 'Find action items from the text delimited by triple quotes and output them in bullet point format. Identify only the action items that need the reader to take action, and exclude action items requiring action from anyone other than the reader. Only give me the output and nothing else. Do not wrap responses in quotes. Respond in the ${lang} language variety or dialect. """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Make shorter', content: 'Here is the original text to rewrite: """${input}""" Please rewrite the text above to be no more than half the number of characters while keeping the core meaning the same. Output only the rewritten text, without any quotes or other formatting. Write the rewritten text in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Make longer', content: 'Here is the original text to rewrite: """${input}""" Please rewrite the text above to be twice as long, while keeping the core meaning the same. Do not add any completely new information, ideas or opinions. Output the rewritten, expanded text directly, without any quotes or other formatting. Write in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Change tone', content: 'Here is the original text: """${input}""" Respond in the same language as the original text. Rewrite the text in a more professional tone. Output only the rewritten text. Do not wrap your rewrite in quotes or tags. ## Respond in the same language as the original text.', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Brainstorm about…', content: 'Please generate 10 creative ideas based on the following keywords or topics.Each idea should be unique and provide a fresh perspective. Output the ideas in the form of an unordered list.Only give me the output and nothing else. The outline should be in the ${lang} language. Keywords or topics: """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Blog post…', content: 'Help me generate a blog post based on the following topics or keywords. Follow the steps below: Step 1: Generate a catchy blog title for me; Step 2: Generate blog content, including an attractive beginning, content described in chapters, and conclusion; Step 3: Organize content according to the format of general blogs, output in markdown format; Do not return anything other than the blog post. Do not include step information. Do not wrap responses in quotes. Respond in the ${lang} language. Topics or keywords: """${input}"""', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Continue writing', content: '"""${input}""" Continue writing that begins with the text above and keeping the same voice and style. Stay on the same topic. Only give me the output and nothing else. Respond in the same language variety or dialect of the text above.', showInMenu: true },
 ];
 
 /**
@@ -128,10 +128,10 @@ function showCustomConfirm(message, onConfirm) {
 }
 
 /**
- * Saves the current list of URLs to chrome.storage.sync.
+ * Saves the current list of URLs to chrome.storage.local.
  */
 function saveUrls() {
-    chrome.storage.sync.set({ managedUrls: managedUrls });
+    chrome.storage.local.set({ managedUrls: managedUrls });
 }
 
 /**
@@ -216,7 +216,7 @@ function updateIframes(iframeContainer) {
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function loadUrls(iframeContainer) {
-    chrome.storage.sync.get(['managedUrls'], function(result) {
+    chrome.storage.local.get(['managedUrls'], function(result) {
         const loadedUrls = result.managedUrls;
         if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
             if (chrome.runtime.lastError) console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
@@ -358,7 +358,7 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
     button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
     button.addEventListener('click', async () => {
         let fullPrompt;
-        const { displayLanguage } = await chrome.storage.sync.get('displayLanguage');
+        const { displayLanguage } = await chrome.storage.local.get('displayLanguage');
         const lang = displayLanguage || 'English'; // Default to English if not set
 
         // Replace placeholders
@@ -528,7 +528,7 @@ async function displayContextualUI(selectedText) {
         promptInputDivider.style.display = 'block';
     }
 
-    let result = await chrome.storage.sync.get('prompts');
+    let result = await chrome.storage.local.get('prompts');
     let prompts = result.prompts;
     if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
         prompts = defaultPrompts;
@@ -695,7 +695,7 @@ function initializeSharedUI(elements) {
         if (contextContainer.style.display === 'flex') {
             const selectedText = contextContainer.dataset.text;
             if (selectedText) {
-                let result = await chrome.storage.sync.get('prompts');
+                let result = await chrome.storage.local.get('prompts');
                 let prompts = result.prompts;
                 if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
                     prompts = defaultPrompts;
