@@ -2,7 +2,6 @@
 let draggedDOMElement = null;
 let confirmationMessageElement = null;
 let isModalActive = false;
-let collectedOutputs = [];
 let managedUrls = [];
 const iframeCache = {};
 
@@ -231,11 +230,7 @@ function loadUrls(iframeContainer) {
 
 /**
  * Automatically resizes the prompt textarea and manages its scrollbar visibility.
- * The scrollbar will only appear when the content exceeds the maximum height.
  * @param {HTMLTextAreaElement} textarea The textarea element.
- * @param {HTMLElement} promptContainer The container for the prompt area.
- * @param {HTMLButtonElement} sendPromptButton The send button.
- * @param {HTMLButtonElement} clearPromptButton The clear button.
  */
 function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
     if (!textarea || !promptContainer) return;
@@ -376,7 +371,7 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
 }
 
 /**
- * Dynamically renders prompt buttons based on available width, ensuring they stay on a single line.
+ * Dynamically renders prompt buttons based on available width.
  * @param {string} selectedText The text that the prompts will act upon.
  * @param {Array} visiblePrompts The list of prompt objects to render.
  */
@@ -618,50 +613,88 @@ function initializeSharedUI(elements) {
         chrome.tabs.create({ url: chrome.runtime.getURL('options.html?section=general') });
     });
 
+    // --- START: MODIFIED SECTION FOR RELIABLE COPY ---
+    let expectedResponses = 0;
+    let receivedResponses = 0;
+    let copyFallbackTimeout = null;
+    let collectedOutputs = [];
+
+    const processCollectedOutputs = () => {
+        // Ensure the operation is still active before proceeding.
+        if (!copyFallbackTimeout) {
+            return;
+        }
+        clearTimeout(copyFallbackTimeout);
+        copyFallbackTimeout = null;
+
+        if (collectedOutputs.length > 0) {
+            const prettyNames = {
+                'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
+                'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
+                'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
+            };
+            const markdownString = collectedOutputs.map(item => {
+                const title = prettyNames[item.source] || item.source;
+                return `## ${title}\n\n${item.output}`;
+            }).join('\n\n---\n\n');
+            
+            promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
+            navigator.clipboard.writeText(markdownString);
+            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            promptInput.focus();
+            setTimeout(() => {
+                promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
+                promptInput.scrollTop = promptInput.scrollHeight;
+            }, 0);
+            showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.length} panel(s).`);
+        } else {
+            showGlobalConfirmationMessage('Could not find any output to copy.');
+        }
+    };
+
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
-            collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
+            // Only process if a copy operation is active.
+            if (copyFallbackTimeout) {
+                collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
+                receivedResponses++;
+                // If all expected iframes have responded, process the results immediately.
+                if (receivedResponses >= expectedResponses) {
+                    processCollectedOutputs();
+                }
+            }
         }
     });
 
     copyMarkdownButton.title = 'Append all outputs to prompt area and copy as Markdown';
     copyMarkdownButton.addEventListener('click', () => {
+        // Clear any previous operation that might be lingering.
+        if (copyFallbackTimeout) {
+            clearTimeout(copyFallbackTimeout);
+        }
+
         collectedOutputs = [];
         const activeIframes = iframeContainer.querySelectorAll('iframe');
-        if (activeIframes.length === 0) {
+        expectedResponses = activeIframes.length;
+        receivedResponses = 0;
+
+        if (expectedResponses === 0) {
             showGlobalConfirmationMessage('No active panels to copy from.');
             return;
         }
+
+        // Request output from all active iframes.
         activeIframes.forEach(iframe => {
-            if (iframe.contentWindow) iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+            }
         });
 
-        setTimeout(() => {
-            if (collectedOutputs.length > 0) {
-                const prettyNames = {
-                    'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
-                    'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
-                    'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
-                };
-                const markdownString = collectedOutputs.map(item => {
-                    const title = prettyNames[item.source] || item.source;
-                    return `## ${title}\n\n${item.output}`;
-                }).join('\n\n---\n\n');
-                
-                promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
-                navigator.clipboard.writeText(markdownString);
-                autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-                promptInput.focus();
-                setTimeout(() => {
-                    promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
-                    promptInput.scrollTop = promptInput.scrollHeight;
-                }, 0);
-                showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.length} panel(s).`);
-            } else {
-                showGlobalConfirmationMessage('Could not find any output to copy.');
-            }
-        }, 1500);
+        // Set a fallback timeout to process whatever has been received.
+        // This prevents the function from getting stuck if an iframe fails to respond.
+        copyFallbackTimeout = setTimeout(processCollectedOutputs, 3000);
     });
+    // --- END: MODIFIED SECTION FOR RELIABLE COPY ---
 
     togglePromptButton.addEventListener('click', () => {
         promptContainer.classList.toggle('collapsed');
