@@ -31,10 +31,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmYesButton = document.getElementById('confirm-yes-button');
     const confirmNoButton = document.getElementById('confirm-no-button');
 
+    // --- APPEARANCE-SPECIFIC DOM ELEMENTS ---
+    const languageSelect = document.getElementById('display-language-select');
+    const languageSelectTrigger = languageSelect.querySelector('.custom-select-trigger');
+    const languageSearchInput = document.getElementById('language-search-input');
+    const languageOptionsList = document.getElementById('language-options-list');
+
     // --- STATE VARIABLES ---
     let prompts = [];
     let managedUrls = [];
     let draggedItem = null; // Used for both prompts and URLs
+
+    // --- LANGUAGE DATA ---
+    const languages = [
+        { code: 'English', name: 'English', native: 'English' },
+        { code: 'ChineseS', name: 'Simplified Chinese', native: '中文(简体)' },
+        { code: 'ChineseT', name: 'Traditional Chinese', native: '中文(繁體)' },
+        { code: 'Spanish', name: 'Spanish', native: 'Español' },
+        { code: 'French', name: 'French', native: 'Français' },
+        { code: 'Japanese', name: 'Japanese', native: '日本語' },
+        { code: 'Korean', name: 'Korean', native: '한국어' },
+        { code: 'German', name: 'German', native: 'Deutsch' },
+        { code: 'Russian', name: 'Russian', native: 'Русский' },
+        { code: 'Portuguese', name: 'Portuguese', native: 'Português' },
+        { code: 'Italian', name: 'Italian', native: 'Italiano' },
+        { code: 'Dutch', name: 'Dutch', native: 'Nederlands' },
+    ];
 
     // --- DEFAULT DATA ---
     const defaultPrompts = [
@@ -311,6 +333,45 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUrlList();
     }
 
+    // --- LANGUAGE DROPDOWN LOGIC ---
+    const populateLanguageDropdown = (filter = '') => {
+        languageOptionsList.innerHTML = '';
+        const lowerCaseFilter = filter.toLowerCase();
+        const filteredLanguages = languages.filter(lang => 
+            lang.name.toLowerCase().includes(lowerCaseFilter) || 
+            lang.native.toLowerCase().includes(lowerCaseFilter)
+        );
+
+        filteredLanguages.forEach(lang => {
+            const option = document.createElement('div');
+            option.className = 'custom-option';
+            option.dataset.value = lang.code;
+            option.innerHTML = `<span>${lang.name}</span><span class="lang-native">${lang.native}</span>`;
+            
+            option.addEventListener('click', () => {
+                languageSelectTrigger.querySelector('span').textContent = lang.name;
+                chrome.storage.sync.set({ displayLanguage: lang.code });
+                languageSelect.classList.remove('open');
+                updateSelectedOption(lang.code);
+            });
+            languageOptionsList.appendChild(option);
+        });
+        updateSelectedOption();
+    };
+
+    const updateSelectedOption = async () => {
+        const { displayLanguage } = await chrome.storage.sync.get({ displayLanguage: 'English' });
+        const selectedLanguage = languages.find(l => l.code === displayLanguage) || languages[0];
+        languageSelectTrigger.querySelector('span').textContent = selectedLanguage.name;
+        
+        document.querySelectorAll('.custom-option').forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.value === displayLanguage) {
+                opt.classList.add('selected');
+            }
+        });
+    };
+
     // --- INITIALIZATION ---
     const init = async () => {
         // Load data
@@ -320,6 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render initial views
         renderPrompts();
         renderUrlList();
+        populateLanguageDropdown();
+        updateSelectedOption();
         
         // Handle view switching based on URL parameter.
         const urlParams = new URLSearchParams(window.location.search);
@@ -338,6 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelPromptButton.addEventListener('click', closePromptModal);
         window.addEventListener('click', (e) => {
             if (e.target === promptModal) closePromptModal();
+            if (!languageSelect.contains(e.target)) {
+                languageSelect.classList.remove('open');
+            }
         });
 
         promptForm.addEventListener('submit', async (e) => {
@@ -391,6 +457,15 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUrlList();
         });
 
+        // Language dropdown listeners
+        languageSelectTrigger.addEventListener('click', () => {
+            languageSelect.classList.toggle('open');
+        });
+
+        languageSearchInput.addEventListener('input', (e) => {
+            populateLanguageDropdown(e.target.value);
+        });
+
         // Attach listeners only to the containers that allow items to be dropped into them.
         [shownPromptsList, hiddenPromptsList].forEach(container => {
             container.addEventListener('dragover', handleDragOver);
@@ -399,9 +474,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Listen for changes in storage and update the UI accordingly.
         chrome.storage.onChanged.addListener((changes, namespace) => {
-            if (namespace === 'sync' && changes.managedUrls) {
-                managedUrls = changes.managedUrls.newValue;
-                renderUrlList();
+            if (namespace === 'sync') {
+                if (changes.managedUrls) {
+                    managedUrls = changes.managedUrls.newValue;
+                    renderUrlList();
+                }
+                if (changes.displayLanguage) {
+                    updateSelectedOption();
+                }
             }
         });
     };

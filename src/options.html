@@ -31,7 +31,7 @@
                  <div class="main-header">
                     <h1>General Settings</h1>
                 </div>
-                <div id="url-list-management-container">
+                <div id="url-list-management-container" class="settings-container">
                     <h3>Manage Website Panels</h3>
                     <p class="settings-description">Add, remove, or reorder the websites that appear in your sidebar. Check the box to show a website panel.</p>
                     <div id="url-list-management"></div>
@@ -43,6 +43,30 @@
                         <button id="invert-selection-button" class="secondary-button">Invert Selection</button>
                         <button id="select-all-button" class="secondary-button">Select All</button>
                         <button id="clear-selection-button" class="secondary-button">Clear All Selections</button>
+                    </div>
+                </div>
+                <!-- Appearance Settings -->
+                <div id="appearance-settings-container" class="settings-container">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label for="display-language-select">Display language</label>
+                        <div class="custom-select-wrapper">
+                            <div id="display-language-select" class="custom-select">
+                                <div class="custom-select-trigger">
+                                    <span>English</span>
+                                    <span class="material-symbols-outlined">arrow_drop_down</span>
+                                </div>
+                                <div class="custom-options">
+                                    <div class="custom-options-search">
+                                        <span class="material-symbols-outlined">search</span>
+                                        <input type="text" id="language-search-input" placeholder="Search">
+                                    </div>
+                                    <div id="language-options-list" class="custom-options-list">
+                                        <!-- Language options will be populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

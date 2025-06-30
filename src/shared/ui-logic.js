@@ -356,16 +356,19 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
     const button = document.createElement('button');
     button.textContent = prompt.name;
     button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
         let fullPrompt;
-        // Check if the prompt content contains the placeholder
-        if (prompt.content.includes('${input}')) {
-            // Replace the placeholder with the selected text
-            fullPrompt = prompt.content.replace('${input}', selectedText);
+        const { displayLanguage } = await chrome.storage.sync.get('displayLanguage');
+        const lang = displayLanguage || 'English'; // Default to English if not set
+
+        // Replace placeholders
+        let promptContent = prompt.content.replace(/\${lang}/g, lang);
+        if (promptContent.includes('${input}')) {
+            fullPrompt = promptContent.replace('${input}', selectedText);
         } else {
-            // Fallback for prompts without the placeholder (like 'Continue writing')
-            fullPrompt = `${prompt.content}\n\n"""\n${selectedText}\n"""`;
+            fullPrompt = `${promptContent}\n\n"""\n${selectedText}\n"""`;
         }
+        
         sendMessageToIframes(iframeContainer, fullPrompt);
         resetContextualUI();
     });
