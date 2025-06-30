@@ -745,12 +745,12 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;
+    gap: 4px;
 }
 
 .main-prompt-buttons {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     flex-wrap: nowrap;
 }
 
@@ -775,6 +775,22 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #5f6368;
 }
 
+/* Style for the 'more prompts' button to be a square icon button */
+.prompt-button.more-button {
+    padding: 4px;
+    border-radius: 8px;
+    line-height: 1;
+}
+
+/* Style for the icon inside the 'more prompts' button */
+.prompt-button.more-button .material-symbols-outlined {
+    font-size: 13px;
+    margin: 0;
+    color: #e8eaed;
+    width: auto;
+    height: auto;
+}
+
 #more-prompts-popup {
     position: absolute;
     bottom: 100%; /* Position the popup above its parent wrapper. */
@@ -786,7 +802,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     z-index: 10;
     padding: 6px;
     width: 180px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: none;
 }
 

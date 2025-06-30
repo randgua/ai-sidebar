@@ -713,8 +713,8 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
             tempContainer.style.position = 'absolute';
             document.body.appendChild(tempContainer);
             const moreButtonTemplate = document.createElement('button');
-            moreButtonTemplate.textContent = '...';
-            moreButtonTemplate.className = 'prompt-button';
+            moreButtonTemplate.className = 'prompt-button more-button';
+            moreButtonTemplate.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
             tempContainer.appendChild(moreButtonTemplate);
             const moreButtonWidth = moreButtonTemplate.offsetWidth;
             tempContainer.innerHTML = '';
@@ -758,8 +758,8 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 
                 // Create a dedicated "..." button that does not send a prompt on click
                 const moreButton = document.createElement('button');
-                moreButton.textContent = '...';
-                moreButton.className = 'prompt-button';
+                moreButton.className = 'prompt-button more-button';
+                moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
                 
                 morePromptsWrapper.appendChild(moreButton);
                 
