@@ -125,10 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getPrompts = async () => {
         const result = await chrome.storage.local.get('prompts');
-        prompts = (!result.prompts || result.prompts.length === 0) ? defaultPrompts : result.prompts;
-        if (!result.prompts || result.prompts.length === 0) {
-            await savePrompts(prompts);
-        }
+        prompts = result.prompts || []; // Defaults are set on install.
     };
 
     const savePrompts = async (updatedPrompts) => {
@@ -191,10 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- URL MANAGEMENT LOGIC ---
     const getUrls = async () => {
         const result = await chrome.storage.local.get('managedUrls');
-        managedUrls = (!result.managedUrls || result.managedUrls.length === 0) ? defaultUrls : result.managedUrls;
-        if (!result.managedUrls || result.managedUrls.length === 0) {
-            await saveUrls();
-        }
+        managedUrls = result.managedUrls || []; // Defaults are set on install.
     };
 
     const saveUrls = async () => {

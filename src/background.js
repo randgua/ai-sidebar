@@ -1,3 +1,6 @@
+// Import default data for installation.
+importScripts('shared/defaults.js');
+
 // Open the side panel when the extension's action icon is clicked.
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
@@ -12,7 +15,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ status: "Side panel opening" });
     }
-    // The 'injectAndSend' action is no longer used and has been removed.
     return true; // Keep the message channel open for the response.
 });
 
@@ -23,9 +25,19 @@ chrome.commands.onCommand.addListener((command) => {
     }
 });
 
-chrome.runtime.onInstalled.addListener(function () {
+chrome.runtime.onInstalled.addListener((details) => {
+    // On first install, populate storage with default URLs and Prompts.
+    if (details.reason === 'install') {
+        chrome.storage.local.set({
+            managedUrls: defaultUrls,
+            prompts: defaultPrompts,
+            displayLanguage: 'English' // Set a default language as well.
+        }, () => {
+            console.log('Default URLs and prompts have been set on installation.');
+        });
+    }
+
     // Add rules to modify response headers, allowing more sites to be embedded in iframes.
-    // This removes x-frame-options and content-security-policy headers that prevent embedding.
     chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: [1],
         addRules: [{

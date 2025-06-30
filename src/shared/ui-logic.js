@@ -163,19 +163,18 @@ function updateIframes(iframeContainer) {
 }
 
 /**
- * Loads URLs from storage or uses defaults, then renders the UI.
+ * Loads URLs from storage, then renders the UI.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function loadUrls(iframeContainer) {
-    chrome.storage.local.get(['managedUrls'], function(result) {
-        const loadedUrls = result.managedUrls;
-        if (chrome.runtime.lastError || !Array.isArray(loadedUrls) || loadedUrls.length === 0) {
-            if (chrome.runtime.lastError) console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
-            managedUrls = defaultUrls.map(u => ({ ...u, id: u.id || crypto.randomUUID() }));
+    // Defaults are now set on install, so we just read what's in storage.
+    chrome.storage.local.get('managedUrls', function(result) {
+        if (chrome.runtime.lastError) {
+            console.error('Error loading managed URLs:', chrome.runtime.lastError.message);
+            managedUrls = [];
         } else {
-            managedUrls = loadedUrls.map(url => ({ ...url, id: url.id || crypto.randomUUID() }));
+            managedUrls = result.managedUrls || [];
         }
-        saveUrls();
         updateIframes(iframeContainer);
     });
 }
@@ -476,10 +475,7 @@ async function displayContextualUI(selectedText) {
     }
 
     let result = await chrome.storage.local.get('prompts');
-    let prompts = result.prompts;
-    if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
-        prompts = defaultPrompts;
-    }
+    let prompts = result.prompts || []; // Defaults are set on install.
     const visiblePrompts = prompts.filter(p => p.showInMenu);
 
     renderResponsivePrompts(selectedText, visiblePrompts);
@@ -681,10 +677,7 @@ function initializeSharedUI(elements) {
             const selectedText = contextContainer.dataset.text;
             if (selectedText) {
                 let result = await chrome.storage.local.get('prompts');
-                let prompts = result.prompts;
-                if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
-                    prompts = defaultPrompts;
-                }
+                let prompts = result.prompts || []; // Defaults are set on install
                 const visiblePrompts = prompts.filter(p => p.showInMenu);
                 renderResponsivePrompts(selectedText, visiblePrompts);
             }
