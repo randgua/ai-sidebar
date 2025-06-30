@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Listen for changes in storage and update the UI accordingly.
         chrome.storage.onChanged.addListener((changes, namespace) => {
-            if (namespace === 'sync') {
+            if (namespace === 'local') {
                 if (changes.managedUrls) {
                     managedUrls = changes.managedUrls.newValue;
                     renderUrlList();

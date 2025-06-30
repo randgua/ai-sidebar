@@ -717,7 +717,7 @@ function initializeSharedUI(elements) {
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (namespace === 'sync' && changes.managedUrls) {
+        if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
         }
