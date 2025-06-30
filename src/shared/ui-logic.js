@@ -86,7 +86,56 @@ function saveUrls() {
 }
 
 /**
+ * Handles copying the output from a single, specific iframe.
+ * @param {HTMLIFrameElement} iframe The specific iframe to get output from.
+ * @param {string} url The URL of the iframe, used to identify the response.
+ */
+function handleSelectiveCopy(iframe, url) {
+    const source = new URL(url).hostname;
+    
+    // Define a one-time listener for the response
+    const listener = (event) => {
+        // Check if the message is the one we're waiting for
+        if (event.data && event.data.action === 'receiveLastOutput' && event.data.source === source && event.data.output) {
+            const output = event.data.output.trim();
+            const promptInput = document.getElementById('prompt-input');
+            const promptContainer = document.getElementById('prompt-container');
+            const sendPromptButton = document.getElementById('send-prompt-button');
+            const clearPromptButton = document.getElementById('clear-prompt-button');
+
+            const prettyNames = {
+                'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
+                'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
+                'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
+            };
+            const title = prettyNames[source] || source;
+            const markdownString = `## ${title}\n\n${output}`;
+            
+            promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
+            navigator.clipboard.writeText(markdownString);
+            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            promptInput.focus();
+            showGlobalConfirmationMessage(`Appended and copied output from ${title}.`);
+            
+            // Clean up this specific listener
+            window.removeEventListener('message', listener);
+        }
+    };
+
+    window.addEventListener('message', listener);
+    
+    // Request the output from the specific iframe
+    if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+    }
+
+    // Fallback to remove the listener after a timeout, preventing memory leaks
+    setTimeout(() => window.removeEventListener('message', listener), 3000);
+}
+
+/**
  * Renders iframes in the main container based on the current selection.
+ * This version avoids reloading iframes by surgically updating the DOM.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function updateIframes(iframeContainer) {
@@ -94,9 +143,16 @@ function updateIframes(iframeContainer) {
     const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
 
     const selectedUrlEntries = managedUrls.filter(u => u.selected);
-    iframeContainer.innerHTML = '';
+    const selectedUrlsSet = new Set(selectedUrlEntries.map(u => u.url));
+    const currentWrappers = Array.from(iframeContainer.children);
+    const wrappersMap = new Map(currentWrappers.map(wrapper => {
+        const iframe = wrapper.querySelector('iframe');
+        return iframe && iframe.src ? [iframe.src, wrapper] : [null, wrapper];
+    }));
 
+    // 1. Handle the empty case
     if (selectedUrlEntries.length === 0) {
+        iframeContainer.innerHTML = ''; // Clear everything
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'empty-message';
         emptyMessage.textContent = managedUrls.length === 0 ?
@@ -104,7 +160,25 @@ function updateIframes(iframeContainer) {
             'No websites selected. Please select websites to display from Settings.';
         iframeContainer.appendChild(emptyMessage);
     } else {
-        selectedUrlEntries.forEach(urlEntry => {
+        const emptyMessage = iframeContainer.querySelector('.empty-message');
+        if (emptyMessage) {
+            iframeContainer.removeChild(emptyMessage);
+        }
+    }
+
+    // 2. Remove wrappers that are no longer selected
+    for (const [url, wrapper] of wrappersMap.entries()) {
+        if (url && !selectedUrlsSet.has(url)) {
+            iframeContainer.removeChild(wrapper);
+        }
+    }
+
+    // 3. Add new wrappers and reorder existing ones
+    let lastPlacedWrapper = null;
+    for (const urlEntry of selectedUrlEntries) {
+        let wrapper = wrappersMap.get(urlEntry.url);
+
+        if (!wrapper) {
             let iframe = iframeCache[urlEntry.url];
             if (!iframe) {
                 iframe = document.createElement('iframe');
@@ -112,7 +186,7 @@ function updateIframes(iframeContainer) {
                 iframeCache[urlEntry.url] = iframe;
             }
 
-            const wrapper = document.createElement('div');
+            wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
 
             const controlsContainer = document.createElement('div');
@@ -138,14 +212,23 @@ function updateIframes(iframeContainer) {
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = 'Append output to prompt area and copy as Markdown';
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-            copyBtn.addEventListener('click', () => handleSelectiveAppend(iframe, urlEntry.url));
+            copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry.url));
 
             controlsContainer.append(sendBtn, copyBtn);
             wrapper.append(controlsContainer, iframe);
-            iframeContainer.appendChild(wrapper);
-        });
+            wrappersMap.set(urlEntry.url, wrapper); // Add the new wrapper to the map
+        }
+
+        // Place the wrapper in the correct order
+        const expectedNextSibling = lastPlacedWrapper ? lastPlacedWrapper.nextSibling : iframeContainer.firstChild;
+        if (wrapper !== expectedNextSibling) {
+            iframeContainer.insertBefore(wrapper, expectedNextSibling);
+        }
+
+        lastPlacedWrapper = wrapper;
     }
 
+    // 4. Clean up the iframe cache
     const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
     for (const urlInCache in iframeCache) {
         if (!currentManagedUrlsSet.has(urlInCache)) {
@@ -153,6 +236,7 @@ function updateIframes(iframeContainer) {
         }
     }
 
+    // 5. Restore UI state
     promptContainer.classList.toggle('collapsed', isCollapsedBeforeUpdate);
     if (!isCollapsedBeforeUpdate) {
         const promptInput = document.getElementById('prompt-input');
