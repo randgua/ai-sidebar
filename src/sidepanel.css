@@ -400,6 +400,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     display: flex;
     align-items: flex-end;
     width: 100%;
+    gap: 8px;
 }
 
 .prompt-input-divider {
@@ -409,8 +410,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 
 #prompt-input {
     flex-grow: 1;
-    /* Default padding for single-line view, leaving space for all buttons. */
-    padding: 12px 72px 12px 16px;
+    padding: 12px 16px;
     border: none;
     font-family: Arial, sans-serif;
     font-size: 14px;
@@ -422,13 +422,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     color: #e8eaed;
     overscroll-behavior: contain;
     min-height: 48px;
-    overflow-y: hidden; /* JS will manage scrollbar visibility. */
-    transition: padding-right 0.2s ease;
-}
-
-/* When in multi-line mode, reduce right padding as clear button is now absolute. */
-.prompt-input-wrapper.multi-line-input #prompt-input {
-    padding-right: 72px;
+    overflow-y: hidden;
+    min-width: 0; /* Allow the textarea to shrink to make room for buttons. */
 }
 
 #prompt-input::placeholder {
@@ -461,9 +456,12 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #9aa0a6;
 }
 
-.prompt-input-row > button {
-    /* Align buttons to the bottom of the flex container in single-line mode. */
+.prompt-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* Prevent this container from shrinking. */
     margin-bottom: 8px;
+    gap: 4px;
 }
 
 #clear-prompt-button {
@@ -477,9 +475,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin-left: 8px;
-    margin-right: 4px;
-    order: 1;
     transition: background-color 0.2s ease;
 }
 
@@ -520,8 +515,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin-right: 8px;
-    order: 3;
     transition: background-color 0.2s ease;
 }
 
@@ -553,8 +546,6 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     transition: background-color 0.2s ease, border-radius 0.2s ease;
     border-radius: 50%;
     background-color: #4a4d5f;
-    margin-right: 4px;
-    order: 2;
 }
 
 #send-prompt-button:not(:disabled) {

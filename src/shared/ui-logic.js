@@ -310,16 +310,14 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
             const paddingTop = parseFloat(styles.paddingTop);
             const paddingBottom = parseFloat(styles.paddingBottom);
             const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
-            const isMultiLine = textContentHeight > singleLineHeight + 1;
+            // Use a more robust threshold to determine if the content is multi-line.
+            const isMultiLine = textContentHeight > (singleLineHeight * 1.5);
             
             // Position the clear button absolutely only when it's multi-line.
             clearPromptButton.classList.toggle('top-right', isMultiLine);
-            // Add a class to the wrapper to adjust textarea padding via CSS.
-            promptInputWrapper.classList.toggle('multi-line-input', isMultiLine);
         } else if (promptInputWrapper) {
-            // Ensure classes are removed when there is no text.
+            // Ensure class is removed when there is no text.
             clearPromptButton.classList.remove('top-right');
-            promptInputWrapper.classList.remove('multi-line-input');
         }
     }
 }
