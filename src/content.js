@@ -312,7 +312,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     }
 
     // Routes the output extraction to a site-specific handler.
-    async function handleOutputExtraction() {
+    async function handleOutputExtraction(uniqueId) {
         const hostname = window.location.hostname;
         const handler = siteOutputHandlers[hostname];
         let lastOutput = '';
@@ -326,7 +326,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         window.parent.postMessage({
             action: 'receiveLastOutput',
             output: lastOutput,
-            source: hostname
+            source: hostname,
+            uniqueId: uniqueId
         }, '*');
     }
 
@@ -343,7 +344,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             }
         }
         if (event.data.action === 'getLastOutput') {
-            handleOutputExtraction();
+            handleOutputExtraction(event.data.uniqueId);
         }
     });
 

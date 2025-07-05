@@ -88,13 +88,14 @@ function saveUrls() {
 /**
  * Handles copying the output from a single, specific iframe.
  * @param {HTMLIFrameElement} iframe The specific iframe to get output from.
- * @param {string} url The URL of the iframe, used to identify the response.
+ * @param {object} urlEntry The URL entry object, containing a unique id.
  */
-function handleSelectiveCopy(iframe, url) {
-    const source = new URL(url).hostname;
+function handleSelectiveCopy(iframe, urlEntry) {
+    const uniqueId = urlEntry.id;
+    const sourceHostname = new URL(urlEntry.url).hostname;
     
     const listener = (event) => {
-        if (event.data && event.data.action === 'receiveLastOutput' && event.data.source === source && event.data.output) {
+        if (event.data && event.data.action === 'receiveLastOutput' && event.data.uniqueId === uniqueId && event.data.output) {
             const output = event.data.output.trim();
             const promptInput = document.getElementById('prompt-input');
             const promptContainer = document.getElementById('prompt-container');
@@ -106,7 +107,7 @@ function handleSelectiveCopy(iframe, url) {
                 'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
                 'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
             };
-            const title = prettyNames[source] || source;
+            const title = prettyNames[sourceHostname] || sourceHostname;
             const markdownString = `## ${title}\n\n${output}`;
             
             promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
@@ -122,7 +123,7 @@ function handleSelectiveCopy(iframe, url) {
     window.addEventListener('message', listener);
     
     if (iframe.contentWindow) {
-        iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+        iframe.contentWindow.postMessage({ action: 'getLastOutput', uniqueId: uniqueId }, '*');
     }
 
     setTimeout(() => window.removeEventListener('message', listener), 3000);
@@ -130,6 +131,7 @@ function handleSelectiveCopy(iframe, url) {
 
 /**
  * Renders iframes in the main container based on the current selection.
+ * This function uses the unique ID of each URL entry to allow for duplicate URLs.
  * @param {HTMLElement} iframeContainer The container for the iframes.
  */
 function updateIframes(iframeContainer) {
@@ -137,11 +139,10 @@ function updateIframes(iframeContainer) {
     const isCollapsedBeforeUpdate = promptContainer.classList.contains('collapsed');
 
     const selectedUrlEntries = managedUrls.filter(u => u.selected);
-    const selectedUrlsSet = new Set(selectedUrlEntries.map(u => u.url));
+    const selectedIdsSet = new Set(selectedUrlEntries.map(u => u.id));
     const currentWrappers = Array.from(iframeContainer.children);
     const wrappersMap = new Map(currentWrappers.map(wrapper => {
-        const iframe = wrapper.querySelector('iframe');
-        return iframe && iframe.src ? [iframe.src, wrapper] : [null, wrapper];
+        return wrapper.dataset.id ? [wrapper.dataset.id, wrapper] : [null, wrapper];
     }));
 
     if (selectedUrlEntries.length === 0) {
@@ -159,26 +160,30 @@ function updateIframes(iframeContainer) {
         }
     }
 
-    for (const [url, wrapper] of wrappersMap.entries()) {
-        if (url && !selectedUrlsSet.has(url)) {
+    // Remove wrappers for entries that are no longer selected.
+    for (const [id, wrapper] of wrappersMap.entries()) {
+        if (id && !selectedIdsSet.has(id)) {
             iframeContainer.removeChild(wrapper);
         }
     }
 
     let lastPlacedWrapper = null;
     for (const urlEntry of selectedUrlEntries) {
-        let wrapper = wrappersMap.get(urlEntry.url);
+        let wrapper = wrappersMap.get(urlEntry.id);
 
         if (!wrapper) {
-            let iframe = iframeCache[urlEntry.url];
+            // Use the unique ID as the key for the iframe cache.
+            let iframe = iframeCache[urlEntry.id];
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.src = urlEntry.url;
-                iframeCache[urlEntry.url] = iframe;
+                iframeCache[urlEntry.id] = iframe;
             }
 
             wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
+            // Store the unique ID on the wrapper element.
+            wrapper.dataset.id = urlEntry.id;
 
             const controlsContainer = document.createElement('div');
             controlsContainer.className = 'iframe-controls-container';
@@ -203,11 +208,12 @@ function updateIframes(iframeContainer) {
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = 'Append output to prompt area and copy as Markdown';
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-            copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry.url));
+            // Pass the entire urlEntry object to the handler.
+            copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry));
 
             controlsContainer.append(sendBtn, copyBtn);
             wrapper.append(controlsContainer, iframe);
-            wrappersMap.set(urlEntry.url, wrapper);
+            wrappersMap.set(urlEntry.id, wrapper);
         }
 
         const expectedNextSibling = lastPlacedWrapper ? lastPlacedWrapper.nextSibling : iframeContainer.firstChild;
@@ -218,10 +224,11 @@ function updateIframes(iframeContainer) {
         lastPlacedWrapper = wrapper;
     }
 
-    const currentManagedUrlsSet = new Set(managedUrls.map(u => u.url));
-    for (const urlInCache in iframeCache) {
-        if (!currentManagedUrlsSet.has(urlInCache)) {
-            delete iframeCache[urlInCache];
+    // Clean up the iframe cache for entries that no longer exist in managedUrls.
+    const currentManagedIdsSet = new Set(managedUrls.map(u => u.id));
+    for (const idInCache in iframeCache) {
+        if (!currentManagedIdsSet.has(idInCache)) {
+            delete iframeCache[idInCache];
         }
     }
 
@@ -619,7 +626,7 @@ function initializeSharedUI(elements) {
         let refreshedCount = 0;
         managedUrls.forEach(urlEntry => {
             if (urlEntry.selected) {
-                const iframe = iframeCache[urlEntry.url];
+                const iframe = iframeCache[urlEntry.id];
                 if (iframe) { iframe.src = iframe.src; refreshedCount++; }
             }
         });
@@ -632,22 +639,23 @@ function initializeSharedUI(elements) {
     });
 
     let expectedResponses = 0;
-    let receivedResponses = 0;
     let copyFallbackTimeout = null;
-    let collectedOutputs = [];
+    // Use a Map to store outputs, keyed by unique ID to prevent duplicates.
+    let collectedOutputs = new Map();
 
     const processCollectedOutputs = () => {
         if (!copyFallbackTimeout) return;
         clearTimeout(copyFallbackTimeout);
         copyFallbackTimeout = null;
 
-        if (collectedOutputs.length > 0) {
+        if (collectedOutputs.size > 0) {
             const prettyNames = {
                 'aistudio.google.com': 'AI Studio', 'gemini.google.com': 'Gemini',
                 'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
                 'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
             };
-            const markdownString = collectedOutputs.map(item => {
+            // Convert map values to an array and create the markdown string.
+            const markdownString = Array.from(collectedOutputs.values()).map(item => {
                 const title = prettyNames[item.source] || item.source;
                 return `## ${title}\n\n${item.output}`;
             }).join('\n\n---\n\n');
@@ -660,18 +668,24 @@ function initializeSharedUI(elements) {
                 promptInput.selectionStart = promptInput.selectionEnd = promptInput.value.length;
                 promptInput.scrollTop = promptInput.scrollHeight;
             }, 0);
-            showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.length} panel(s).`);
+            showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.size} panel(s).`);
         } else {
             showGlobalConfirmationMessage('Could not find any output to copy.');
         }
     };
 
     window.addEventListener('message', (event) => {
-        if (event.data && event.data.action === 'receiveLastOutput' && event.data.output) {
+        if (event.data && event.data.action === 'receiveLastOutput' && event.data.output && event.data.uniqueId) {
             if (copyFallbackTimeout) {
-                collectedOutputs.push({ source: event.data.source, output: event.data.output.trim() });
-                receivedResponses++;
-                if (receivedResponses >= expectedResponses) {
+                // Only add the output if we haven't received it for this unique ID yet.
+                if (!collectedOutputs.has(event.data.uniqueId)) {
+                    collectedOutputs.set(event.data.uniqueId, { 
+                        source: event.data.source, 
+                        output: event.data.output.trim() 
+                    });
+                }
+                // If we've received all expected responses, process them immediately.
+                if (collectedOutputs.size >= expectedResponses) {
                     processCollectedOutputs();
                 }
             }
@@ -682,10 +696,9 @@ function initializeSharedUI(elements) {
     copyMarkdownButton.addEventListener('click', () => {
         if (copyFallbackTimeout) clearTimeout(copyFallbackTimeout);
 
-        collectedOutputs = [];
+        collectedOutputs.clear();
         const activeIframes = iframeContainer.querySelectorAll('iframe');
         expectedResponses = activeIframes.length;
-        receivedResponses = 0;
 
         if (expectedResponses === 0) {
             showGlobalConfirmationMessage('No active panels to copy from.');
@@ -693,11 +706,18 @@ function initializeSharedUI(elements) {
         }
 
         activeIframes.forEach(iframe => {
-            if (iframe.contentWindow) {
-                iframe.contentWindow.postMessage({ action: 'getLastOutput' }, '*');
+            const wrapper = iframe.closest('.iframe-wrapper');
+            const uniqueId = wrapper ? wrapper.dataset.id : null;
+            if (iframe.contentWindow && uniqueId) {
+                // Send the request with the unique ID.
+                iframe.contentWindow.postMessage({ action: 'getLastOutput', uniqueId: uniqueId }, '*');
+            } else {
+                // If an iframe has no ID, decrement the expected count.
+                expectedResponses--;
             }
         });
 
+        // Fallback timer in case some iframes don't respond.
         copyFallbackTimeout = setTimeout(processCollectedOutputs, 3000);
     });
     
