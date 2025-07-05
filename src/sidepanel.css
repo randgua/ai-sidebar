@@ -139,7 +139,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .selective-copy-button,
-.selective-send-button {
+.selective-send-button,
+.toggle-search-button {
     background-color: transparent;
     border: none;
     border-radius: 0;
@@ -154,12 +155,14 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 }
 
 .selective-copy-button:hover,
-.selective-send-button:hover {
+.selective-send-button:hover,
+.toggle-search-button:hover {
     background-color: transparent;
 }
 
 .selective-copy-button .material-symbols-outlined,
-.selective-send-button .material-symbols-outlined {
+.selective-send-button .material-symbols-outlined,
+.toggle-search-button .material-symbols-outlined {
     font-size: 18px;
 }
 

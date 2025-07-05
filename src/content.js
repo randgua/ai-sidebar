@@ -331,6 +331,17 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }, '*');
     }
 
+    // Toggles the "Grounding with Google Search" button on supported sites.
+    async function handleGoogleSearchToggle() {
+        const selector = 'button[aria-label="Grounding with Google Search"]';
+        const toggleButton = await waitForElement(selector);
+        if (toggleButton) {
+            toggleButton.click();
+        } else {
+            console.warn('AI-Sidebar: Google Search toggle button not found.');
+        }
+    }
+
     // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -345,6 +356,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
         if (event.data.action === 'getLastOutput') {
             handleOutputExtraction(event.data.uniqueId);
+        }
+        if (event.data.action === 'toggleGoogleSearch') {
+            handleGoogleSearchToggle();
         }
     });
 

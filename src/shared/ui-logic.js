@@ -208,10 +208,27 @@ function updateIframes(iframeContainer) {
             copyBtn.className = 'selective-copy-button';
             copyBtn.title = 'Append output to prompt area and copy as Markdown';
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-            // Pass the entire urlEntry object to the handler.
             copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry));
 
-            controlsContainer.append(sendBtn, copyBtn);
+            const buttons = [sendBtn];
+            const currentUrl = new URL(urlEntry.url);
+            if (currentUrl.hostname.includes('gemini.google.com') || currentUrl.hostname.includes('aistudio.google.com')) {
+                const toggleSearchBtn = document.createElement('button');
+                toggleSearchBtn.className = 'toggle-search-button';
+                toggleSearchBtn.title = 'Toggle Google Search';
+                toggleSearchBtn.innerHTML = '<span class="material-symbols-outlined">search</span>';
+                toggleSearchBtn.addEventListener('click', () => {
+                    if (iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ action: 'toggleGoogleSearch' }, '*');
+                        const hostname = new URL(urlEntry.url).hostname;
+                        showGlobalConfirmationMessage(`Toggled Google Search in ${hostname}.`);
+                    }
+                });
+                buttons.push(toggleSearchBtn);
+            }
+            buttons.push(copyBtn);
+            
+            controlsContainer.append(...buttons);
             wrapper.append(controlsContainer, iframe);
             wrappersMap.set(urlEntry.id, wrapper);
         }
