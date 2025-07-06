@@ -182,11 +182,11 @@ function updateIframes(iframeContainer) {
 
             wrapper = document.createElement('div');
             wrapper.className = 'iframe-wrapper';
-            // Store the unique ID on the wrapper element.
             wrapper.dataset.id = urlEntry.id;
 
-            const controlsContainer = document.createElement('div');
-            controlsContainer.className = 'iframe-controls-container';
+            // Create bottom controls container (for send/copy)
+            const bottomControlsContainer = document.createElement('div');
+            bottomControlsContainer.className = 'iframe-controls-container';
 
             const sendBtn = document.createElement('button');
             sendBtn.className = 'selective-send-button';
@@ -210,9 +210,15 @@ function updateIframes(iframeContainer) {
             copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
             copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry));
 
-            const buttons = [sendBtn];
+            // Always add send and copy to the bottom container
+            bottomControlsContainer.append(sendBtn, copyBtn);
+
+            // Conditionally create and add the top container for the search toggle button
             const currentUrl = new URL(urlEntry.url);
             if (currentUrl.hostname.includes('gemini.google.com') || currentUrl.hostname.includes('aistudio.google.com')) {
+                const topControlsContainer = document.createElement('div');
+                topControlsContainer.className = 'iframe-top-controls-container';
+
                 const toggleSearchBtn = document.createElement('button');
                 toggleSearchBtn.className = 'toggle-search-button';
                 toggleSearchBtn.title = 'Toggle Google Search';
@@ -224,12 +230,12 @@ function updateIframes(iframeContainer) {
                         showGlobalConfirmationMessage(`Toggled Google Search in ${hostname}.`);
                     }
                 });
-                buttons.push(toggleSearchBtn);
+                topControlsContainer.appendChild(toggleSearchBtn);
+                wrapper.appendChild(topControlsContainer);
             }
-            buttons.push(copyBtn);
             
-            controlsContainer.append(...buttons);
-            wrapper.append(controlsContainer, iframe);
+            // Append the bottom controls and the iframe itself to the wrapper
+            wrapper.append(bottomControlsContainer, iframe);
             wrappersMap.set(urlEntry.id, wrapper);
         }
 
