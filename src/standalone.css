@@ -166,6 +166,13 @@ body, html {
     height: 32px;
 }
 
+/* Override the general icon size for the smaller 'more' button icon */
+#main-content .prompt-button.more-button .material-symbols-outlined {
+    font-size: 13px;
+    width: auto;
+    height: auto;
+}
+
 #back-to-panel-button {
     font-size: 18px;
     width: 28px;
