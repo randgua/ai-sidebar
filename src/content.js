@@ -25,11 +25,24 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             });
             const timer = setTimeout(() => {
                 observer.disconnect();
+                // Only log a warning for sites that have a specific handler.
                 if (siteHandlers[window.location.hostname]) {
                     console.warn(`AI-Sidebar: Element with selector "${selector}" timed out after ${timeout}ms.`);
                 }
                 resolve(null);
             }, timeout);
+        });
+    }
+    
+    // Reports an interaction failure to the user-facing UI.
+    function reportInteractionFailure(hostname, message) {
+        console.warn(`AI-Sidebar interaction failed on ${hostname}: ${message}`);
+        chrome.runtime.sendMessage({
+            action: 'interactionFailed',
+            details: {
+                host: hostname,
+                message: message
+            }
         });
     }
 
@@ -66,10 +79,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 
     // Site-specific handler for aistudio.google.com.
     async function handleAiStudio(prompt) {
+        const hostname = 'aistudio.google.com';
         const selector = 'textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Start typing a prompt"]';
         const inputArea = await waitForElement(selector);
         if (!inputArea) {
-            console.warn('AI-Sidebar: Could not find the input area on aistudio.google.com.');
+            reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
         inputArea.value = prompt;
@@ -78,30 +92,35 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: AI Studio send button not found or was disabled.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Site-specific handler for gemini.google.com.
     async function handleGemini(prompt) {
+        const hostname = 'gemini.google.com';
         const inputArea = await waitForElement('div[role="textbox"][contenteditable="true"]');
-        if (!inputArea) return;
+        if (!inputArea) {
+            reportInteractionFailure(hostname, 'Could not find the input area.');
+            return;
+        }
         inputArea.textContent = prompt;
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
         const sendButton = await waitForElement('button[aria-label="Send message"]:not([disabled])');
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: Gemini send button not found or was disabled.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Site-specific handler for chatgpt.com.
     async function handleChatGPT(prompt) {
+        const hostname = 'chatgpt.com';
         const selector = '#prompt-textarea, div.ProseMirror[role="textbox"]';
         const inputArea = await waitForElement(selector);
         if (!inputArea) {
-            console.warn('AI-Sidebar: Could not find the input area on chatgpt.com.');
+            reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
         if (inputArea.isContentEditable) {
@@ -114,29 +133,34 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: Send button not found or was disabled on chatgpt.com.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Site-specific handler for claude.ai.
     async function handleClaude(prompt) {
+        const hostname = 'claude.ai';
         const inputArea = await waitForElement('div[contenteditable="true"][aria-label="Send a message"]');
-        if (!inputArea) return;
+        if (!inputArea) {
+            reportInteractionFailure(hostname, 'Could not find the input area.');
+            return;
+        }
         inputArea.innerText = prompt;
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
         const sendButton = await waitForElement('button[aria-label="Send Message"]:not([disabled])');
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: Claude send button not found or was disabled.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Site-specific handler for perplexity.ai.
     async function handlePerplexity(prompt) {
+        const hostname = 'perplexity.ai';
         const inputArea = await waitForElement('textarea[placeholder*="Ask anything"]');
         if (!inputArea) {
-            console.warn('AI-Sidebar: Could not find the input area on perplexity.ai.');
+            reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
         inputArea.value = prompt;
@@ -145,15 +169,16 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: Perplexity send button not found or was disabled.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Site-specific handler for chat.deepseek.com.
     async function handleDeepSeek(prompt) {
+        const hostname = 'chat.deepseek.com';
         const inputArea = await waitForElement('textarea#chat-input');
         if (!inputArea) {
-            console.warn('AI-Sidebar: Could not find the input area on chat.deepseek.com.');
+            reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
@@ -173,9 +198,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 
     // Site-specific handler for chat.qwen.ai.
     async function handleQwen(prompt) {
+        const hostname = 'chat.qwen.ai';
         const inputArea = await waitForElement('textarea[placeholder*="How can I help you"]');
         if (!inputArea) {
-            console.warn('AI-Sidebar: Could not find the input area on chat.qwen.ai.');
+            reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
         inputArea.focus();
@@ -186,14 +212,19 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            console.warn('AI-Sidebar: Qwen send button not found or was disabled.');
+            reportInteractionFailure(hostname, 'Could not find or click the send button.');
         }
     }
 
     // Generic handler for other websites.
     async function handleGeneric(prompt) {
+        const hostname = window.location.hostname;
         const inputArea = await waitForElement('textarea, [role="textbox"]');
-        if (!inputArea) return;
+        if (!inputArea) {
+            // Avoid reporting errors on generic sites where selectors are just a guess.
+            console.warn(`AI-Sidebar: Could not find a generic input area on ${hostname}.`);
+            return;
+        }
         if (inputArea.isContentEditable) {
             inputArea.textContent = prompt;
         } else {
@@ -204,6 +235,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
+            // Fallback to Enter key press for generic sites.
             const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
             inputArea.dispatchEvent(enterEvent);
         }
@@ -333,12 +365,13 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 
     // Toggles the "Grounding with Google Search" button on supported sites.
     async function handleGoogleSearchToggle() {
+        const hostname = window.location.hostname;
         const selector = 'button[aria-label="Grounding with Google Search"]';
         const toggleButton = await waitForElement(selector);
         if (toggleButton) {
             toggleButton.click();
         } else {
-            console.warn('AI-Sidebar: Google Search toggle button not found.');
+            reportInteractionFailure(hostname, 'Could not find the Google Search toggle button.');
         }
     }
 

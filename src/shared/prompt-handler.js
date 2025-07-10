@@ -1,0 +1,222 @@
+// Manages the contextual prompt UI that appears on text selection.
+
+/**
+ * Resets the contextual UI elements to their default hidden state.
+ */
+function resetContextualUI() {
+    const contextContainer = document.getElementById('context-container');
+    const promptButtonsContainer = document.getElementById('prompt-buttons-container');
+    const morePromptsPopup = document.getElementById('more-prompts-popup');
+    const promptInputDivider = document.querySelector('.prompt-input-divider');
+
+    if(contextContainer) {
+        contextContainer.style.display = 'none';
+        contextContainer.querySelector('#context-content').textContent = '';
+        delete contextContainer.dataset.text;
+    }
+    
+    if(promptButtonsContainer) {
+        promptButtonsContainer.style.display = 'none';
+        promptButtonsContainer.innerHTML = '';
+    }
+
+    if(morePromptsPopup) {
+        morePromptsPopup.style.display = 'none';
+    }
+    
+    if (promptInputDivider) {
+        promptInputDivider.style.display = 'none';
+    }
+}
+
+/**
+ * Creates a single prompt button element.
+ * @param {object} prompt The prompt data.
+ * @param {string} selectedText The text to be used in the prompt.
+ * @param {boolean} isMoreMenuItem True if the button is for the popup menu.
+ * @returns {HTMLButtonElement} The created button element.
+ */
+function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
+    const iframeContainer = document.getElementById('iframe-container');
+    const button = document.createElement('button');
+    button.textContent = prompt.name;
+    button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
+    button.addEventListener('click', async () => {
+        let fullPrompt;
+        const { displayLanguage } = await chrome.storage.local.get('displayLanguage');
+        const lang = displayLanguage || 'English';
+
+        let promptContent = prompt.content.replace(/\${lang}/g, lang);
+        if (promptContent.includes('${input}')) {
+            fullPrompt = promptContent.replace('${input}', selectedText);
+        } else {
+            fullPrompt = `${promptContent}\n\n"""\n${selectedText}\n"""`;
+        }
+        
+        sendMessageToIframes(iframeContainer, fullPrompt);
+        resetContextualUI();
+    });
+    return button;
+}
+
+/**
+ * Dynamically renders prompt buttons based on available width.
+ * @param {string} selectedText The text that the prompts will act upon.
+ * @param {Array} visiblePrompts The list of prompt objects to render.
+ */
+function renderResponsivePrompts(selectedText, visiblePrompts) {
+    const promptButtonsContainer = document.getElementById('prompt-buttons-container');
+    const morePromptsPopup = document.getElementById('more-prompts-popup');
+    const morePromptsList = morePromptsPopup.querySelector('#more-prompts-list');
+
+    promptButtonsContainer.innerHTML = '';
+    morePromptsList.innerHTML = '';
+    if (morePromptsPopup.parentElement) {
+        morePromptsPopup.parentElement.removeChild(morePromptsPopup);
+    }
+    morePromptsPopup.style.display = 'none';
+
+    if (!visiblePrompts || visiblePrompts.length === 0) {
+        return;
+    }
+
+    const mainButtonsWrapper = document.createElement('div');
+    mainButtonsWrapper.className = 'main-prompt-buttons';
+    promptButtonsContainer.appendChild(mainButtonsWrapper);
+
+    const allButtons = visiblePrompts.map(prompt => createPromptButton(prompt, selectedText, false));
+    if (allButtons.length === 0) return;
+
+    const observer = new ResizeObserver(entries => {
+        window.requestAnimationFrame(() => {
+            if (!entries || !entries.length) {
+                return;
+            }
+            const containerWidth = entries[0].contentRect.width;
+            
+            mainButtonsWrapper.innerHTML = '';
+            const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
+            if (existingMoreWrapper) {
+                promptButtonsContainer.removeChild(existingMoreWrapper);
+            }
+            morePromptsList.innerHTML = '';
+            if (morePromptsPopup.parentElement) {
+                morePromptsPopup.parentElement.removeChild(morePromptsPopup);
+            }
+            morePromptsPopup.style.display = 'none';
+
+            const promptsToShow = [];
+            const promptsToHide = [];
+            let accumulatedWidth = 0;
+            let hideStartIndex = -1;
+
+            const tempContainer = document.createElement('div');
+            tempContainer.style.visibility = 'hidden';
+            tempContainer.style.position = 'absolute';
+            document.body.appendChild(tempContainer);
+            const moreButtonTemplate = document.createElement('button');
+            moreButtonTemplate.className = 'prompt-button more-button';
+            moreButtonTemplate.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
+            tempContainer.appendChild(moreButtonTemplate);
+            const moreButtonWidth = moreButtonTemplate.offsetWidth;
+            tempContainer.innerHTML = '';
+
+            for (let i = 0; i < allButtons.length; i++) {
+                const button = allButtons[i];
+                tempContainer.appendChild(button);
+                const buttonWidth = button.offsetWidth;
+                const gap = 4;
+                
+                const spaceNeededForMore = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
+
+                if (accumulatedWidth + buttonWidth + gap + spaceNeededForMore <= containerWidth) {
+                    accumulatedWidth += buttonWidth + gap;
+                } else {
+                    hideStartIndex = i;
+                    break;
+                }
+            }
+            document.body.removeChild(tempContainer);
+
+            if (hideStartIndex !== -1) {
+                visiblePrompts.forEach((prompt, i) => {
+                    if (i < hideStartIndex) {
+                        promptsToShow.push(prompt);
+                    } else {
+                        promptsToHide.push(prompt);
+                    }
+                });
+            } else {
+                promptsToShow.push(...visiblePrompts);
+            }
+
+            promptsToShow.forEach(prompt => {
+                mainButtonsWrapper.appendChild(createPromptButton(prompt, selectedText, false));
+            });
+
+            if (promptsToHide.length > 0) {
+                const morePromptsWrapper = document.createElement('div');
+                morePromptsWrapper.className = 'more-prompts-wrapper';
+                
+                const moreButton = document.createElement('button');
+                moreButton.className = 'prompt-button more-button';
+                moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
+                
+                morePromptsWrapper.appendChild(moreButton);
+                
+                morePromptsWrapper.appendChild(morePromptsPopup);
+                
+                promptButtonsContainer.appendChild(morePromptsWrapper);
+
+                promptsToHide.forEach(prompt => {
+                    morePromptsList.appendChild(createPromptButton(prompt, selectedText, true));
+                });
+
+                let hidePopupTimeout;
+                const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
+                const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
+
+                morePromptsWrapper.addEventListener('mouseenter', showPopup);
+                morePromptsWrapper.addEventListener('mouseleave', hidePopup);
+            }
+        });
+    });
+
+    observer.observe(promptButtonsContainer);
+}
+
+
+/**
+ * Displays the contextual UI with the selected text and prompt buttons.
+ * @param {string} selectedText The text selected by the user on the webpage.
+ */
+async function displayContextualUI(selectedText) {
+    const contextContainer = document.getElementById('context-container');
+    const contextContent = contextContainer.querySelector('#context-content');
+    const promptButtonsContainer = document.getElementById('prompt-buttons-container');
+    const promptInputDivider = document.querySelector('.prompt-input-divider');
+    const openPromptSettings = document.querySelector('#open-prompt-settings');
+    
+    contextContent.textContent = selectedText;
+    contextContainer.style.display = 'flex';
+    contextContainer.dataset.text = selectedText;
+
+    promptButtonsContainer.style.display = 'flex';
+    
+    if (promptInputDivider) {
+        promptInputDivider.style.display = 'block';
+    }
+
+    let result = await chrome.storage.local.get('prompts');
+    let prompts = result.prompts || [];
+    const visiblePrompts = prompts.filter(p => p.showInMenu);
+
+    renderResponsivePrompts(selectedText, visiblePrompts);
+
+    if (openPromptSettings && !openPromptSettings.listenerAdded) {
+        openPromptSettings.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'options.html?section=prompts' });
+        });
+        openPromptSettings.listenerAdded = true;
+    }
+}

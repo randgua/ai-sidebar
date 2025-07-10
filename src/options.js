@@ -243,13 +243,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const urlTextInput = itemDiv.querySelector('input[type="text"]');
-            urlTextInput.addEventListener('input', (e) => {
+
+            // Save changes when the input field loses focus (on blur), which is more
+            // efficient than saving on every keystroke (on input).
+            urlTextInput.addEventListener('blur', (e) => {
                 const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
-                if (urlToUpdate) {
+                if (urlToUpdate && urlToUpdate.url !== e.target.value) {
                     urlToUpdate.url = e.target.value;
                     saveUrls();
                 }
             });
+
+            // On 'Enter', blur the input to trigger the 'blur' event and save the change.
             urlTextInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();

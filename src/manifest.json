@@ -1,14 +1,12 @@
 {
   "manifest_version": 3,
   "name": "AI Sidebar",
-  "version": "1.5.3",
-  "description": "Opens selected sites in a sidebar with a unified prompt input.",
+  "version": "1.5.4",
+  "description": "A powerful AI sidebar to open multiple websites, manage custom prompts, and interact with page content seamlessly.",
   "permissions": [
     "sidePanel",
     "declarativeNetRequest",
-    "storage",
-    "activeTab",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
