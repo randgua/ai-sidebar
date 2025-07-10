@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         confirmMessage.textContent = message;
         confirmModal.style.display = 'flex';
+        confirmYesButton.focus(); // Set focus on the 'Delete' button.
 
         const yesHandler = () => {
             hide();
@@ -77,15 +78,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const noHandler = () => {
             hide();
         };
+        
+        // Handle key presses for the modal.
+        const keydownHandler = (e) => {
+            // If Enter is pressed, trigger the action of the focused button.
+            if (e.key === 'Enter') {
+                if (document.activeElement === confirmYesButton) {
+                    e.preventDefault();
+                    yesHandler();
+                } else if (document.activeElement === confirmNoButton) {
+                    e.preventDefault();
+                    noHandler();
+                }
+            }
+            // If Escape is pressed, cancel the action.
+            else if (e.key === 'Escape') {
+                e.preventDefault();
+                noHandler();
+            }
+        };
 
         const hide = () => {
             confirmModal.style.display = 'none';
             confirmYesButton.removeEventListener('click', yesHandler);
             confirmNoButton.removeEventListener('click', noHandler);
+            window.removeEventListener('keydown', keydownHandler, true);
         };
 
         confirmYesButton.addEventListener('click', yesHandler);
         confirmNoButton.addEventListener('click', noHandler);
+        window.addEventListener('keydown', keydownHandler, true);
     }
 
     // --- VIEW SWITCHING LOGIC ---
@@ -125,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getPrompts = async () => {
         const result = await chrome.storage.local.get('prompts');
-        prompts = result.prompts || []; // Defaults are set on install.
+        prompts = result.prompts || [];
     };
 
     const savePrompts = async (updatedPrompts) => {
@@ -145,12 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const createPromptElement = (prompt, container) => {
         const item = document.createElement('div');
         item.className = 'prompt-item';
-        item.setAttribute('draggable', true);
         item.dataset.id = prompt.id;
         const showHideIcon = prompt.showInMenu ? 'visibility_off' : 'visibility';
         const showHideTitle = prompt.showInMenu ? 'Hide' : 'Show';
         item.innerHTML = `
-            <span class="material-symbols-outlined drag-handle">drag_indicator</span>
+            <span class="material-symbols-outlined drag-handle" draggable="true">drag_indicator</span>
             <span class="material-symbols-outlined prompt-item-icon">style</span>
             <span class="prompt-item-name"></span>
             <div class="prompt-item-actions">
@@ -163,8 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
         item.querySelector('.edit-button').addEventListener('click', () => openPromptModal(prompt));
         item.querySelector('.delete-button').addEventListener('click', () => deletePrompt(prompt));
         item.querySelector('.toggle-show-button').addEventListener('click', () => togglePromptVisibility(prompt.id));
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragend', handleDragEnd);
+        
+        // Attach drag events to the handle, not the whole item.
+        const dragHandle = item.querySelector('.drag-handle');
+        dragHandle.addEventListener('dragstart', handleDragStart);
+        dragHandle.addEventListener('dragend', handleDragEnd);
+
         container.appendChild(item);
     };
 
@@ -188,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- URL MANAGEMENT LOGIC ---
     const getUrls = async () => {
         const result = await chrome.storage.local.get('managedUrls');
-        managedUrls = result.managedUrls || []; // Defaults are set on install.
+        managedUrls = result.managedUrls || [];
     };
 
     const saveUrls = async () => {
@@ -200,10 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
         managedUrls.forEach(urlEntry => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'url-item';
-            itemDiv.setAttribute('draggable', true);
             itemDiv.dataset.id = urlEntry.id;
             itemDiv.innerHTML = `
-                <span class="material-symbols-outlined drag-handle">drag_indicator</span>
+                <span class="material-symbols-outlined drag-handle" draggable="true">drag_indicator</span>
                 <input type="checkbox" ${urlEntry.selected ? 'checked' : ''}>
                 <input type="text" value="${urlEntry.url}">
                 <div class="url-actions">
@@ -213,27 +237,35 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             urlListManagementDiv.appendChild(itemDiv);
 
-            // Add event listeners
             itemDiv.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
                 urlEntry.selected = e.target.checked;
                 saveUrls();
             });
 
-            itemDiv.querySelector('input[type="text"]').addEventListener('input', (e) => {
+            const urlTextInput = itemDiv.querySelector('input[type="text"]');
+            urlTextInput.addEventListener('input', (e) => {
                 const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
                 if (urlToUpdate) {
                     urlToUpdate.url = e.target.value;
                     saveUrls();
                 }
             });
+            urlTextInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
 
             itemDiv.querySelector('.remove-url-button').addEventListener('click', () => deleteUrl(urlEntry));
             itemDiv.querySelector('.open-url-button').addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
             
-            itemDiv.addEventListener('dragstart', handleDragStart);
-            itemDiv.addEventListener('dragend', handleDragEnd);
+            // Attach drag events to the handle, not the whole item.
+            const dragHandle = itemDiv.querySelector('.drag-handle');
+            dragHandle.addEventListener('dragstart', handleDragStart);
+            dragHandle.addEventListener('dragend', handleDragEnd);
+            
             itemDiv.addEventListener('dragover', handleDragOver);
-            // The 'drop' event is handled by the container for robustness.
         });
     };
     
@@ -247,10 +279,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DRAG & DROP LOGIC (for both lists) ---
     function handleDragStart(e) {
-        draggedItem = this;
+        // Set the dragged item to the closest parent '.prompt-item' or '.url-item'.
+        draggedItem = this.closest('.prompt-item, .url-item');
+        if (!draggedItem) return;
+
         // Use a timeout to avoid issues with the drag image.
         setTimeout(() => {
-            this.classList.add('dragging');
+            if (draggedItem) {
+                draggedItem.classList.add('dragging');
+            }
         }, 0);
     }
 
@@ -268,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!currentlyDragged) return;
         
-        // Prevent dropping items into the wrong type of list.
         const isDraggedItemUrl = currentlyDragged.classList.contains('url-item');
         const isDraggedItemPrompt = currentlyDragged.classList.contains('prompt-item');
 
@@ -314,7 +350,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newShowInMenu = container.id === 'shown-prompts-list';
                 if (prompt.showInMenu !== newShowInMenu) {
                     prompt.showInMenu = newShowInMenu;
-                    // Update the icon for immediate feedback without a full re-render.
                     const toggleButton = draggedItem.querySelector('.toggle-show-button');
                     const icon = toggleButton.querySelector('.material-symbols-outlined');
                     toggleButton.title = newShowInMenu ? 'Hide' : 'Show';
@@ -322,21 +357,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
     
-            // Get the new order of IDs from the DOM.
             const newOrder = [
                 ...Array.from(shownPromptsList.querySelectorAll('.prompt-item')),
                 ...Array.from(hiddenPromptsList.querySelectorAll('.prompt-item'))
             ].map(item => item.dataset.id);
     
-            // Reorder the source-of-truth array.
             prompts.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
             await savePrompts(prompts);
     
         } else if (draggedItem.classList.contains('url-item')) {
-            // Get the new order of IDs from the DOM.
             const newOrder = Array.from(urlListManagementDiv.querySelectorAll('.url-item')).map(item => item.dataset.id);
-            
-            // Reorder the source-of-truth array.
             managedUrls.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
             await saveUrls();
         }
@@ -391,11 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
         populateLanguageDropdown();
         updateSelectedOption();
         
-        // Handle view switching based on URL parameter.
         const urlParams = new URLSearchParams(window.location.search);
         const section = urlParams.get('section');
 
-        // Default to 'general' unless 'prompts' is explicitly specified.
         if (section === 'prompts') {
             switchView('prompts');
         } else {
@@ -442,6 +470,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await saveUrls();
                 renderUrlList();
                 newUrlInput.value = '';
+            }
+        });
+
+        newUrlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addUrlButton.click();
             }
         });
         

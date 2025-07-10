@@ -191,6 +191,12 @@ body, html {
     left: 36px;
 }
 
+#main-content #google-search-toggle-container {
+    position: absolute;
+    top: 0;
+    right: 36px;
+}
+
 #main-content #settings-container {
     position: absolute;
     top: 0;

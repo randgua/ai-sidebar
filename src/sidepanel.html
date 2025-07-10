@@ -19,6 +19,11 @@
             <span id="refresh-icon" class="material-symbols-outlined" title="Refresh Panel">refresh</span>
         </div>
 
+        <!-- Google Search Toggle Button -->
+        <div id="google-search-toggle-container" class="control-icon-container">
+            <span id="google-search-toggle-icon" class="material-symbols-outlined" title="Toggle Google Search for all panels">search</span>
+        </div>
+
         <!-- Settings Button -->
         <div id="settings-container" class="control-icon-container">
             <span id="settings-icon" class="material-symbols-outlined" title="Settings">settings</span>
@@ -34,6 +39,9 @@
         <span id="toggle-prompt-button" class="material-symbols-outlined" title="Collapse prompt area">expand_more</span>
         
         <div class="prompt-input-wrapper">
+            <!-- Container for the pinned prompt -->
+            <div id="pinned-prompt-container" style="display: none;"></div>
+
             <!-- Container for showing selected text from the page -->
             <div id="context-container" style="display: none;">
                 <div id="context-header">
@@ -60,11 +68,22 @@
                     <!-- Additional prompt items will be inserted here -->
                 </div>
             </div>
+
+            <!-- Popup for slash command prompts -->
+            <div id="slash-command-popup" style="display: none;">
+                <div class="slash-command-header">
+                    <span>Select prompt</span>
+                    <span id="slash-command-settings" class="material-symbols-outlined" title="Manage Prompts">settings</span>
+                </div>
+                <div id="slash-command-list">
+                    <!-- Slash command prompt items will be inserted here -->
+                </div>
+            </div>
             
             <div class="prompt-input-divider" style="display: none;"></div>
             
             <div class="prompt-input-row">
-                <textarea id="prompt-input" placeholder="Enter your prompt..." rows="1"></textarea>
+                <textarea id="prompt-input" placeholder="Enter your prompt or type '/' for commands..." rows="1"></textarea>
                 <div class="prompt-actions">
                     <button id="clear-prompt-button" title="Clear" style="display: none;">
                         <span class="material-symbols-outlined">close</span>

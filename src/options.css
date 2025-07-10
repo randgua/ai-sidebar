@@ -159,17 +159,23 @@ body, html {
     background-color: #282828;
     border-radius: 8px;
     margin-bottom: 8px;
-    cursor: grab;
     border: 1px solid #383838;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .prompt-item:hover {
     background-color: #333;
 }
 
-.prompt-item.dragging {
-    opacity: 0.5;
+/* Style for the item being dragged */
+.prompt-item.dragging,
+.url-item.dragging {
+    opacity: 1; /* Ensure the dragged item is fully visible */
+    background-color: #3a3a3a;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* A softer, more pronounced shadow for a lifting effect */
+    transform: scale(1.02); /* A subtle scale-up to indicate it's active */
+    border-color: #7f56d9;
+    cursor: grabbing;
 }
 
 .drag-handle {
@@ -373,6 +379,7 @@ body, html {
     border-radius: 8px;
     border: 1px solid #383838;
     background-color: #282828;
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .url-item .drag-handle {
@@ -568,4 +575,65 @@ body, html {
 
 .custom-option.selected .lang-native {
     color: #e0e0e0;
+}
+
+/* Custom Confirmation Modal Styles */
+#custom-confirm-modal .modal-content {
+    max-width: 400px;
+    padding: 24px;
+}
+
+#custom-confirm-modal p {
+    margin: 0 0 24px 0;
+    font-size: 16px;
+    color: #e0e0e0;
+    line-height: 1.5;
+    text-align: center;
+}
+
+#custom-confirm-modal .modal-actions {
+    justify-content: center;
+}
+
+#custom-confirm-modal .modal-actions button {
+    padding: 8px 24px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+#custom-confirm-modal #confirm-no-button {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+#custom-confirm-modal #confirm-no-button:hover {
+    background-color: #4a4a4a;
+}
+
+#custom-confirm-modal #confirm-yes-button {
+    background-color: #c82333;
+    color: #ffffff;
+    border-color: #c82333;
+}
+
+#custom-confirm-modal #confirm-yes-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Add a distinct focus style for the delete button */
+#custom-confirm-modal #confirm-yes-button:focus {
+    outline: none; /* Remove the default browser outline */
+    border-color: #ffffff; /* Make the border white to stand out */
+    box-shadow: 0 0 0 2px #121212, 0 0 0 4px #ffffff; /* Create a double border effect */
+}
+
+#custom-confirm-modal #confirm-no-button:focus {
+    outline: none;
+    border-color: #7f56d9;
+    box-shadow: 0 0 0 2px #121212, 0 0 0 4px #7f56d9;
 }

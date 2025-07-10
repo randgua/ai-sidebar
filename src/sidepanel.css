@@ -29,6 +29,13 @@ body, html {
     z-index: 1000;
 }
 
+#google-search-toggle-container {
+    position: absolute;
+    top: 1px;
+    right: 28px;
+    z-index: 1000;
+}
+
 #settings-container {
     position: absolute;
     top: 1px;
@@ -701,4 +708,162 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 /* Make it fully opaque when hovering the controls directly */
 .iframe-wrapper:hover .iframe-top-controls-container:hover {
     opacity: 1;
+}
+
+/* Pinned Prompt Styles */
+#pinned-prompt-container {
+    padding-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pinned-prompt-tag {
+    display: flex;
+    flex-direction: column; /* Stack header and content vertically */
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #4a4d5f;
+    color: #e8eaed;
+    padding: 8px 12px;
+    border-radius: 8px;
+    gap: 6px; /* Space between header and content */
+}
+
+.pinned-prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.pinned-prompt-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #e8eaed;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+
+.pinned-prompt-content {
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: normal;
+    max-height: 4.2em; /* Limit height to approx. 3 lines */
+    overflow-y: auto;
+    padding-right: 4px; /* Space for scrollbar */
+    /* Custom scrollbar for the content area */
+    scrollbar-width: thin;
+    scrollbar-color: #5f6368 #4a4d5f;
+}
+
+.pinned-prompt-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.pinned-prompt-content::-webkit-scrollbar-track {
+    background: #4a4d5f;
+}
+
+.pinned-prompt-content::-webkit-scrollbar-thumb {
+    background-color: #5f6368;
+    border-radius: 4px;
+}
+
+.pinned-prompt-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+/* Pin icon within the actions container */
+.pinned-prompt-actions > .material-symbols-outlined {
+    font-size: 18px;
+    color: #8ab4f7;
+}
+
+.pinned-prompt-close {
+    background: none;
+    border: none;
+    color: #e8eaed;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.pinned-prompt-close:hover {
+    opacity: 1;
+}
+
+/* Close icon within the button */
+.pinned-prompt-close .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* Slash Command Popup Styles */
+#slash-command-popup {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 180px; /* Set a fixed width to match the 'more prompts' popup */
+    background-color: #2d2d2d;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); /* Use consistent shadow direction */
+    z-index: 10;
+    padding: 6px;
+    margin-bottom: 4px;
+    display: none;
+}
+
+#slash-command-list {
+    max-height: 300px; /* Match the max-height of the 'more prompts' list */
+    overflow-y: auto;
+}
+
+.slash-command-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 6px 6px 6px;
+    border-bottom: 1px solid #5f6368;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #bdc1c6;
+}
+
+#slash-command-settings {
+    font-size: 20px;
+    cursor: pointer;
+    color: #9aa0a6;
+}
+
+#slash-command-settings:hover {
+    color: #e8eaed;
+}
+
+#slash-command-list .slash-command-item {
+    background: none;
+    border: none;
+    color: #e8eaed;
+    width: 100%;
+    text-align: left;
+    padding: 6px 10px; /* Match the padding of '.more-prompt-item' */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px; /* Match the font-size of '.more-prompt-item' */
+    display: block;
+}
+
+#slash-command-list .slash-command-item:hover,
+#slash-command-list .slash-command-item.selected {
+    background-color: #4a4d5f;
 }

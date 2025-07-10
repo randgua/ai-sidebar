@@ -4,6 +4,7 @@ let confirmationMessageElement = null;
 let isModalActive = false;
 let managedUrls = [];
 const iframeCache = {};
+let pinnedPrompt = null; // Holds the currently pinned prompt object
 
 /**
  * Displays a short-lived confirmation message at the bottom of the screen.
@@ -601,10 +602,138 @@ function initializeSharedUI(elements) {
 
     const contextContainer = document.getElementById('context-container');
     const closeContextButton = document.getElementById('close-context-button');
+    const pinnedPromptContainer = document.getElementById('pinned-prompt-container');
+    const slashCommandPopup = document.getElementById('slash-command-popup');
+    const slashCommandList = document.getElementById('slash-command-list');
+    const slashCommandSettings = document.getElementById('slash-command-settings');
+    const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
+    let slashCommandSelectedIndex = -1;
 
-    const executeSend = () => {
+    // --- Pinned Prompt and Slash Command Functions ---
+
+    function renderPinnedPrompt() {
+        pinnedPromptContainer.innerHTML = '';
+        if (pinnedPrompt) {
+            const tag = document.createElement('div');
+            tag.className = 'pinned-prompt-tag';
+            // New two-row structure: header with name/actions, and content below.
+            tag.innerHTML = `
+                <div class="pinned-prompt-header">
+                    <span class="pinned-prompt-name">${pinnedPrompt.name}</span>
+                    <div class="pinned-prompt-actions">
+                        <button class="pinned-prompt-close" title="Unpin prompt">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="pinned-prompt-content">${pinnedPrompt.content}</div>
+            `;
+            tag.querySelector('.pinned-prompt-close').addEventListener('click', unpinPrompt);
+            pinnedPromptContainer.appendChild(tag);
+            pinnedPromptContainer.style.display = 'flex';
+        } else {
+            pinnedPromptContainer.style.display = 'none';
+        }
+    }
+
+    function unpinPrompt() {
+        pinnedPrompt = null;
+        renderPinnedPrompt();
+    }
+
+    function pinPrompt(prompt) {
+        const currentText = promptInput.value;
+        const triggerIndex = currentText.lastIndexOf('/');
+        const textBeforeTrigger = currentText.substring(0, triggerIndex).trimEnd();
+        promptInput.value = textBeforeTrigger ? textBeforeTrigger + ' ' : '';
+
+        pinnedPrompt = prompt;
+        renderPinnedPrompt();
+        hideSlashCommandMenu();
+        promptInput.focus();
+        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    }
+
+    function updateSlashCommandSelection() {
+        const items = slashCommandList.querySelectorAll('.slash-command-item');
+        if (!items.length) return;
+
+        // Ensure index is within bounds for wrapping
+        if (slashCommandSelectedIndex < 0) {
+            slashCommandSelectedIndex = items.length - 1;
+        }
+        if (slashCommandSelectedIndex >= items.length) {
+            slashCommandSelectedIndex = 0;
+        }
+
+        items.forEach((item, index) => {
+            if (index === slashCommandSelectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    async function showSlashCommandMenu(query) {
+        let { prompts } = await chrome.storage.local.get('prompts');
+        prompts = prompts || [];
+        const visiblePrompts = prompts.filter(p => 
+            p.showInMenu && p.name.toLowerCase().includes(query.toLowerCase())
+        );
+
+        slashCommandList.innerHTML = '';
+        if (visiblePrompts.length === 0) {
+            hideSlashCommandMenu();
+            return;
+        }
+
+        visiblePrompts.forEach(prompt => {
+            const item = document.createElement('button');
+            item.className = 'slash-command-item';
+            item.textContent = prompt.name;
+            item.addEventListener('click', () => pinPrompt(prompt));
+            slashCommandList.appendChild(item);
+        });
+
+        slashCommandPopup.style.display = 'block';
+        slashCommandSelectedIndex = -1; // Reset index whenever the menu is shown
+    }
+
+    function hideSlashCommandMenu() {
+        if (slashCommandPopup) {
+            slashCommandPopup.style.display = 'none';
+            slashCommandSelectedIndex = -1; // Reset index when hiding
+        }
+    }
+
+    // --- Main Execution and Event Handling ---
+
+    const executeSend = async () => {
         let promptText = promptInput.value.trim();
         
+        if (pinnedPrompt) {
+            if (!promptText) return; // Don't send if input is empty
+            const { displayLanguage } = await chrome.storage.local.get({ displayLanguage: 'English' });
+            const lang = displayLanguage || 'English';
+            let promptContent = pinnedPrompt.content.replace(/\${lang}/g, lang);
+            let fullPrompt;
+
+            if (promptContent.includes('${input}')) {
+                fullPrompt = promptContent.replace('${input}', promptText);
+            } else {
+                fullPrompt = `${promptContent}\n\n"""\n${promptText}\n"""`;
+            }
+            sendMessageToIframes(iframeContainer, fullPrompt);
+            
+            // Clear input for next message in multi-turn conversation
+            promptInput.value = '';
+            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            setTimeout(() => promptInput.focus(), 100);
+            return;
+        }
+
         const isContextVisible = contextContainer.style.display === 'flex';
         if (isContextVisible) {
             const contextText = contextContainer.querySelector('#context-content').textContent.trim();
@@ -626,6 +755,15 @@ function initializeSharedUI(elements) {
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
+            // If a prompt is pinned, it takes priority. Just update the input.
+            if (pinnedPrompt) {
+                promptInput.value = message.text;
+                autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+                promptInput.focus();
+                sendResponse({status: "Text inserted into prompt with pinned prompt."});
+                return true;
+            }
+            // Otherwise, show the default contextual UI.
             displayContextualUI(message.text);
             sendResponse({status: "Context displayed in sidebar"});
         } else if (message.action === 'textDeselected') {
@@ -659,9 +797,44 @@ function initializeSharedUI(elements) {
         chrome.tabs.create({ url: chrome.runtime.getURL('options.html?section=general') });
     });
 
+    if (googleSearchToggleIcon) {
+        googleSearchToggleIcon.addEventListener('click', () => {
+            const activeIframes = iframeContainer.querySelectorAll('iframe');
+            let toggledCount = 0;
+            
+            activeIframes.forEach(iframe => {
+                try {
+                    const iframeUrl = new URL(iframe.src);
+                    const hostname = iframeUrl.hostname;
+
+                    // Check if the hostname is one of the supported sites
+                    if (hostname.includes('gemini.google.com') || hostname.includes('aistudio.google.com')) {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.postMessage({ action: 'toggleGoogleSearch' }, '*');
+                            toggledCount++;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error processing iframe URL for search toggle:", e);
+                }
+            });
+
+            if (toggledCount > 0) {
+                showGlobalConfirmationMessage(`Toggled Google Search in ${toggledCount} panel(s).`);
+            } else {
+                showGlobalConfirmationMessage('No active panels support Google Search toggle.');
+            }
+        });
+    }
+
+    if (slashCommandSettings) {
+        slashCommandSettings.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'options.html?section=prompts' });
+        });
+    }
+
     let expectedResponses = 0;
     let copyFallbackTimeout = null;
-    // Use a Map to store outputs, keyed by unique ID to prevent duplicates.
     let collectedOutputs = new Map();
 
     const processCollectedOutputs = () => {
@@ -675,7 +848,6 @@ function initializeSharedUI(elements) {
                 'chatgpt.com': 'ChatGPT', 'claude.ai': 'Claude',
                 'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
             };
-            // Convert map values to an array and create the markdown string.
             const markdownString = Array.from(collectedOutputs.values()).map(item => {
                 const title = prettyNames[item.source] || item.source;
                 return `## ${title}\n\n${item.output}`;
@@ -698,14 +870,12 @@ function initializeSharedUI(elements) {
     window.addEventListener('message', (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.output && event.data.uniqueId) {
             if (copyFallbackTimeout) {
-                // Only add the output if we haven't received it for this unique ID yet.
                 if (!collectedOutputs.has(event.data.uniqueId)) {
                     collectedOutputs.set(event.data.uniqueId, { 
                         source: event.data.source, 
                         output: event.data.output.trim() 
                     });
                 }
-                // If we've received all expected responses, process them immediately.
                 if (collectedOutputs.size >= expectedResponses) {
                     processCollectedOutputs();
                 }
@@ -730,15 +900,12 @@ function initializeSharedUI(elements) {
             const wrapper = iframe.closest('.iframe-wrapper');
             const uniqueId = wrapper ? wrapper.dataset.id : null;
             if (iframe.contentWindow && uniqueId) {
-                // Send the request with the unique ID.
                 iframe.contentWindow.postMessage({ action: 'getLastOutput', uniqueId: uniqueId }, '*');
             } else {
-                // If an iframe has no ID, decrement the expected count.
                 expectedResponses--;
             }
         });
 
-        // Fallback timer in case some iframes don't respond.
         copyFallbackTimeout = setTimeout(processCollectedOutputs, 3000);
     });
     
@@ -759,7 +926,24 @@ function initializeSharedUI(elements) {
         promptInput.focus();
     });
 
-    promptInput.addEventListener('input', () => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
+    promptInput.addEventListener('input', () => {
+        const text = promptInput.value;
+        const triggerIndex = text.lastIndexOf('/');
+
+        // Trigger condition: / is at the start of the string or preceded by a space.
+        if (triggerIndex !== -1 && (triggerIndex === 0 || /\s/.test(text[triggerIndex - 1]))) {
+            const potentialQuery = text.substring(triggerIndex + 1);
+            // The query must not contain spaces to be considered a valid command trigger.
+            if (!/\s/.test(potentialQuery)) {
+                showSlashCommandMenu(potentialQuery);
+            } else {
+                hideSlashCommandMenu();
+            }
+        } else {
+            hideSlashCommandMenu();
+        }
+        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    });
     
     function debounce(func, wait) {
         let timeout;
@@ -785,10 +969,46 @@ function initializeSharedUI(elements) {
     window.addEventListener('resize', handleResize);
 
     sendPromptButton.addEventListener('click', executeSend);
+
     promptInput.addEventListener('keydown', (event) => {
+        const isSlashPopupVisible = slashCommandPopup.style.display === 'block';
+
+        // Handle keyboard navigation for the slash command popup
+        if (isSlashPopupVisible && ['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) {
+            const items = slashCommandList.querySelectorAll('.slash-command-item');
+            if (items.length === 0) return;
+
+            event.preventDefault(); // Prevent default browser action for these keys
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    slashCommandSelectedIndex++;
+                    updateSlashCommandSelection();
+                    break;
+                case 'ArrowUp':
+                    slashCommandSelectedIndex--;
+                    updateSlashCommandSelection();
+                    break;
+                case 'Enter':
+                    if (slashCommandSelectedIndex > -1) {
+                        items[slashCommandSelectedIndex].click(); // Triggers pinPrompt and hides menu
+                    } else {
+                        hideSlashCommandMenu(); // Hide if Enter is pressed with no selection
+                    }
+                    break;
+            }
+            return; // Event has been handled
+        }
+
+        // Handle sending prompt on Enter (if not navigating popup)
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             executeSend();
+        }
+
+        // Handle closing popup with Escape key
+        if (event.key === 'Escape') {
+            hideSlashCommandMenu();
         }
     });
 
