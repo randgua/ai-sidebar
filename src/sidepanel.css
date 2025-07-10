@@ -692,13 +692,13 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     pointer-events: none; /* Block interactions when invisible */
 }
 
-/* Show top controls on wrapper hover */
-body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-top-controls-container {
+/* Show top controls on wrapper hover, regardless of prompt area state */
+.iframe-wrapper:hover .iframe-top-controls-container {
     opacity: 0.7;
     pointer-events: auto; /* Allow interactions when visible */
 }
 
 /* Make it fully opaque when hovering the controls directly */
-body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-top-controls-container:hover {
+.iframe-wrapper:hover .iframe-top-controls-container:hover {
     opacity: 1;
 }
