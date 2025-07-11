@@ -375,6 +375,32 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
+    // Clears the chat content on AI Studio.
+    async function handleClearAIStudio() {
+        const hostname = 'aistudio.google.com';
+        const clearButton = await waitForElement('button[aria-label="Clear chat"]');
+        if (!clearButton) {
+            reportInteractionFailure(hostname, 'Could not find "Clear chat" button.');
+            return;
+        }
+        clearButton.click();
+
+        const dialogContainer = await waitForElement('mat-dialog-container');
+        if (!dialogContainer) {
+            reportInteractionFailure(hostname, 'Confirmation dialog did not appear.');
+            return;
+        }
+
+        const buttons = dialogContainer.querySelectorAll('button');
+        const continueButton = Array.from(buttons).find(btn => btn.innerText.trim().toUpperCase() === 'CONTINUE');
+        
+        if (continueButton) {
+            continueButton.click();
+        } else {
+            reportInteractionFailure(hostname, 'Could not find "Continue" button in dialog.');
+        }
+    }
+
     // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -392,6 +418,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
         if (event.data.action === 'toggleGoogleSearch') {
             handleGoogleSearchToggle();
+        }
+        if (event.data.action === 'clearAIStudio') {
+            handleClearAIStudio();
         }
     });
 

@@ -12,6 +12,8 @@ function initializeSharedUI(elements) {
     const contextContainer = document.getElementById('context-container');
     const closeContextButton = document.getElementById('close-context-button');
     const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
+    const clearAIStudioIcon = document.getElementById('clear-aistudio-icon');
+    const clearAIStudioContainer = document.getElementById('clear-aistudio-container');
 
     initializeSlashCommands(elements);
 
@@ -54,6 +56,13 @@ function initializeSharedUI(elements) {
         }
     };
 
+    const updateButtonVisibility = (urls) => {
+        const isAIStudioVisible = urls.some(u => u.selected && u.url.includes('aistudio.google.com'));
+        if (clearAIStudioContainer) {
+            clearAIStudioContainer.style.display = isAIStudioVisible ? 'flex' : 'none';
+        }
+    };
+
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             if (getPinnedPrompt()) {
@@ -71,7 +80,6 @@ function initializeSharedUI(elements) {
                 sendResponse({status: "Context cleared in sidebar"});
             }
         } else if (message.action === 'interactionFailed') {
-            // Handle the error message from the content script.
             const { host } = message.details;
             showGlobalConfirmationMessage(`Error with ${host}. The site may have updated.`, 5000);
             sendResponse({status: "Error reported to user."});
@@ -81,6 +89,18 @@ function initializeSharedUI(elements) {
 
     if (closeContextButton) {
         closeContextButton.addEventListener('click', resetContextualUI);
+    }
+
+    if (clearAIStudioIcon) {
+        clearAIStudioIcon.addEventListener('click', () => {
+            const aiStudioIframe = Object.values(iframeCache).find(iframe => iframe.src.includes('aistudio.google.com'));
+            if (aiStudioIframe && aiStudioIframe.contentWindow) {
+                aiStudioIframe.contentWindow.postMessage({ action: 'clearAIStudio' }, '*');
+                showGlobalConfirmationMessage('Clearing AI Studio chat...');
+            } else {
+                showGlobalConfirmationMessage('AI Studio panel not found.');
+            }
+        });
     }
 
     refreshIcon.addEventListener('click', () => {
@@ -211,12 +231,14 @@ function initializeSharedUI(elements) {
         if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
+            updateButtonVisibility(managedUrls);
         }
     });
 
     chrome.storage.local.get('managedUrls', (result) => {
         managedUrls = result.managedUrls ? result.managedUrls : [];
         updateIframes(iframeContainer);
+        updateButtonVisibility(managedUrls);
     });
     
     setTimeout(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton), 10);

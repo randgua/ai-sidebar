@@ -193,6 +193,7 @@ function updateIframes(iframeContainer) {
     wrappersMap.forEach((wrapper, id) => {
         if (!selectedIdsSet.has(id)) {
             iframeContainer.removeChild(wrapper);
+            delete iframeCache[id];
         }
     });
 
@@ -231,11 +232,16 @@ function updateIframes(iframeContainer) {
 
 /**
  * Sends a prompt to all active iframes.
- * @param {HTMLElement} iframeContainer The container for the iframes.
  * @param {string} prompt The prompt text to send.
  */
-function sendMessageToIframes(iframeContainer, prompt) {
-    const activeIframes = iframeContainer.querySelectorAll('iframe');
+function sendMessageToIframes(prompt) {
+    // Get iframes from the cache, not the DOM, to ensure we message
+    // even those that are still in the process of loading.
+    const selectedIds = new Set(managedUrls.filter(u => u.selected).map(u => u.id));
+    const activeIframes = Object.entries(iframeCache)
+        .filter(([id, iframe]) => selectedIds.has(id))
+        .map(([id, iframe]) => iframe);
+
     if (activeIframes.length === 0) {
         showGlobalConfirmationMessage('No active panels to send prompt to.');
         return;

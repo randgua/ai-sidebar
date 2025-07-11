@@ -2,7 +2,7 @@
 // It serves as the single source of truth to be used across different parts of the extension.
 
 const defaultUrls = [
-    { id: crypto.randomUUID(), url: "https://aistudio.google.com/", selected: true },
+    { id: crypto.randomUUID(), url: "https://aistudio.google.com/", selected: false },
     { id: crypto.randomUUID(), url: "https://gemini.google.com/", selected: false },
     { id: crypto.randomUUID(), url: "https://chatgpt.com/", selected: false },
     { id: crypto.randomUUID(), url: "https://claude.ai/", selected: false },
