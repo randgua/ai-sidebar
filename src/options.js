@@ -39,19 +39,60 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedItem = null; // Used for both prompts and URLs
 
     // --- LANGUAGE DATA ---
+    // Expanded language list for the display language setting.
+    // 'code' is used for prompt templates, 'name' for display, and 'native' for the secondary display name.
     const languages = [
         { code: 'English', name: 'English', native: 'English' },
-        { code: 'ChineseS', name: 'Simplified Chinese', native: '中文(简体)' },
-        { code: 'ChineseT', name: 'Traditional Chinese', native: '中文(繁體)' },
+        { code: 'Chinese(Simplified)', name: 'Chinese (Simplified)', native: '中文 (简体)' },
+        { code: 'Chinese(Traditional)', name: 'Chinese (Traditional)', native: '中文 (繁體)' },
         { code: 'Spanish', name: 'Spanish', native: 'Español' },
         { code: 'French', name: 'French', native: 'Français' },
         { code: 'Japanese', name: 'Japanese', native: '日本語' },
-        { code: 'Korean', name: 'Korean', native: '한국어' },
         { code: 'German', name: 'German', native: 'Deutsch' },
-        { code: 'Russian', name: 'Russian', native: 'Русский' },
         { code: 'Portuguese', name: 'Portuguese', native: 'Português' },
+        { code: 'Arabic', name: 'Arabic', native: 'العربية' },
+        { code: 'Russian', name: 'Russian', native: 'Русский' },
         { code: 'Italian', name: 'Italian', native: 'Italiano' },
+        { code: 'Korean', name: 'Korean', native: '한국어' },
+        { code: 'Hindi', name: 'Hindi', native: 'हिन्दी' },
         { code: 'Dutch', name: 'Dutch', native: 'Nederlands' },
+        { code: 'Polish', name: 'Polish', native: 'Polski' },
+        { code: 'Amharic', name: 'Amharic', native: 'አማርኛ' },
+        { code: 'Bulgarian', name: 'Bulgarian', native: 'Български' },
+        { code: 'Bengali', name: 'Bengali', native: 'বাংলা' },
+        { code: 'Catalan', name: 'Catalan', native: 'Català' },
+        { code: 'Czech', name: 'Czech', native: 'Čeština' },
+        { code: 'Danish', name: 'Danish', native: 'Dansk' },
+        { code: 'Greek', name: 'Greek', native: 'Ελληνικά' },
+        { code: 'Estonian', name: 'Estonian', native: 'Eesti' },
+        { code: 'Persian', name: 'Persian', native: 'فارسی' },
+        { code: 'Finnish', name: 'Finnish', native: 'Suomi' },
+        { code: 'Filipino', name: 'Filipino', native: 'Tagalog' },
+        { code: 'Gujarati', name: 'Gujarati', native: 'ગુજરાતી' },
+        { code: 'Hebrew', name: 'Hebrew', native: 'עברית' },
+        { code: 'Croatian', name: 'Croatian', native: 'Hrvatski' },
+        { code: 'Hungarian', name: 'Hungarian', native: 'Magyar' },
+        { code: 'Indonesian', name: 'Indonesian', native: 'Bahasa Indonesia' },
+        { code: 'Kannada', name: 'Kannada', native: 'ಕನ್ನಡ' },
+        { code: 'Lithuanian', name: 'Lithuanian', native: 'Lietuvių' },
+        { code: 'Latvian', name: 'Latvian', native: 'Latviešu' },
+        { code: 'Malayalam', name: 'Malayalam', native: 'മലയാളം' },
+        { code: 'Marathi', name: 'Marathi', native: 'मराठी' },
+        { code: 'Malay', name: 'Malay', native: 'Bahasa Melayu' },
+        { code: 'Norwegian', name: 'Norwegian', native: 'Norsk' },
+        { code: 'Romanian', name: 'Romanian', native: 'Română' },
+        { code: 'Slovak', name: 'Slovak', native: 'Slovenčina' },
+        { code: 'Slovenian', name: 'Slovenian', native: 'Slovenščina' },
+        { code: 'Serbian', name: 'Serbian', native: 'Српски' },
+        { code: 'Swedish', name: 'Swedish', native: 'Svenska' },
+        { code: 'Swahili', name: 'Swahili', native: 'Kiswahili' },
+        { code: 'Tamil', name: 'Tamil', native: 'தமிழ்' },
+        { code: 'Telugu', name: 'Telugu', native: 'తెలుగు' },
+        { code: 'Thai', name: 'Thai', native: 'ไทย' },
+        { code: 'Turkish', name: 'Turkish', native: 'Türkçe' },
+        { code: 'Ukrainian', name: 'Ukrainian', native: 'Українська' },
+        { code: 'Urdu', name: 'Urdu', native: 'اردو' },
+        { code: 'Vietnamese', name: 'Vietnamese', native: 'Tiếng Việt' }
     ];
 
     // --- CUSTOM CONFIRM MODAL LOGIC ---
@@ -244,8 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const urlTextInput = itemDiv.querySelector('input[type="text"]');
 
-            // Save changes when the input field loses focus (on blur), which is more
-            // efficient than saving on every keystroke (on input).
+            // Save changes when the input field loses focus (on blur).
             urlTextInput.addEventListener('blur', (e) => {
                 const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
                 if (urlToUpdate && urlToUpdate.url !== e.target.value) {
