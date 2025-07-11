@@ -114,6 +114,20 @@ body, html {
     flex-direction: column;
     position: relative;
     background-color: #2a2b36;
+    justify-content: center;
+    align-items: center;
+}
+
+.iframe-loading-indicator,
+.iframe-error-message {
+    color: #9aa0a6;
+    font-size: 14px;
+    padding: 20px;
+    text-align: center;
+}
+
+.iframe-error-message {
+    color: #f08080; /* Light red for error text */
 }
 
 .iframe-wrapper iframe {
