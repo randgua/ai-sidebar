@@ -375,26 +375,52 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    // Clears the chat content on AI Studio.
+    // Clears the chat content on AI Studio, handling different layouts.
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
-        // Step 1: Find and click the 'Clear chat' button.
-        const clearButton = await waitForElement('button[aria-label="Clear chat"]');
-        if (!clearButton) {
-            reportInteractionFailure(hostname, 'Could not find "Clear chat" button.');
-            return;
+    
+        // Check for the "More actions" button which indicates a narrow/responsive layout.
+        const moreButton = document.querySelector('button[aria-label="More actions"]');
+    
+        if (moreButton && moreButton.offsetParent !== null) {
+            // Narrow layout: Click "More actions" -> "Clear chat" -> "Continue"
+            moreButton.click();
+            
+            const menuPanel = await waitForElement('.mat-mdc-menu-panel');
+            if (!menuPanel) {
+                reportInteractionFailure(hostname, 'Menu did not appear after clicking "More actions".');
+                return;
+            }
+    
+            const menuItems = menuPanel.querySelectorAll('button[role="menuitem"]');
+            const clearMenuItem = Array.from(menuItems).find(item => item.textContent.trim().includes('Clear chat'));
+    
+            if (!clearMenuItem) {
+                reportInteractionFailure(hostname, 'Could not find "Clear chat" in the menu.');
+                document.body.click(); // Attempt to close the menu
+                return;
+            }
+            clearMenuItem.click();
+    
+        } else {
+            // Wide layout: Click the visible "Clear chat" button directly.
+            await waitForElement('button[aria-label="Clear chat"]');
+            const allClearButtons = document.querySelectorAll('button[aria-label="Clear chat"]');
+            const visibleButton = Array.from(allClearButtons).find(btn => btn.offsetParent !== null);
+    
+            if (!visibleButton) {
+                reportInteractionFailure(hostname, 'Could not find the visible "Clear chat" button.');
+                return;
+            }
+            visibleButton.click();
         }
-        clearButton.click();
-
-        // Step 2: Wait for the confirmation dialog's 'Continue' button and click it.
-        // We select the primary button in the dialog, which is 'Continue'.
-        // This is more robust than waiting for the container and then searching for the button.
+    
+        // Common step: Handle the confirmation dialog.
         const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
-        
         if (continueButton) {
             continueButton.click();
         } else {
-            reportInteractionFailure(hostname, 'Could not find "Continue" button in dialog.');
+            reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
         }
     }
 
