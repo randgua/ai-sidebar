@@ -29,6 +29,13 @@ body, html {
     z-index: 1000;
 }
 
+#clear-aistudio-container {
+    position: absolute;
+    top: 1px;
+    right: 56px; /* Changed from left to right */
+    z-index: 1000;
+}
+
 #google-search-toggle-container {
     position: absolute;
     top: 1px;

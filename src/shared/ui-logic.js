@@ -13,7 +13,6 @@ function initializeSharedUI(elements) {
     const closeContextButton = document.getElementById('close-context-button');
     const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
     const clearAIStudioIcon = document.getElementById('clear-aistudio-icon');
-    const clearAIStudioContainer = document.getElementById('clear-aistudio-container');
 
     initializeSlashCommands(elements);
 
@@ -56,13 +55,6 @@ function initializeSharedUI(elements) {
         }
     };
 
-    const updateButtonVisibility = (urls) => {
-        const isAIStudioVisible = urls.some(u => u.selected && u.url.includes('aistudio.google.com'));
-        if (clearAIStudioContainer) {
-            clearAIStudioContainer.style.display = isAIStudioVisible ? 'flex' : 'none';
-        }
-    };
-
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
             if (getPinnedPrompt()) {
@@ -93,10 +85,17 @@ function initializeSharedUI(elements) {
 
     if (clearAIStudioIcon) {
         clearAIStudioIcon.addEventListener('click', () => {
-            const aiStudioIframe = Object.values(iframeCache).find(iframe => iframe.src.includes('aistudio.google.com'));
-            if (aiStudioIframe && aiStudioIframe.contentWindow) {
-                aiStudioIframe.contentWindow.postMessage({ action: 'clearAIStudio' }, '*');
-                showGlobalConfirmationMessage('Clearing AI Studio chat...');
+            // Filter for all iframes that are AI Studio panels.
+            const aiStudioIframes = Object.values(iframeCache).filter(iframe => iframe.src.includes('aistudio.google.com'));
+            
+            if (aiStudioIframes.length > 0) {
+                // Iterate over all found AI Studio iframes and send the clear message.
+                aiStudioIframes.forEach(iframe => {
+                    if (iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ action: 'clearAIStudio' }, '*');
+                    }
+                });
+                showGlobalConfirmationMessage(`Clearing ${aiStudioIframes.length} AI Studio panel(s)...`);
             } else {
                 showGlobalConfirmationMessage('AI Studio panel not found.');
             }
@@ -231,14 +230,12 @@ function initializeSharedUI(elements) {
         if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
-            updateButtonVisibility(managedUrls);
         }
     });
 
     chrome.storage.local.get('managedUrls', (result) => {
         managedUrls = result.managedUrls ? result.managedUrls : [];
         updateIframes(iframeContainer);
-        updateButtonVisibility(managedUrls);
     });
     
     setTimeout(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton), 10);

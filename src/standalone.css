@@ -191,6 +191,12 @@ body, html {
     left: 36px;
 }
 
+#main-content #clear-aistudio-container {
+    position: absolute;
+    top: 0;
+    right: 72px; /* Changed from left to right */
+}
+
 #main-content #google-search-toggle-container {
     position: absolute;
     top: 0;

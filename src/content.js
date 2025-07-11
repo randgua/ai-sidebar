@@ -378,6 +378,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Clears the chat content on AI Studio.
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
+        // Step 1: Find and click the 'Clear chat' button.
         const clearButton = await waitForElement('button[aria-label="Clear chat"]');
         if (!clearButton) {
             reportInteractionFailure(hostname, 'Could not find "Clear chat" button.');
@@ -385,14 +386,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
         clearButton.click();
 
-        const dialogContainer = await waitForElement('mat-dialog-container');
-        if (!dialogContainer) {
-            reportInteractionFailure(hostname, 'Confirmation dialog did not appear.');
-            return;
-        }
-
-        const buttons = dialogContainer.querySelectorAll('button');
-        const continueButton = Array.from(buttons).find(btn => btn.innerText.trim().toUpperCase() === 'CONTINUE');
+        // Step 2: Wait for the confirmation dialog's 'Continue' button and click it.
+        // We select the primary button in the dialog, which is 'Continue'.
+        // This is more robust than waiting for the container and then searching for the button.
+        const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
         
         if (continueButton) {
             continueButton.click();
