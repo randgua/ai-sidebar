@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LANGUAGE DATA ---
     // Expanded language list for the display language setting.
-    // 'code' is used for prompt templates, 'name' for display, and 'native' for the secondary display name.
     const languages = [
         { code: 'English', name: 'English', native: 'English' },
         { code: 'Chinese(Simplified)', name: 'Chinese (Simplified)', native: '中文 (简体)' },
@@ -122,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Handle key presses for the modal.
         const keydownHandler = (e) => {
-            // If Enter is pressed, trigger the action of the focused button.
             if (e.key === 'Enter') {
                 if (document.activeElement === confirmYesButton) {
                     e.preventDefault();
@@ -132,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     noHandler();
                 }
             }
-            // If Escape is pressed, cancel the action.
             else if (e.key === 'Escape') {
                 e.preventDefault();
                 noHandler();
@@ -226,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         item.querySelector('.delete-button').addEventListener('click', () => deletePrompt(prompt));
         item.querySelector('.toggle-show-button').addEventListener('click', () => togglePromptVisibility(prompt.id));
         
-        // Attach drag events to the handle, not the whole item.
         const dragHandle = item.querySelector('.drag-handle');
         dragHandle.addEventListener('dragstart', handleDragStart);
         dragHandle.addEventListener('dragend', handleDragEnd);
@@ -285,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const urlTextInput = itemDiv.querySelector('input[type="text"]');
 
-            // Save changes when the input field loses focus (on blur).
             urlTextInput.addEventListener('blur', (e) => {
                 const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
                 if (urlToUpdate && urlToUpdate.url !== e.target.value) {
@@ -294,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // On 'Enter', blur the input to trigger the 'blur' event and save the change.
             urlTextInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -305,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
             itemDiv.querySelector('.remove-url-button').addEventListener('click', () => deleteUrl(urlEntry));
             itemDiv.querySelector('.open-url-button').addEventListener('click', () => chrome.tabs.create({ url: urlEntry.url }));
             
-            // Attach drag events to the handle, not the whole item.
             const dragHandle = itemDiv.querySelector('.drag-handle');
             dragHandle.addEventListener('dragstart', handleDragStart);
             dragHandle.addEventListener('dragend', handleDragEnd);
@@ -324,11 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DRAG & DROP LOGIC (for both lists) ---
     function handleDragStart(e) {
-        // Set the dragged item to the closest parent '.prompt-item' or '.url-item'.
         draggedItem = this.closest('.prompt-item, .url-item');
         if (!draggedItem) return;
 
-        // Use a timeout to avoid issues with the drag image.
         setTimeout(() => {
             if (draggedItem) {
                 draggedItem.classList.add('dragging');
@@ -508,19 +499,35 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPrompts();
         });
 
+        // Handles adding single or multiple URLs from the textarea.
         addUrlButton.addEventListener('click', async () => {
             const newUrlValue = newUrlInput.value.trim();
             if (newUrlValue) {
-                managedUrls.push({ id: crypto.randomUUID(), url: newUrlValue, selected: true });
-                await saveUrls();
-                renderUrlList();
-                newUrlInput.value = '';
+                // Split by newlines, trim whitespace, and filter out empty lines.
+                const urlsToAdd = newUrlValue.split('\n')
+                    .map(url => url.trim())
+                    .filter(url => url.length > 0);
+
+                if (urlsToAdd.length > 0) {
+                    const newEntries = urlsToAdd.map(url => ({
+                        id: crypto.randomUUID(),
+                        url: url,
+                        selected: true
+                    }));
+                    managedUrls.push(...newEntries);
+                    await saveUrls();
+                    renderUrlList();
+                    newUrlInput.value = ''; // Clear the textarea after adding.
+                }
             }
         });
 
+        // Add keydown listener to the textarea.
+        // Pressing 'Enter' (without Shift) will add the URLs.
+        // Pressing 'Shift+Enter' will create a new line.
         newUrlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevent creating a new line.
                 addUrlButton.click();
             }
         });

@@ -447,7 +447,7 @@ body, html {
     margin-bottom: 16px;
 }
 
-.add-url-section input {
+.add-url-section textarea {
     flex-grow: 1;
     padding: 10px 14px;
     border: 1px solid #555;
@@ -455,6 +455,8 @@ body, html {
     background-color: #222;
     color: #e0e0e0;
     font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
 }
 
 .popup-actions-section {
