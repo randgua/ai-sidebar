@@ -28,7 +28,7 @@ function initializeSharedUI(elements) {
                 ? promptContent.replace('${input}', promptText)
                 : `${promptContent}\n\n"""\n${promptText}\n"""`;
             
-            sendMessageToIframes(iframeContainer, fullPrompt);
+            sendMessageToIframes(fullPrompt);
             promptInput.value = '';
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             setTimeout(() => promptInput.focus(), 100);
@@ -40,10 +40,10 @@ function initializeSharedUI(elements) {
             const contextText = contextContainer.querySelector('#context-content').textContent.trim();
             if (contextText) {
                 const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
-                sendMessageToIframes(iframeContainer, finalPrompt);
+                sendMessageToIframes(finalPrompt);
             }
         } else if (promptText) {
-            sendMessageToIframes(iframeContainer, promptText);
+            sendMessageToIframes(promptText);
         }
 
         if (promptText || isContextVisible) {
@@ -204,6 +204,8 @@ function initializeSharedUI(elements) {
             executeSend();
         }
     });
+
+    sendPromptButton.addEventListener('click', executeSend);
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (namespace === 'local' && changes.managedUrls) {

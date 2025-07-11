@@ -37,7 +37,6 @@ function resetContextualUI() {
  * @returns {HTMLButtonElement} The created button element.
  */
 function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
-    const iframeContainer = document.getElementById('iframe-container');
     const button = document.createElement('button');
     button.textContent = prompt.name;
     button.className = isMoreMenuItem ? 'more-prompt-item' : 'prompt-button';
@@ -53,7 +52,7 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
             fullPrompt = `${promptContent}\n\n"""\n${selectedText}\n"""`;
         }
         
-        sendMessageToIframes(iframeContainer, fullPrompt);
+        sendMessageToIframes(fullPrompt);
         resetContextualUI();
     });
     return button;
