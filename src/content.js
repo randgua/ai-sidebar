@@ -379,48 +379,53 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
     
-        // Check for the "More actions" button which indicates a narrow/responsive layout.
-        const moreButton = document.querySelector('button[aria-label="More actions"]');
-    
-        if (moreButton && moreButton.offsetParent !== null) {
-            // Narrow layout: Click "More actions" -> "Clear chat" -> "Continue"
-            moreButton.click();
-            
+        // Helper to find and click "Clear chat" from a menu
+        const clearFromMenu = async () => {
             const menuPanel = await waitForElement('.mat-mdc-menu-panel');
-            if (!menuPanel) {
-                reportInteractionFailure(hostname, 'Menu did not appear after clicking "More actions".');
-                return;
+            if (!menuPanel) return false;
+    
+            const clearMenuItem = Array.from(menuPanel.querySelectorAll('button[role="menuitem"]'))
+                .find(item => item.textContent.trim().includes('Clear chat'));
+    
+            if (clearMenuItem) {
+                clearMenuItem.click();
+                return true;
             }
+            document.body.click(); // Close menu if item not found
+            return false;
+        };
     
-            const menuItems = menuPanel.querySelectorAll('button[role="menuitem"]');
-            const clearMenuItem = Array.from(menuItems).find(item => item.textContent.trim().includes('Clear chat'));
+        let actionInitiated = false;
     
-            if (!clearMenuItem) {
-                reportInteractionFailure(hostname, 'Could not find "Clear chat" in the menu.');
-                document.body.click(); // Attempt to close the menu
-                return;
+        // Priority 1: Check for the narrowest layout's "View more actions" button.
+        const viewMoreButton = document.querySelector('button[aria-label="View more actions"]');
+        if (viewMoreButton && viewMoreButton.offsetParent !== null) {
+            viewMoreButton.click();
+            if (await clearFromMenu()) {
+                actionInitiated = true;
             }
-            clearMenuItem.click();
-    
-        } else {
-            // Wide layout: Click the visible "Clear chat" button directly.
-            await waitForElement('button[aria-label="Clear chat"]');
-            const allClearButtons = document.querySelectorAll('button[aria-label="Clear chat"]');
-            const visibleButton = Array.from(allClearButtons).find(btn => btn.offsetParent !== null);
-    
-            if (!visibleButton) {
-                reportInteractionFailure(hostname, 'Could not find the visible "Clear chat" button.');
-                return;
-            }
-            visibleButton.click();
         }
     
-        // Common step: Handle the confirmation dialog.
-        const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
-        if (continueButton) {
-            continueButton.click();
+        // Priority 2: If still not found, check for the wide layout's direct "Clear chat" button.
+        if (!actionInitiated) {
+            const allClearButtons = document.querySelectorAll('button[aria-label="Clear chat"]');
+            const visibleButton = Array.from(allClearButtons).find(btn => btn.offsetParent !== null);
+            if (visibleButton) {
+                visibleButton.click();
+                actionInitiated = true;
+            }
+        }
+    
+        // Final step: Handle the confirmation dialog if any clear action was initiated.
+        if (actionInitiated) {
+            const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
+            if (continueButton) {
+                continueButton.click();
+            } else {
+                reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
+            }
         } else {
-            reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
+            reportInteractionFailure(hostname, 'Could not find any actionable "Clear chat" or "More" button.');
         }
     }
 
