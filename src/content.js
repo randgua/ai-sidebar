@@ -379,7 +379,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
     
-        // Helper to find and click "Clear chat" from a menu
+        // Helper to find and click "Clear chat" from a menu, and close the menu if not found.
         const clearFromMenu = async () => {
             const menuPanel = await waitForElement('.mat-mdc-menu-panel');
             if (!menuPanel) return false;
@@ -391,13 +391,15 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
                 clearMenuItem.click();
                 return true;
             }
-            document.body.click(); // Close menu if item not found
+            
+            // If "Clear chat" is not found (e.g., it's disabled), close the menu by simulating an Escape key press.
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             return false;
         };
     
         let actionInitiated = false;
     
-        // Priority 1: Check for the narrowest layout's "View more actions" button.
+        // Priority 1: Check for the narrow layout's "View more actions" button.
         const viewMoreButton = document.querySelector('button[aria-label="View more actions"]');
         if (viewMoreButton && viewMoreButton.offsetParent !== null) {
             viewMoreButton.click();
@@ -406,7 +408,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             }
         }
     
-        // Priority 2: If still not found, check for the wide layout's direct "Clear chat" button.
+        // Priority 2: If no action was taken, check for the wide layout's direct "Clear chat" button.
         if (!actionInitiated) {
             const allClearButtons = document.querySelectorAll('button[aria-label="Clear chat"]');
             const visibleButton = Array.from(allClearButtons).find(btn => btn.offsetParent !== null);
@@ -416,7 +418,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             }
         }
     
-        // Final step: Handle the confirmation dialog if any clear action was initiated.
+        // Final step: Handle the confirmation dialog if any clear action was successful.
         if (actionInitiated) {
             const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
             if (continueButton) {
