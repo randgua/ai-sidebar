@@ -624,8 +624,8 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     background-color: #4a4d5f;
     color: #e8eaed;
     border: 1px solid #5f6368;
-    border-radius: 16px;
-    padding: 4px 12px;
+    border-radius: 8px;
+    padding: 4px 8px;
     font-size: 13px;
     cursor: pointer;
     transition: background-color 0.2s;
