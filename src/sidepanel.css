@@ -32,7 +32,7 @@ body, html {
 #clear-aistudio-container {
     position: absolute;
     top: 1px;
-    right: 56px; /* Changed from left to right */
+    right: 56px;
     z-index: 1000;
 }
 
