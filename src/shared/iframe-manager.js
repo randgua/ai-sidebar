@@ -8,7 +8,7 @@ const IFRAME_LOAD_TIMEOUT = 15000; // 15 seconds
  * @param {HTMLIFrameElement} iframe The specific iframe to get output from.
  * @param {object} urlEntry The URL entry object, containing a unique id.
  */
-function handleSelectiveCopy(iframe, urlEntry) {
+function handleSelectiveAppendAndCopy(iframe, urlEntry) {
     const uniqueId = urlEntry.id;
     const sourceHostname = new URL(urlEntry.url).hostname;
     let listener;
@@ -139,7 +139,7 @@ function loadIframeAsync(wrapper, urlEntry) {
     copyBtn.className = 'selective-copy-button';
     copyBtn.title = 'Append output to prompt area and copy as Markdown';
     copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-    copyBtn.addEventListener('click', () => handleSelectiveCopy(iframe, urlEntry));
+    copyBtn.addEventListener('click', () => handleSelectiveAppendAndCopy(iframe, urlEntry));
 
     bottomControlsContainer.append(sendBtn, copyBtn);
     wrapper.appendChild(bottomControlsContainer);

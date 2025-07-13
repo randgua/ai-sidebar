@@ -30,9 +30,12 @@ function initializeSharedUI(elements) {
                 : `${promptContent}\n\n"""\n${promptText}\n"""`;
             
             sendMessageToIframes(fullPrompt);
-            promptInput.value = '';
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-            requestAnimationFrame(() => promptInput.focus());
+            // Do not clear the prompt input, allowing for multi-turn conversations by editing the last input.
+            // Instead, focus and select the text for easy editing.
+            requestAnimationFrame(() => {
+                promptInput.focus();
+                promptInput.select();
+            });
             return;
         }
 
@@ -56,6 +59,7 @@ function initializeSharedUI(elements) {
     };
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        // If a prompt is pinned, treat the selected text as direct input. Otherwise, show the contextual UI.
         if (message.action === 'textSelected' && message.text) {
             if (getPinnedPrompt()) {
                 promptInput.value = message.text;

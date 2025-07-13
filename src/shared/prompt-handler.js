@@ -208,7 +208,6 @@ async function displayContextualUI(selectedText) {
     const contextContent = contextContainer.querySelector('#context-content');
     const promptButtonsContainer = document.getElementById('prompt-buttons-container');
     const promptInputDivider = document.querySelector('.prompt-input-divider');
-    const openPromptSettings = document.querySelector('#open-prompt-settings');
     
     contextContent.textContent = selectedText;
     contextContainer.style.display = 'flex';
@@ -225,11 +224,4 @@ async function displayContextualUI(selectedText) {
     const visiblePrompts = prompts.filter(p => p.showInMenu);
 
     renderResponsivePrompts(selectedText, visiblePrompts);
-
-    if (openPromptSettings && !openPromptSettings.listenerAdded) {
-        openPromptSettings.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'options.html?section=prompts' });
-        });
-        openPromptSettings.listenerAdded = true;
-    }
 }

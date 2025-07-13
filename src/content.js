@@ -187,7 +187,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
         // Use a more specific selector looking for a button that is a sibling of the input area.
-        // This is more robust than a generic class name like '.absolute'.
         const sendButton = await waitForElement('textarea#chat-input ~ button', 100);
         if (sendButton) {
             sendButton.click();

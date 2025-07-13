@@ -15,10 +15,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ status: "Side panel opening" });
     }
-    return true; // Keep the message channel open for the response.
+    // Return true to indicate that the response will be sent asynchronously.
+    return true;
 });
 
-// Listener for keyboard shortcuts
+// Listener for keyboard shortcuts.
 chrome.commands.onCommand.addListener((command) => {
     if (command === "open-standalone-page") {
         chrome.tabs.create({ url: 'standalone.html' });
@@ -26,18 +27,18 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 chrome.runtime.onInstalled.addListener((details) => {
-    // On first install, populate storage with default URLs and Prompts.
+    // On first install, populate storage with default URLs, Prompts, and language.
     if (details.reason === 'install') {
         chrome.storage.local.set({
             managedUrls: defaultUrls,
             prompts: defaultPrompts,
-            displayLanguage: 'English' // Set a default language as well.
+            displayLanguage: 'English'
         }, () => {
-            console.log('Default URLs and prompts have been set on installation.');
+            console.log('Default URLs, prompts, and language have been set on installation.');
         });
     }
 
-    // Add rules to modify response headers, allowing more sites to be embedded in iframes.
+    // Add rules to modify network headers, allowing more sites to be embedded in iframes.
     chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: [1],
         addRules: [{
@@ -46,13 +47,14 @@ chrome.runtime.onInstalled.addListener((details) => {
                 action: {
                     type: "modifyHeaders",
                     requestHeaders: [
+                        // This header can signal that a request is for an iframe, so we remove it.
                         // { header: 'Sec-Fetch-Site', operation: 'remove' },
                         // { header: 'Sec-Fetch-Mode', operation: 'remove' },
                         { header: 'Sec-Fetch-Dest', operation: 'remove' },
                         // { header: 'Sec-Fetch-User', operation: 'remove' }
-                      ],
+                    ],
                     responseHeaders: [
-                        // Remove headers that prevent the page from being embedded in an iframe.
+                        // These headers can prevent a page from being embedded in an iframe.
                         { header: "x-frame-options", operation: "remove" },
                         { header: "content-security-policy", operation: "remove" },
                         // Remove headers that prevent embedding.
