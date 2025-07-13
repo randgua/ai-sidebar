@@ -52,7 +52,7 @@ chrome.runtime.onInstalled.addListener((details) => {
                         // { header: 'Sec-Fetch-User', operation: 'remove' }
                       ],
                     responseHeaders: [
-                        // Remove headers that prevent embedding.
+                        // Remove headers that prevent the page from being embedded in an iframe.
                         { header: "x-frame-options", operation: "remove" },
                         { header: "content-security-policy", operation: "remove" },
                         // Remove headers that prevent embedding.

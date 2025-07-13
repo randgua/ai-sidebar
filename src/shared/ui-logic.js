@@ -32,7 +32,7 @@ function initializeSharedUI(elements) {
             sendMessageToIframes(fullPrompt);
             promptInput.value = '';
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-            setTimeout(() => promptInput.focus(), 100);
+            requestAnimationFrame(() => promptInput.focus());
             return;
         }
 
@@ -51,7 +51,7 @@ function initializeSharedUI(elements) {
             promptInput.value = '';
             resetContextualUI();
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
-            setTimeout(() => promptInput.focus(), 100);
+            requestAnimationFrame(() => promptInput.focus());
         }
     };
 
@@ -238,5 +238,5 @@ function initializeSharedUI(elements) {
         updateIframes(iframeContainer);
     });
     
-    setTimeout(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton), 10);
+    requestAnimationFrame(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
 }

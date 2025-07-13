@@ -454,7 +454,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
     overscroll-behavior: contain;
     min-height: 48px;
     overflow-y: hidden;
-    min-width: 0; /* Allow the textarea to shrink to make room for buttons. */
+    min-width: 0;
 }
 
 #prompt-input::placeholder {
@@ -490,7 +490,7 @@ body:not(.prompt-collapsed) .iframe-wrapper:hover .iframe-controls-container:hov
 .prompt-actions {
     display: flex;
     align-items: center;
-    flex-shrink: 0; /* Prevent this container from shrinking. */
+    flex-shrink: 0;
     margin-bottom: 8px;
     gap: 4px;
 }

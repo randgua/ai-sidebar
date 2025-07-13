@@ -11,8 +11,15 @@ const IFRAME_LOAD_TIMEOUT = 15000; // 15 seconds
 function handleSelectiveCopy(iframe, urlEntry) {
     const uniqueId = urlEntry.id;
     const sourceHostname = new URL(urlEntry.url).hostname;
+    let listener;
+    let timeoutId;
+
+    const cleanup = () => {
+        window.removeEventListener('message', listener);
+        if (timeoutId) clearTimeout(timeoutId);
+    };
     
-    const listener = (event) => {
+    listener = (event) => {
         if (event.data && event.data.action === 'receiveLastOutput' && event.data.uniqueId === uniqueId && event.data.output) {
             const output = event.data.output.trim();
             const promptInput = document.getElementById('prompt-input');
@@ -34,7 +41,7 @@ function handleSelectiveCopy(iframe, urlEntry) {
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${title}.`);
             
-            window.removeEventListener('message', listener);
+            cleanup();
         }
     };
 
@@ -44,7 +51,7 @@ function handleSelectiveCopy(iframe, urlEntry) {
         iframe.contentWindow.postMessage({ action: 'getLastOutput', uniqueId: uniqueId }, '*');
     }
 
-    setTimeout(() => window.removeEventListener('message', listener), 3000);
+    timeoutId = setTimeout(cleanup, 3000);
 }
 
 /**

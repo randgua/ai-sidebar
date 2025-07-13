@@ -25,10 +25,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             });
             const timer = setTimeout(() => {
                 observer.disconnect();
-                // Only log a warning for sites that have a specific handler.
-                if (siteHandlers[window.location.hostname]) {
-                    console.warn(`AI-Sidebar: Element with selector "${selector}" timed out after ${timeout}ms.`);
-                }
+                // Warn on timeout for any site to aid in debugging.
+                console.warn(`AI-Sidebar: Element with selector "${selector}" timed out after ${timeout}ms.`);
                 resolve(null);
             }, timeout);
         });
@@ -181,19 +179,31 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
+
+        // This site uses a framework (like React) that requires interacting with the textarea's
+        // native value setter to properly trigger state updates. A simple .value assignment is ignored.
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
         nativeInputValueSetter.call(inputArea, prompt);
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            which: 13,
-            keyCode: 13,
-            bubbles: true,
-            cancelable: true
-        });
-        inputArea.dispatchEvent(enterEvent);
+
+        // Use a more specific selector looking for a button that is a sibling of the input area.
+        // This is more robust than a generic class name like '.absolute'.
+        const sendButton = await waitForElement('textarea#chat-input ~ button', 100);
+        if (sendButton) {
+            sendButton.click();
+        } else {
+            // Fallback to Enter key press if no button is found.
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const enterEvent = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                which: 13,
+                keyCode: 13,
+                bubbles: true,
+                cancelable: true
+            });
+            inputArea.dispatchEvent(enterEvent);
+        }
     }
 
     // Site-specific handler for chat.qwen.ai.
@@ -235,7 +245,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            // Fallback to Enter key press for generic sites.
+            // Fallback to Enter key press for generic sites. This may not always work.
             const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
             inputArea.dispatchEvent(enterEvent);
         }
@@ -275,7 +285,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
         if (assistantMessages.length > 0) {
             const lastMessage = assistantMessages[assistantMessages.length - 1];
-            const content = lastMessage.querySelector('.markdown');
+            // Use a more robust selector to find the content within the message.
+            const content = lastMessage.querySelector('.markdown, .prose, [class*="result-streaming"]');
             if (content) {
                 return content.innerText;
             }

@@ -302,8 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const dragHandle = itemDiv.querySelector('.drag-handle');
             dragHandle.addEventListener('dragstart', handleDragStart);
             dragHandle.addEventListener('dragend', handleDragEnd);
-            
-            itemDiv.addEventListener('dragover', handleDragOver);
         });
     };
     
@@ -317,6 +315,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DRAG & DROP LOGIC (for both lists) ---
     function handleDragStart(e) {
+        // Clean up any lingering dragging states from previous failed drags.
+        const oldDragged = document.querySelector('.dragging');
+        if (oldDragged) {
+            oldDragged.classList.remove('dragging');
+        }
+
         draggedItem = this.closest('.prompt-item, .url-item');
         if (!draggedItem) return;
 
@@ -558,6 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
             populateLanguageDropdown(e.target.value);
         });
 
+        // Add event listeners to all drag-and-drop containers.
         [shownPromptsList, hiddenPromptsList, urlListManagementDiv].forEach(container => {
             container.addEventListener('dragover', handleDragOver);
             container.addEventListener('drop', handleDrop);
