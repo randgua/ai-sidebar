@@ -1,5 +1,8 @@
 // A promise that resolves when the main UI elements are initialized.
-// This prevents race conditions where messages arrive before the UI is ready.
+// This is a crucial mechanism to prevent race conditions. For example, a message
+// from a content script ('textSelected') might arrive before the DOM is fully
+// parsed and the listeners are attached. By awaiting this promise, message
+// handlers can ensure the UI is ready to be manipulated.
 let uiReadyResolve;
 const uiReadyPromise = new Promise(resolve => {
     uiReadyResolve = resolve;
@@ -23,40 +26,48 @@ function initializeSharedUI(elements) {
 
     initializeSlashCommands(elements);
 
+    // Central logic for sending a prompt, adapting its behavior based on the current UI state.
     const executeSend = async () => {
         let promptText = promptInput.value.trim();
         const pinned = getPinnedPrompt();
         
+        // 1. If a prompt is pinned, use the input as a variable for that prompt's template.
         if (pinned) {
-            if (!promptText) return;
+            if (!promptText) return; // Don't send if there's no input.
             const { displayLanguage } = await chrome.storage.local.get({ displayLanguage: 'English' });
             const lang = displayLanguage || 'English';
             let promptContent = pinned.content.replace(/\${lang}/g, lang);
+            
             const fullPrompt = promptContent.includes('${input}')
                 ? promptContent.replace('${input}', promptText)
                 : `${promptContent}\n\n"""\n${promptText}\n"""`;
             
             sendMessageToIframes(fullPrompt);
-            // Do not clear the prompt input, allowing for multi-turn conversations.
-            // Instead, focus and select the text for easy editing.
+            // For pinned prompts, we don't clear the input to allow for multi-turn conversations.
+            // Instead, we select the text for easy replacement.
             requestAnimationFrame(() => {
                 promptInput.focus();
                 promptInput.select();
             });
-            return;
+            return; // Stop further execution.
         }
 
+        // 2. If no prompt is pinned, check if there's text selected from the webpage (context).
         const isContextVisible = contextContainer.style.display === 'flex';
         if (isContextVisible) {
             const contextText = contextContainer.querySelector('#context-content').textContent.trim();
             if (contextText) {
+                // Prepend the page context to the user's prompt.
                 const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
                 sendMessageToIframes(finalPrompt);
             }
-        } else if (promptText) {
+        } 
+        // 3. If no context, just send the prompt text directly.
+        else if (promptText) {
             sendMessageToIframes(promptText);
         }
 
+        // 4. Clean up the UI after sending.
         if (promptText || isContextVisible) {
             promptInput.value = '';
             resetContextualUI();
@@ -66,10 +77,9 @@ function initializeSharedUI(elements) {
     };
 
     chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+        await uiReadyPromise;
+        
         if (message.action === 'textSelected' && message.text) {
-            // Wait for the UI to be fully initialized before attempting to modify it.
-            await uiReadyPromise;
-            
             if (getPinnedPrompt()) {
                 promptInput.value = message.text;
                 autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
@@ -251,6 +261,5 @@ function initializeSharedUI(elements) {
     
     requestAnimationFrame(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
 
-    // Signal that the UI is now fully initialized and ready for interactions.
     uiReadyResolve();
 }

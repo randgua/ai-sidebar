@@ -67,6 +67,7 @@ chrome.runtime.onInstalled.addListener((details) => {
                     ]
                 },
                 condition: {
+                    // Apply these rules only to main documents and sub-frames.
                     resourceTypes: [
                         "main_frame",
                         "sub_frame"

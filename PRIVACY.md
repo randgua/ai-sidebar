@@ -2,55 +2,49 @@ Privacy Policy for AI Sidebar Chrome Extension
 
 Last Updated: July 10, 2024
 
-Thank you for using AI Sidebar (the "Extension"). This Privacy Policy explains how we handle information in relation to the Extension.
+Thank you for using AI Sidebar (the "Extension"). This Privacy Policy explains how we handle information in relation to the Extension. Your privacy is critically important to us.
 
-**1. Information We Collect**
+**1. Data We Store**
 
-The AI Sidebar Extension allows users to configure and store the following information:
-*   **Custom URL Lists:** You can input and store a list of website URLs, including their selection state and custom order.
-*   **Custom Prompts:** You can create, edit, and store a list of custom prompts, including their name, content, visibility in menus, and custom order.
-*   **Display Language:** The preferred language you select for prompt templates is stored.
+The AI Sidebar Extension allows you to configure and store the following information:
+*   **Custom URL Lists:** The list of website URLs you add, including their selection state and custom order.
+*   **Custom Prompts:** The list of custom prompts you create, including their name, content, visibility in menus, and custom order.
+*   **Display Language:** The preferred language you select for prompt templates.
 
-This data is actively provided and configured by you. It is stored on your local device using the `chrome.storage.local` API.
+This data is actively provided and configured by you. It is stored **exclusively on your local device** using the `chrome.storage.local` API.
 
-We DO NOT collect any other personally identifiable information (PII). We do not collect names, email addresses, general browsing history, or any other personal data.
+**2. Data We DO NOT Collect or Store**
 
-**2. How We Use Your Information**
-
-The stored data is used solely to enable the core functionality of the Extension. This includes:
-*   Loading your selected websites into the side panel.
-*   Remembering your settings and configurations across sessions on the same device.
-*   Populating the contextual prompt buttons (on text selection) and the slash command menu with your custom prompts.
-*   Formatting prompts with your selected display language where the `${lang}` placeholder is used.
-*   Displaying your URLs and prompts in the settings pages so you can manage them.
+To be perfectly clear, we DO NOT collect, store, or transmit any of the following:
+*   Your browsing history.
+*   The content of any web pages you visit.
+*   Any text you select on a page (it is used in real-time but never stored).
+*   Any prompts you enter or the responses you receive from AI services.
+*   Any other personally identifiable information (PII), such as your name, email address, or IP address.
 
 **3. Information Storage and Security**
 
-All data you provide is stored locally on your device using the `chrome.storage.local` API. This means your data is saved only on the computer where you configured it and is not automatically synchronized across other computers, even if you are logged into the same Chrome account.
+All data you provide is stored locally on your device using the `chrome.storage.local` API. This means your data is saved only on the computer where you configured it and is **not automatically synchronized across other computers**, even if you are logged into the same Chrome account.
 
-The data is NOT transmitted to any external servers controlled by the developer of this Extension, nor is it accessed by or shared with the developer or any third parties. The security of this data is handled by your browser's local storage security measures.
+The data is **NEVER** transmitted to any external servers controlled by the developer of this Extension, nor is it accessed by or shared with the developer or any third parties.
 
-**4. Data Sharing**
+**4. Permissions (`host_permissions`)**
 
-We do not sell, trade, or otherwise transfer any data you store in the Extension to outside parties. The data remains within your browser's local storage.
+The extension requests broad host permissions (`<all_urls>`) in the manifest. This permission is required for two key functions and is **not** used for tracking:
+1.  **Text Selection**: To detect when you select text on any webpage so it can be sent to the sidebar.
+2.  **Website Interaction**: To programmatically interact with the AI chat websites loaded within the sidebar's iframes (e.g., to input a prompt and click the "send" button).
+
+**We do not monitor, collect, or transmit your browsing activity.** The permission is used strictly to enable the extension's core on-page features.
 
 **5. User Control and Access**
 
-You have full control over the information stored by the Extension. Through the settings pages, you can add, edit, and delete any of your stored data at any time.
-*   **Website Panels:** On the 'General' settings page, you can add, edit, delete, reorder, and select/deselect URLs.
-*   **Custom Prompts:** On the 'Prompts' settings page, you can create, edit, delete, and manage your prompts' visibility and order via drag-and-drop.
-*   **Display Language:** You can change your preferred language at any time in the 'General' settings.
-*   **Defaults:** A default set of URLs and prompts is added only upon the first installation of the extension. If you delete these items, they will not be automatically restored.
+You have full and complete control over the information stored by the Extension. Through the settings pages, you can add, edit, and delete any of your stored data at any time. If you delete an item, it is permanently removed from your local storage.
 
-**6. Children's Privacy**
+**6. Changes to This Privacy Policy**
 
-The Extension is not directed at children under the age of 13 (or the relevant age in your jurisdiction), and we do not knowingly collect any personal information from children.
+We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page or through the Chrome Web Store listing.
 
-**7. Changes to This Privacy Policy**
-
-We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page or through the Chrome Web Store listing. You are advised to review this Privacy Policy periodically for any changes.
-
-**8. Contact Us**
+**7. Contact Us**
 
 If you have any questions about this Privacy Policy, please contact us via the project's GitHub page:
 https://github.com/randgua/ai-sidebar
