@@ -1,3 +1,10 @@
+// A promise that resolves when the main UI elements are initialized.
+// This prevents race conditions where messages arrive before the UI is ready.
+let uiReadyResolve;
+const uiReadyPromise = new Promise(resolve => {
+    uiReadyResolve = resolve;
+});
+
 /**
  * Main function to initialize all shared UI logic and event listeners.
  * @param {object} elements A dictionary of DOM elements required by the functions.
@@ -30,7 +37,7 @@ function initializeSharedUI(elements) {
                 : `${promptContent}\n\n"""\n${promptText}\n"""`;
             
             sendMessageToIframes(fullPrompt);
-            // Do not clear the prompt input, allowing for multi-turn conversations by editing the last input.
+            // Do not clear the prompt input, allowing for multi-turn conversations.
             // Instead, focus and select the text for easy editing.
             requestAnimationFrame(() => {
                 promptInput.focus();
@@ -58,9 +65,11 @@ function initializeSharedUI(elements) {
         }
     };
 
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        // If a prompt is pinned, treat the selected text as direct input. Otherwise, show the contextual UI.
+    chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         if (message.action === 'textSelected' && message.text) {
+            // Wait for the UI to be fully initialized before attempting to modify it.
+            await uiReadyPromise;
+            
             if (getPinnedPrompt()) {
                 promptInput.value = message.text;
                 autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
@@ -89,11 +98,9 @@ function initializeSharedUI(elements) {
 
     if (clearAIStudioIcon) {
         clearAIStudioIcon.addEventListener('click', () => {
-            // Filter for all iframes that are AI Studio panels.
             const aiStudioIframes = Object.values(iframeCache).filter(iframe => iframe.src.includes('aistudio.google.com'));
             
             if (aiStudioIframes.length > 0) {
-                // Iterate over all found AI Studio iframes and send the clear message.
                 aiStudioIframes.forEach(iframe => {
                     if (iframe.contentWindow) {
                         iframe.contentWindow.postMessage({ action: 'clearAIStudio' }, '*');
@@ -130,7 +137,7 @@ function initializeSharedUI(elements) {
                         toggledCount++;
                     }
                 } catch (e) {
-                    // Silently ignore invalid URLs that might be in the iframe src
+                    // Silently ignore invalid URLs in iframe src
                 }
             });
             showGlobalConfirmationMessage(toggledCount > 0 ? `Toggled Google Search in ${toggledCount} panel(s).` : 'No active panels support this feature.');
@@ -243,4 +250,7 @@ function initializeSharedUI(elements) {
     });
     
     requestAnimationFrame(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
+
+    // Signal that the UI is now fully initialized and ready for interactions.
+    uiReadyResolve();
 }

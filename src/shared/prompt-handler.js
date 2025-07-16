@@ -73,7 +73,7 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
 
     // Gracefully exit if essential elements are not found.
     if (!promptButtonsContainer || !morePromptsPopup) {
-        console.error('AI Sidebar: Required UI elements for prompts are missing.');
+        console.error('AI Sidebar: UI not ready when prompt rendering was requested. This is likely a race condition.');
         return;
     }
 
@@ -116,7 +116,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
 
             const containerWidth = entries[0].contentRect.width;
             
-            // Clear previous render state inside the observer.
             mainButtonsWrapper.innerHTML = '';
             morePromptsList.innerHTML = '';
             const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
@@ -147,7 +146,6 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 tempContainer.appendChild(button);
                 const buttonWidth = button.offsetWidth;
                 
-                // Reserve space for the 'more' button if this isn't the last item.
                 const potentialMoreButtonSpace = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
 
                 if (currentWidth + buttonWidth + gap + potentialMoreButtonSpace <= containerWidth) {
@@ -162,10 +160,8 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
             const promptsToShow = (splitIndex === -1) ? allButtons : allButtons.slice(0, splitIndex);
             const promptsToHide = (splitIndex === -1) ? [] : visiblePrompts.slice(splitIndex);
 
-            // Render the buttons that fit into the main container.
             promptsToShow.forEach(button => mainButtonsWrapper.appendChild(button));
 
-            // If there are buttons to hide, create the 'more' button and prepare the popup.
             if (promptsToHide.length > 0) {
                 const morePromptsWrapper = document.createElement('div');
                 morePromptsWrapper.className = 'more-prompts-wrapper';
@@ -175,16 +171,13 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
                 moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
                 
                 morePromptsWrapper.appendChild(moreButton);
-                // Append the single, persistent popup element to the new wrapper.
                 morePromptsWrapper.appendChild(morePromptsPopup);
                 promptButtonsContainer.appendChild(morePromptsWrapper);
 
-                // Populate the list inside the popup.
                 promptsToHide.forEach(promptData => {
                     morePromptsList.appendChild(createPromptButton(promptData, selectedText, true));
                 });
 
-                // Set up hover listeners to show/hide the popup.
                 let hidePopupTimeout;
                 const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
                 const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
