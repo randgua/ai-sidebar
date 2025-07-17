@@ -25,8 +25,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             });
             const timer = setTimeout(() => {
                 observer.disconnect();
-                // Warn on timeout for any site to aid in debugging.
-                console.warn(`AI-Sidebar: Element with selector "${selector}" timed out after ${timeout}ms.`);
+                // Log on timeout for any site to aid in debugging.
+                console.log(`AI-Sidebar: Element with selector "${selector}" timed out after ${timeout}ms.`);
                 resolve(null);
             }, timeout);
         });
@@ -34,7 +34,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     
     // Reports an interaction failure to the user-facing UI.
     function reportInteractionFailure(hostname, message) {
-        console.warn(`AI-Sidebar interaction failed on ${hostname}: ${message}`);
+        console.log(`AI-Sidebar interaction failed on ${hostname}: ${message}`);
         try {
             chrome.runtime.sendMessage({
                 action: 'interactionFailed',
@@ -47,7 +47,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             if (e.message.includes('Extension context invalidated')) {
                 // This is expected when the extension is updated or reloaded. Safe to ignore.
             } else {
-                console.warn("AI-Sidebar: An unexpected error occurred in reportInteractionFailure:", e);
+                console.log("AI-Sidebar: An unexpected error occurred in reportInteractionFailure:", e);
             }
         }
     }
@@ -238,8 +238,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const hostname = window.location.hostname;
         const inputArea = await waitForElement('textarea, [role="textbox"]');
         if (!inputArea) {
-            // Avoid reporting errors on generic sites where selectors are just a guess.
-            console.warn(`AI-Sidebar: Could not find a generic input area on ${hostname}.`);
+            // Avoid reporting failures on generic sites where selectors are just a guess.
+            console.log(`AI-Sidebar: Could not find a generic input area on ${hostname}.`);
             return;
         }
         if (inputArea.isContentEditable) {
