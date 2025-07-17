@@ -35,13 +35,21 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Reports an interaction failure to the user-facing UI.
     function reportInteractionFailure(hostname, message) {
         console.warn(`AI-Sidebar interaction failed on ${hostname}: ${message}`);
-        chrome.runtime.sendMessage({
-            action: 'interactionFailed',
-            details: {
-                host: hostname,
-                message: message
+        try {
+            chrome.runtime.sendMessage({
+                action: 'interactionFailed',
+                details: {
+                    host: hostname,
+                    message: message
+                }
+            });
+        } catch (e) {
+            if (e.message.includes('Extension context invalidated')) {
+                // This is expected when the extension is updated or reloaded. Safe to ignore.
+            } else {
+                console.warn("AI-Sidebar: An unexpected error occurred in reportInteractionFailure:", e);
             }
-        });
+        }
     }
 
     // Hostname to prompt injection handler mapping.
@@ -481,12 +489,21 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             return;
         }
         const selectedText = window.getSelection().toString().trim();
-        if (selectedText) {
-            // Send the selected text to the side panel.
-            chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
-        } else {
-            // When text is deselected, send a message to clear the context.
-            chrome.runtime.sendMessage({ action: 'textDeselected' });
+        
+        try {
+            if (selectedText) {
+                // Send the selected text to the side panel.
+                chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
+            } else {
+                // When text is deselected, send a message to clear the context.
+                chrome.runtime.sendMessage({ action: 'textDeselected' });
+            }
+        } catch (e) {
+            if (e.message.includes('Extension context invalidated')) {
+                // This is expected when the extension is updated or reloaded. Safe to ignore.
+            } else {
+                console.error("AI-Sidebar: An unexpected error occurred in handleSelection:", e);
+            }
         }
     }
 
