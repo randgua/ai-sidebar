@@ -73,7 +73,7 @@ function renderResponsivePrompts(selectedText, visiblePrompts) {
 
     // Gracefully exit if essential elements are not found.
     if (!promptButtonsContainer || !morePromptsPopup) {
-        console.warn('AI Sidebar: UI not ready when prompt rendering was requested. This is likely a race condition.');
+        console.log('AI Sidebar: UI not ready when prompt rendering was requested. This is likely a race condition.');
         return;
     }
 

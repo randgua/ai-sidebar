@@ -165,7 +165,7 @@ function loadIframeAsync(wrapper, urlEntry) {
             wrapper.appendChild(topControlsContainer);
         }
     } catch (e) {
-        console.warn("Could not parse URL to add top controls:", urlEntry.url, e);
+        console.log("Could not parse URL to add top controls:", urlEntry.url, e);
     }
     
     wrapper.appendChild(iframe);
