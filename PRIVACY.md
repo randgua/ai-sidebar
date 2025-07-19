@@ -28,13 +28,17 @@ All data you provide is stored locally on your device using the `chrome.storage.
 
 The data is **NEVER** transmitted to any external servers controlled by the developer of this Extension, nor is it accessed by or shared with the developer or any third parties.
 
-**4. Permissions (`host_permissions`)**
+**4. Permissions Explained**
 
-The extension requests broad host permissions (`<all_urls>`) in the manifest. This permission is required for two key functions and is **not** used for tracking:
-1.  **Text Selection**: To detect when you select text on any webpage so it can be sent to the sidebar.
-2.  **Website Interaction**: To programmatically interact with the AI chat websites loaded within the sidebar's iframes (e.g., to input a prompt and click the "send" button).
+The extension's `manifest.json` file requests the following permissions, which are essential for its core functionality:
 
-**We do not monitor, collect, or transmit your browsing activity.** The permission is used strictly to enable the extension's core on-page features.
+*   **`host_permissions: ["<all_urls>"]`**: This permission is required for two key functions and is **not** used for tracking:
+    1.  **Text Selection**: To detect when you select text on any webpage so it can be sent to the sidebar.
+    2.  **Website Interaction**: To programmatically interact with the AI chat websites loaded within the sidebar's iframes (e.g., to input a prompt and click the "send" button).
+
+*   **`declarativeNetRequest`**: This permission is used to modify network request headers to allow third-party websites (like Gemini, ChatGPT, etc.) to be embedded within the sidebar's iframes. This is a privacy-preserving method because the extension only declares rules to remove specific headers (like `x-frame-options`) and **does not read, intercept, or see the content of your network traffic**.
+
+**We do not monitor, collect, or transmit your browsing activity.** The permissions are used strictly to enable the extension's on-page features.
 
 **5. User Control and Access**
 
