@@ -15,8 +15,8 @@ const defaultUrls = [
 ];
 
 const defaultPrompts = [
-    { id: crypto.randomUUID(), name: 'Explain', content: 'Please explain clearly and concisely in ${lang} : """${input}"""', showInMenu: true },
     { id: crypto.randomUUID(), name: 'Summ', content: 'You are a highly skilled AI trained in language comprehension and summarization. I would like you to read the text delimited by triple quotes and summarize it into a concise abstract paragraph. Aim to retain the most important points, providing a coherent and readable summary that could help a person understand the main points of the discussion without needing to read the entire text. Please avoid unnecessary details or tangential points. Only give me the output and nothing else. Do not wrap responses in quotes. Respond in the ${lang} language. """ ${input} """', showInMenu: true },
+    { id: crypto.randomUUID(), name: 'Explain', content: 'Please explain clearly and concisely in ${lang} : """${input}"""', showInMenu: true },
     { id: crypto.randomUUID(), name: 'Eli5', content: 'Explain in words a five-year-old can understand. Respond in the ${lang} language. """ ${input} """.', showInMenu: true },
     { id: crypto.randomUUID(), name: 'Trans', content: 'Rewrite the text in triple quotes in ${lang}. """ ${input} """ Only give me the translation and nothing else. Do not wrap responses in quotes.', showInMenu: true },
     { id: crypto.randomUUID(), name: 'BestPrac', content: 'Based on the context below, generate a response that adheres to best practices. Respond in the ${lang} language.""" ${input} """', showInMenu: true },

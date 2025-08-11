@@ -503,8 +503,23 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     const debouncedHandleSelection = debounce(handleSelection, 250);
 
     // Listen for selection changes in the document.
-    // This will only run in the top-level frame, not in the extension's iframes.
-    if (window.self === window.top) {
+    // This runs in the top-level frame of a webpage, or inside iframes
+    // that are hosted by this extension's side panel or standalone page.
+    const isTopLevelPage = window.self === window.top;
+    
+    // A secure way to check if this iframe is hosted by our extension.
+    // It checks the origin of its ancestors, which is allowed by the browser.
+    let isHostedByExtension = false;
+    if (!isTopLevelPage && window.location.ancestorOrigins) {
+        for (let i = 0; i < window.location.ancestorOrigins.length; i++) {
+            if (window.location.ancestorOrigins[i].startsWith('chrome-extension://')) {
+                isHostedByExtension = true;
+                break;
+            }
+        }
+    }
+
+    if (isTopLevelPage || isHostedByExtension) {
         document.addEventListener('selectionchange', debouncedHandleSelection);
     }
 }
