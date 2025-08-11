@@ -393,58 +393,50 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    // Clears the chat content on AI Studio, handling different layouts.
+    // Clears the chat content on AI Studio, handling both wide and narrow layouts.
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
-    
-        // Helper to find and click "Clear chat" from a menu, and close the menu if not found.
-        const clearFromMenu = async () => {
-            const menuPanel = await waitForElement('.mat-mdc-menu-panel');
-            if (!menuPanel) return false;
-    
-            const clearMenuItem = Array.from(menuPanel.querySelectorAll('button[role="menuitem"]'))
-                .find(item => item.textContent.trim().includes('Clear chat'));
-    
-            if (clearMenuItem) {
-                clearMenuItem.click();
-                return true;
-            }
-            
-            // If "Clear chat" is not found (e.g., it's disabled), close the menu by simulating an Escape key press.
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-            return false;
-        };
-    
         let actionInitiated = false;
-    
-        // Priority 1: Check for the narrow layout's "View more actions" button.
-        const viewMoreButton = document.querySelector('button[aria-label="View more actions"]');
-        if (viewMoreButton && viewMoreButton.offsetParent !== null) {
-            viewMoreButton.click();
-            if (await clearFromMenu()) {
-                actionInitiated = true;
-            }
+
+        // Priority 1: Check for the wide layout's direct "Clear chat" button.
+        const wideClearButtonSelector = 'button[data-test-clear="outside"][aria-label="Clear chat"]';
+        const wideClearButton = document.querySelector(wideClearButtonSelector);
+
+        if (wideClearButton && wideClearButton.offsetParent !== null) {
+            wideClearButton.click();
+            actionInitiated = true;
         }
-    
-        // Priority 2: If no action was taken, check for the wide layout's direct "Clear chat" button.
+
+        // Priority 2: If the wide button wasn't found, check for the narrow layout's "View more actions" button.
         if (!actionInitiated) {
-            const allClearButtons = document.querySelectorAll('button[aria-label="Clear chat"]');
-            const visibleButton = Array.from(allClearButtons).find(btn => btn.offsetParent !== null);
-            if (visibleButton) {
-                visibleButton.click();
-                actionInitiated = true;
+            const moreActionsButtonSelector = 'button[aria-label="View more actions"]';
+            const moreActionsButton = document.querySelector(moreActionsButtonSelector);
+
+            if (moreActionsButton && moreActionsButton.offsetParent !== null) {
+                moreActionsButton.click();
+                
+                // Wait for the "Clear chat" item inside the menu and click it.
+                const narrowClearButtonSelector = 'button[data-test-clear="inside"][aria-label="Clear chat"]';
+                const narrowClearButton = await waitForElement(narrowClearButtonSelector);
+                
+                if (narrowClearButton) {
+                    narrowClearButton.click();
+                    actionInitiated = true;
+                }
             }
         }
-    
+
         // Final step: Handle the confirmation dialog if any clear action was successful.
         if (actionInitiated) {
-            const continueButton = await waitForElement('mat-dialog-container button[color="primary"]');
-            if (continueButton) {
+            const continueSelector = 'mat-dialog-container button.primary';
+            const continueButton = await waitForElement(continueSelector);
+            if (continueButton && continueButton.textContent.trim() === 'Continue') {
                 continueButton.click();
             } else {
                 reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
             }
         } else {
+            // If neither the wide button nor the "more actions" button was found.
             reportInteractionFailure(hostname, 'Could not find any actionable "Clear chat" or "More" button.');
         }
     }
