@@ -110,14 +110,14 @@ body, html {
     position: absolute;
     top: 100%;
     right: 0;
-    width: 320px;
+    width: 350px;
     max-height: 90vh; /* Usability: limit height to 90% of viewport */
     background-color: #2d2d2d;
     border: 1px solid #5f6368;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     z-index: 1001;
-    margin-top: 4px;
+    margin-top: 0px;
     color: #e8eaed;
     flex-direction: column;
 }
