@@ -402,12 +402,13 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const wideClearButtonSelector = 'button[data-test-clear="outside"][aria-label="Clear chat"]';
         const wideClearButton = document.querySelector(wideClearButtonSelector);
 
+        // Check if the button exists and is currently visible on the screen.
         if (wideClearButton && wideClearButton.offsetParent !== null) {
             wideClearButton.click();
             actionInitiated = true;
         }
 
-        // Priority 2: If the wide button wasn't found, check for the narrow layout's "View more actions" button.
+        // Priority 2: If the wide button wasn't found or visible, check for the narrow layout's "View more actions" button.
         if (!actionInitiated) {
             const moreActionsButtonSelector = 'button[aria-label="View more actions"]';
             const moreActionsButton = document.querySelector(moreActionsButtonSelector);
@@ -415,9 +416,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             if (moreActionsButton && moreActionsButton.offsetParent !== null) {
                 moreActionsButton.click();
                 
-                // Wait for the "Clear chat" item inside the menu and click it.
+                // Wait for the "Clear chat" item inside the dropdown menu to appear and then click it.
                 const narrowClearButtonSelector = 'button[data-test-clear="inside"][aria-label="Clear chat"]';
-                const narrowClearButton = await waitForElement(narrowClearButtonSelector);
+                const narrowClearButton = await waitForElement(narrowClearButtonSelector, 2000); // Wait for the menu to open.
                 
                 if (narrowClearButton) {
                     narrowClearButton.click();
@@ -428,15 +429,18 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 
         // Final step: Handle the confirmation dialog if any clear action was successful.
         if (actionInitiated) {
-            const continueSelector = 'mat-dialog-container button.primary';
-            const continueButton = await waitForElement(continueSelector);
-            if (continueButton && continueButton.textContent.trim() === 'Continue') {
+            // Use a more specific and robust selector for the "Continue" button in the dialog.
+            const continueSelector = 'mat-dialog-container button.ms-button-primary';
+            const continueButton = await waitForElement(continueSelector, 2000); // Wait for the dialog to appear.
+            
+            // Use a case-insensitive check for the button text for robustness.
+            if (continueButton && continueButton.textContent.trim().toLowerCase() === 'continue') {
                 continueButton.click();
             } else {
                 reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
             }
         } else {
-            // If neither the wide button nor the "more actions" button was found.
+            // If neither the wide button nor the "more actions" button could be found and clicked.
             reportInteractionFailure(hostname, 'Could not find any actionable "Clear chat" or "More" button.');
         }
     }
