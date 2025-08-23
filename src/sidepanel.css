@@ -32,7 +32,7 @@ body, html {
 #clear-aistudio-container {
     position: absolute;
     top: 1px;
-    right: 56px;
+    right: 54px;
     z-index: 1000;
 }
 
@@ -102,6 +102,177 @@ body, html {
     font-size: 20px;
     width: 24px;
     height: 24px;
+}
+
+/* Settings Popup Styles */
+#settings-popup {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 320px;
+    max-height: 90vh; /* Usability: limit height to 90% of viewport */
+    background-color: #2d2d2d;
+    border: 1px solid #5f6368;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1001;
+    margin-top: 4px;
+    color: #e8eaed;
+    flex-direction: column;
+}
+
+#settings-container:hover #settings-popup {
+    display: flex; /* Show on hover */
+}
+
+.settings-popup-header {
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    border-bottom: 1px solid #5f6368;
+    flex-shrink: 0;
+}
+
+#settings-popup-url-list {
+    padding: 8px;
+    overflow-y: auto; /* This part will scroll if content exceeds max-height */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+#settings-popup .url-item {
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #383838;
+    background-color: #282828;
+}
+
+#settings-popup .url-item.dragging {
+    opacity: 1;
+    background-color: #3a3a3a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transform: scale(1.02);
+    cursor: grabbing;
+}
+
+#settings-popup .drag-handle {
+    cursor: grab;
+    color: #777;
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+#settings-popup input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+}
+
+#settings-popup input[type="text"] {
+    flex-grow: 1;
+    padding: 6px 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #222;
+    color: #e0e0e0;
+    font-size: 13px;
+    min-width: 0;
+}
+
+#settings-popup input[type="text"]:focus {
+    outline: none;
+    border-color: #8ab4f7;
+}
+
+#settings-popup .url-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+#settings-popup .url-actions button {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+}
+
+#settings-popup .url-actions button:hover {
+    color: #fff;
+    background-color: #444;
+}
+
+#settings-popup .url-actions .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.settings-popup-add-section {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-top: 1px solid #5f6368;
+    flex-shrink: 0;
+}
+
+.settings-popup-add-section textarea {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #222;
+    color: #e0e0e0;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.popup-action-button {
+    padding: 6px 12px;
+    border: none;
+    background-color: #87a9ff;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.popup-action-button:hover {
+    background-color: #588cff;
+}
+
+.settings-popup-actions-section {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #5f6368;
+    padding: 8px;
+    flex-shrink: 0;
+}
+
+.popup-secondary-button {
+    flex-grow: 1;
+    padding: 6px 12px;
+    border: 1px solid #555;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.popup-secondary-button:hover {
+    background-color: #4a4a4a;
 }
 
 #iframe-container {

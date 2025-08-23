@@ -8,6 +8,135 @@ const uiReadyPromise = new Promise(resolve => {
     uiReadyResolve = resolve;
 });
 
+// --- START: Logic for Settings Popup ---
+let draggedItem = null; // Used for drag-and-drop in the settings popup.
+
+/**
+ * Saves the current state of the managedUrls array to local storage.
+ */
+async function saveUrls() {
+    await chrome.storage.local.set({ managedUrls });
+}
+
+/**
+ * Renders the list of URLs in the settings popup.
+ * This function is responsible for creating the interactive list items.
+ */
+function renderSettingsPopupUrlList() {
+    const listContainer = document.getElementById('settings-popup-url-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = ''; // Clear previous items.
+    managedUrls.forEach(urlEntry => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'url-item';
+        itemDiv.dataset.id = urlEntry.id;
+        itemDiv.innerHTML = `
+            <span class="material-symbols-outlined drag-handle" draggable="true">drag_indicator</span>
+            <input type="checkbox" ${urlEntry.selected ? 'checked' : ''}>
+            <input type="text" value="${urlEntry.url}">
+            <div class="url-actions">
+                <button class="open-url-button" title="Open in new tab"><span class="material-symbols-outlined">open_in_new</span></button>
+                <button class="remove-url-button" title="Delete URL"><span class="material-symbols-outlined">delete</span></button>
+            </div>
+        `;
+        listContainer.appendChild(itemDiv);
+
+        // Event listener for the checkbox to toggle selection.
+        itemDiv.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+            urlEntry.selected = e.target.checked;
+            saveUrls();
+        });
+
+        // Event listeners for the text input to handle URL edits.
+        const urlTextInput = itemDiv.querySelector('input[type="text"]');
+        urlTextInput.addEventListener('blur', (e) => {
+            const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
+            if (urlToUpdate && urlToUpdate.url !== e.target.value) {
+                urlToUpdate.url = e.target.value;
+                saveUrls();
+            }
+        });
+        urlTextInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+            }
+        });
+
+        // Event listener for the open in new tab button.
+        itemDiv.querySelector('.open-url-button').addEventListener('click', () => {
+            chrome.tabs.create({ url: urlEntry.url });
+        });
+
+        // Event listener for the remove button.
+        itemDiv.querySelector('.remove-url-button').addEventListener('click', () => {
+            managedUrls = managedUrls.filter(u => u.id !== urlEntry.id);
+            saveUrls(); // This will trigger a re-render via the storage listener.
+        });
+        
+        // Event listeners for drag-and-drop.
+        const dragHandle = itemDiv.querySelector('.drag-handle');
+        dragHandle.addEventListener('dragstart', handleDragStart);
+        dragHandle.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+// --- Drag & Drop Handlers for Settings Popup ---
+function handleDragStart(e) {
+    draggedItem = this.closest('.url-item');
+    setTimeout(() => {
+        if (draggedItem) {
+            draggedItem.classList.add('dragging');
+        }
+    }, 0);
+}
+
+function handleDragEnd() {
+    if (draggedItem) {
+        draggedItem.classList.remove('dragging');
+    }
+    draggedItem = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    const container = document.getElementById('settings-popup-url-list');
+    const afterElement = getDragAfterElement(container, e.clientY);
+    const currentlyDragged = document.querySelector('#settings-popup-url-list .dragging');
+    if (!currentlyDragged) return;
+
+    if (afterElement == null) {
+        container.appendChild(currentlyDragged);
+    } else {
+        container.insertBefore(currentlyDragged, afterElement);
+    }
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.url-item:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    if (!draggedItem) return;
+    const container = document.getElementById('settings-popup-url-list');
+    const newOrder = Array.from(container.querySelectorAll('.url-item')).map(item => item.dataset.id);
+    managedUrls.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+    await saveUrls();
+}
+// --- END: Logic for Settings Popup ---
+
+
 /**
  * Main function to initialize all shared UI logic and event listeners.
  * @param {object} elements A dictionary of DOM elements required by the functions.
@@ -23,6 +152,43 @@ function initializeSharedUI(elements) {
     const closeContextButton = document.getElementById('close-context-button');
     const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
     const clearAIStudioIcon = document.getElementById('clear-aistudio-icon');
+    
+    // --- START: Get elements and bind events for the Settings Popup ---
+    const settingsPopupUrlList = document.getElementById('settings-popup-url-list');
+    const newUrlInputPopup = document.getElementById('new-url-input-popup');
+    const addUrlButtonPopup = document.getElementById('add-url-button-popup');
+    const invertSelectionButtonPopup = document.getElementById('invert-selection-button-popup');
+    const selectAllButtonPopup = document.getElementById('select-all-button-popup');
+    const clearSelectionButtonPopup = document.getElementById('clear-selection-button-popup');
+
+    // Bind "Add URL" button functionality.
+    addUrlButtonPopup.addEventListener('click', async () => {
+        const newUrlValue = newUrlInputPopup.value.trim();
+        if (newUrlValue) {
+            const urlsToAdd = newUrlValue.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+            if (urlsToAdd.length > 0) {
+                const newEntries = urlsToAdd.map(url => ({ id: crypto.randomUUID(), url: url, selected: true }));
+                managedUrls.push(...newEntries);
+                await saveUrls();
+                newUrlInputPopup.value = '';
+            }
+        }
+    });
+
+    // Bind bulk action buttons functionality.
+    invertSelectionButtonPopup.addEventListener('click', async () => {
+        managedUrls.forEach(u => u.selected = !u.selected);
+        await saveUrls();
+    });
+    selectAllButtonPopup.addEventListener('click', async () => {
+        managedUrls.forEach(u => u.selected = true);
+        await saveUrls();
+    });
+    clearSelectionButtonPopup.addEventListener('click', async () => {
+        managedUrls.forEach(u => u.selected = false);
+        await saveUrls();
+    });
+    // --- END: Bind events for Settings Popup ---
 
     initializeSlashCommands(elements);
 
@@ -132,8 +298,12 @@ function initializeSharedUI(elements) {
         showGlobalConfirmationMessage(refreshedCount > 0 ? `Refreshed ${refreshedCount} panel(s).` : 'No active panels to refresh.');
     });
 
-    settingsContainer.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'options.html?section=general' });
+    // Handle click on settings icon to open options page.
+    settingsContainer.addEventListener('click', (e) => {
+        // Ensure the click is on the icon itself, not the popup.
+        if (e.target.id === 'settings-icon') {
+            chrome.tabs.create({ url: 'options.html?section=general' });
+        }
     });
 
     if (googleSearchToggleIcon) {
@@ -251,14 +421,22 @@ function initializeSharedUI(elements) {
         if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
+            renderSettingsPopupUrlList(); // Keep popup in sync.
         }
     });
 
     chrome.storage.local.get('managedUrls', (result) => {
         managedUrls = result.managedUrls ? result.managedUrls : [];
         updateIframes(iframeContainer);
+        renderSettingsPopupUrlList(); // Initial render for the popup.
     });
     
+    // Add drag-and-drop listeners to the popup list container.
+    if (settingsPopupUrlList) {
+        settingsPopupUrlList.addEventListener('dragover', handleDragOver);
+        settingsPopupUrlList.addEventListener('drop', handleDrop);
+    }
+
     requestAnimationFrame(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
 
     uiReadyResolve();
