@@ -159,40 +159,43 @@ function initializeSharedUI(elements) {
     const clearAIStudioIcon = document.getElementById('clear-aistudio-icon');
     
     // --- START: Get elements and bind events for the Settings Popup ---
+    // This entire block is conditional, as these elements only exist in sidepanel.html
     const settingsPopupUrlList = document.getElementById('settings-popup-url-list');
-    const newUrlInputPopup = document.getElementById('new-url-input-popup');
-    const addUrlButtonPopup = document.getElementById('add-url-button-popup');
-    const invertSelectionButtonPopup = document.getElementById('invert-selection-button-popup');
-    const selectAllButtonPopup = document.getElementById('select-all-button-popup');
-    const clearSelectionButtonPopup = document.getElementById('clear-selection-button-popup');
+    if (settingsPopupUrlList) {
+        const newUrlInputPopup = document.getElementById('new-url-input-popup');
+        const addUrlButtonPopup = document.getElementById('add-url-button-popup');
+        const invertSelectionButtonPopup = document.getElementById('invert-selection-button-popup');
+        const selectAllButtonPopup = document.getElementById('select-all-button-popup');
+        const clearSelectionButtonPopup = document.getElementById('clear-selection-button-popup');
 
-    // Bind "Add URL" button functionality.
-    addUrlButtonPopup.addEventListener('click', async () => {
-        const newUrlValue = newUrlInputPopup.value.trim();
-        if (newUrlValue) {
-            const urlsToAdd = newUrlValue.split('\n').map(url => url.trim()).filter(url => url.length > 0);
-            if (urlsToAdd.length > 0) {
-                const newEntries = urlsToAdd.map(url => ({ id: crypto.randomUUID(), url: url, selected: true }));
-                managedUrls.push(...newEntries);
-                await saveUrls();
-                newUrlInputPopup.value = '';
+        // Bind "Add URL" button functionality.
+        addUrlButtonPopup.addEventListener('click', async () => {
+            const newUrlValue = newUrlInputPopup.value.trim();
+            if (newUrlValue) {
+                const urlsToAdd = newUrlValue.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+                if (urlsToAdd.length > 0) {
+                    const newEntries = urlsToAdd.map(url => ({ id: crypto.randomUUID(), url: url, selected: true }));
+                    managedUrls.push(...newEntries);
+                    await saveUrls();
+                    newUrlInputPopup.value = '';
+                }
             }
-        }
-    });
+        });
 
-    // Bind bulk action buttons functionality.
-    invertSelectionButtonPopup.addEventListener('click', async () => {
-        managedUrls.forEach(u => u.selected = !u.selected);
-        await saveUrls();
-    });
-    selectAllButtonPopup.addEventListener('click', async () => {
-        managedUrls.forEach(u => u.selected = true);
-        await saveUrls();
-    });
-    clearSelectionButtonPopup.addEventListener('click', async () => {
-        managedUrls.forEach(u => u.selected = false);
-        await saveUrls();
-    });
+        // Bind bulk action buttons functionality.
+        invertSelectionButtonPopup.addEventListener('click', async () => {
+            managedUrls.forEach(u => u.selected = !u.selected);
+            await saveUrls();
+        });
+        selectAllButtonPopup.addEventListener('click', async () => {
+            managedUrls.forEach(u => u.selected = true);
+            await saveUrls();
+        });
+        clearSelectionButtonPopup.addEventListener('click', async () => {
+            managedUrls.forEach(u => u.selected = false);
+            await saveUrls();
+        });
+    }
     // --- END: Bind events for Settings Popup ---
 
     initializeSlashCommands(elements);
@@ -426,17 +429,23 @@ function initializeSharedUI(elements) {
         if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
-            renderSettingsPopupUrlList(); // Keep popup in sync.
+            // Conditionally render the popup list only if it exists.
+            if (settingsPopupUrlList) {
+                renderSettingsPopupUrlList();
+            }
         }
     });
 
     chrome.storage.local.get('managedUrls', (result) => {
         managedUrls = result.managedUrls ? result.managedUrls : [];
         updateIframes(iframeContainer);
-        renderSettingsPopupUrlList(); // Initial render for the popup.
+        // Conditionally render the popup list only if it exists.
+        if (settingsPopupUrlList) {
+            renderSettingsPopupUrlList();
+        }
     });
     
-    // Add drag-and-drop listeners to the popup list container.
+    // Add drag-and-drop listeners to the popup list container only if it exists.
     if (settingsPopupUrlList) {
         settingsPopupUrlList.addEventListener('dragover', handleDragOver);
         settingsPopupUrlList.addEventListener('drop', handleDrop);
