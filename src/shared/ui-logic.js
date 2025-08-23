@@ -85,6 +85,9 @@ function renderSettingsPopupUrlList() {
 // --- Drag & Drop Handlers for Settings Popup ---
 function handleDragStart(e) {
     draggedItem = this.closest('.url-item');
+    // Add a class to the body to indicate a drag is in progress.
+    // This helps prevent the hover-based popup from closing during the drag.
+    document.body.classList.add('is-dragging-url');
     setTimeout(() => {
         if (draggedItem) {
             draggedItem.classList.add('dragging');
@@ -97,6 +100,8 @@ function handleDragEnd() {
         draggedItem.classList.remove('dragging');
     }
     draggedItem = null;
+    // Clean up the class on the body.
+    document.body.classList.remove('is-dragging-url');
 }
 
 function handleDragOver(e) {

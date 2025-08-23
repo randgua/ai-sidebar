@@ -122,8 +122,10 @@ body, html {
     flex-direction: column;
 }
 
-#settings-container:hover #settings-popup {
-    display: flex; /* Show on hover */
+/* Show popup on hover, or when a URL item is being dragged from it. */
+#settings-container:hover #settings-popup,
+body.is-dragging-url #settings-popup {
+    display: flex;
 }
 
 .settings-popup-header {
