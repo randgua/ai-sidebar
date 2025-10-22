@@ -40,6 +40,23 @@
                 </div>
                 <div id="settings-container" class="control-icon-container">
                     <span id="settings-icon" class="material-symbols-outlined" title="Settings">settings</span>
+                    <!-- START: Added settings popup for hover functionality -->
+                    <div id="settings-popup">
+                        <div class="settings-popup-header">Manage Panels</div>
+                        <div id="settings-popup-url-list">
+                            <!-- URL items are dynamically rendered here by ui-logic.js -->
+                        </div>
+                        <div class="settings-popup-add-section">
+                            <textarea id="new-url-input-popup" placeholder="Enter one or more URLs, one per line." rows="3"></textarea>
+                            <button id="add-url-button-popup" class="popup-action-button">Add URL</button>
+                        </div>
+                        <div class="settings-popup-actions-section">
+                            <button id="invert-selection-button-popup" class="popup-secondary-button">Invert</button>
+                            <button id="select-all-button-popup" class="popup-secondary-button">Select All</button>
+                            <button id="clear-selection-button-popup" class="popup-secondary-button">Clear All</button>
+                        </div>
+                    </div>
+                    <!-- END: Added settings popup -->
                 </div>
             </div>
             <div id="iframe-container"></div>
