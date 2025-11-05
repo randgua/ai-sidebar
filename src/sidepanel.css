@@ -43,6 +43,20 @@ body, html {
     z-index: 1000;
 }
 
+#scroll-to-bottom-container {
+    position: absolute;
+    top: 1px;
+    right: 54px;
+    z-index: 1000;
+}
+
+#scroll-to-top-container {
+    position: absolute;
+    top: 1px;
+    right: 80px;
+    z-index: 1000;
+}
+
 #settings-container {
     position: absolute;
     top: 1px;

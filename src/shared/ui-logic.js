@@ -141,6 +141,26 @@ async function handleDrop(e) {
 }
 // --- END: Logic for Settings Popup ---
 
+/**
+ * Sends a message to all active iframes for a specific action.
+ * @param {string} action The action to be performed by the iframe.
+ * @param {string} confirmationMessage The message to show the user.
+ */
+function sendMessageToAllIframes(action, confirmationMessage) {
+    const iframeContainer = document.getElementById('iframe-container');
+    const activeIframes = iframeContainer.querySelectorAll('iframe');
+    if (activeIframes.length > 0) {
+        activeIframes.forEach(iframe => {
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ action }, '*');
+            }
+        });
+        showGlobalConfirmationMessage(confirmationMessage);
+    } else {
+        showGlobalConfirmationMessage('No active panels.');
+    }
+}
+
 
 /**
  * Main function to initialize all shared UI logic and event listeners.
@@ -157,6 +177,8 @@ function initializeSharedUI(elements) {
     const closeContextButton = document.getElementById('close-context-button');
     const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
     const clearAIStudioIcon = document.getElementById('clear-aistudio-icon');
+    const scrollToTopIcon = document.getElementById('scroll-to-top-icon');
+    const scrollToBottomIcon = document.getElementById('scroll-to-bottom-icon');
     
     // --- START: Get elements and bind events for the Settings Popup ---
     // This entire block is conditional, as these elements only exist in sidepanel.html
@@ -294,6 +316,18 @@ function initializeSharedUI(elements) {
             } else {
                 showGlobalConfirmationMessage('AI Studio panel not found.');
             }
+        });
+    }
+
+    if (scrollToTopIcon) {
+        scrollToTopIcon.addEventListener('click', () => {
+            sendMessageToAllIframes('scrollToTop', 'Scrolling to top...');
+        });
+    }
+
+    if (scrollToBottomIcon) {
+        scrollToBottomIcon.addEventListener('click', () => {
+            sendMessageToAllIframes('scrollToBottom', 'Scrolling to bottom...');
         });
     }
 

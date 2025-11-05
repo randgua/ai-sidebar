@@ -203,6 +203,18 @@ body, html {
     right: 36px;
 }
 
+#main-content #scroll-to-bottom-container {
+    position: absolute;
+    top: 0;
+    right: 72px;
+}
+
+#main-content #scroll-to-top-container {
+    position: absolute;
+    top: 0;
+    right: 108px;
+}
+
 #main-content #settings-container {
     position: absolute;
     top: 0;

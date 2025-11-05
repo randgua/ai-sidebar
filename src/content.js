@@ -449,23 +449,32 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
-        if (event.data.action === 'injectPrompt') {
-            const prompt = event.data.prompt;
-            const executeInjection = () => handlePromptInjection(prompt);
-            if (document.readyState === 'complete') {
-                executeInjection();
-            } else {
-                window.addEventListener('load', executeInjection, { once: true });
-            }
-        }
-        if (event.data.action === 'getLastOutput') {
-            handleOutputExtraction(event.data.uniqueId);
-        }
-        if (event.data.action === 'toggleGoogleSearch') {
-            handleGoogleSearchToggle();
-        }
-        if (event.data.action === 'clearAIStudio') {
-            handleClearAIStudio();
+
+        switch (event.data.action) {
+            case 'injectPrompt':
+                const prompt = event.data.prompt;
+                const executeInjection = () => handlePromptInjection(prompt);
+                if (document.readyState === 'complete') {
+                    executeInjection();
+                } else {
+                    window.addEventListener('load', executeInjection, { once: true });
+                }
+                break;
+            case 'getLastOutput':
+                handleOutputExtraction(event.data.uniqueId);
+                break;
+            case 'toggleGoogleSearch':
+                handleGoogleSearchToggle();
+                break;
+            case 'clearAIStudio':
+                handleClearAIStudio();
+                break;
+            case 'scrollToTop':
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                break;
+            case 'scrollToBottom':
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                break;
         }
     });
 
