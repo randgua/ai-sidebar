@@ -349,11 +349,10 @@ function initializeSharedUI(elements) {
             };
             const markdownString = Array.from(collectedOutputs.values()).map(item => {
                 const title = prettyNames[item.source] || item.source;
-                return `## ${title}\n\n${item.output}`;
+                return `## ${title}\n${item.output}`;
             }).join('\n\n---\n\n');
-            
-            promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
-            navigator.clipboard.writeText(markdownString);
+            const existingText = promptInput.value.trim();
+            promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.size} panel(s).`);

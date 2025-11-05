@@ -33,10 +33,9 @@ function handleSelectiveAppendAndCopy(iframe, urlEntry) {
                 'chat.deepseek.com': 'DeepSeek', 'chat.qwen.ai': 'Qwen',
             };
             const title = prettyNames[sourceHostname] || sourceHostname;
-            const markdownString = `## ${title}\n\n${output}`;
-            
-            promptInput.value = promptInput.value.trim() === '' ? markdownString : `${promptInput.value}\n\n${markdownString}`;
-            navigator.clipboard.writeText(markdownString);
+            const markdownString = `## ${title}\n${output}`;
+            const existingText = promptInput.value.trim();
+            promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
             autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${title}.`);

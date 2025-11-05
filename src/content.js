@@ -373,9 +373,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
                 console.error('AI-Sidebar: Error extracting output:', e);
             }
         }
+        const normalizedOutput = lastOutput ? lastOutput.trim().replace(/\n{2,}/g, '\n') : '';
         window.parent.postMessage({
             action: 'receiveLastOutput',
-            output: lastOutput,
+            output: normalizedOutput,
             source: hostname,
             uniqueId: uniqueId
         }, '*');
