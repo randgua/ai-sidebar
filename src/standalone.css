@@ -194,7 +194,7 @@ body, html {
 #main-content #clear-aistudio-container {
     position: absolute;
     top: 0;
-    right: 72px;
+    left: 72px;
 }
 
 #main-content #google-search-toggle-container {
