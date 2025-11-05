@@ -142,27 +142,6 @@ async function handleDrop(e) {
 // --- END: Logic for Settings Popup ---
 
 /**
- * Sends a message to all active iframes for a specific action.
- * @param {string} action The action to be performed by the iframe.
- * @param {string} confirmationMessage The message to show the user.
- */
-function sendMessageToAllIframes(action, confirmationMessage) {
-    const iframeContainer = document.getElementById('iframe-container');
-    const activeIframes = iframeContainer.querySelectorAll('iframe');
-    if (activeIframes.length > 0) {
-        activeIframes.forEach(iframe => {
-            if (iframe.contentWindow) {
-                iframe.contentWindow.postMessage({ action }, '*');
-            }
-        });
-        showGlobalConfirmationMessage(confirmationMessage);
-    } else {
-        showGlobalConfirmationMessage('No active panels.');
-    }
-}
-
-
-/**
  * Main function to initialize all shared UI logic and event listeners.
  * @param {object} elements A dictionary of DOM elements required by the functions.
  */
@@ -321,13 +300,23 @@ function initializeSharedUI(elements) {
 
     if (scrollToTopIcon) {
         scrollToTopIcon.addEventListener('click', () => {
-            sendMessageToAllIframes('scrollToTop', 'Scrolling to top...');
+            const sentCount = postMessageToAllIframes({ action: 'scrollToTop' });
+            if (sentCount > 0) {
+                showGlobalConfirmationMessage('Scrolling to top...');
+            } else {
+                showGlobalConfirmationMessage('No active panels.');
+            }
         });
     }
 
     if (scrollToBottomIcon) {
         scrollToBottomIcon.addEventListener('click', () => {
-            sendMessageToAllIframes('scrollToBottom', 'Scrolling to bottom...');
+            const sentCount = postMessageToAllIframes({ action: 'scrollToBottom' });
+            if (sentCount > 0) {
+                showGlobalConfirmationMessage('Scrolling to bottom...');
+            } else {
+                showGlobalConfirmationMessage('No active panels.');
+            }
         });
     }
 

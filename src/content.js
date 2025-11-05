@@ -182,20 +182,21 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Site-specific handler for chat.deepseek.com.
     async function handleDeepSeek(prompt) {
         const hostname = 'chat.deepseek.com';
-        const inputArea = await waitForElement('textarea#chat-input');
+        // UPDATE: Use the placeholder attribute for a more stable selector.
+        const inputArea = await waitForElement('textarea[placeholder="Message DeepSeek"]');
         if (!inputArea) {
             reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
 
         // This site uses a framework (like React) that requires interacting with the textarea's
-        // native value setter to properly trigger state updates. A simple .value assignment is ignored.
+        // native value setter to properly trigger state updates.
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
         nativeInputValueSetter.call(inputArea, prompt);
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-        // Use a more specific selector looking for a button that is a sibling of the input area.
-        const sendButton = await waitForElement('textarea#chat-input ~ button', 100);
+        // UPDATE: Adjust the send button selector to match the new input area selector.
+        const sendButton = await waitForElement('textarea[placeholder="Message DeepSeek"] ~ button', 100);
         if (sendButton) {
             sendButton.click();
         } else {
@@ -397,51 +398,35 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Clears the chat content on AI Studio, handling both wide and narrow layouts.
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
-        let actionInitiated = false;
+        
+        // REFACTOR: Use more robust, combined selectors to find the clear chat buttons.
+        const clearButtonSelector = 'button[aria-label="Clear chat"]:not([disabled])';
+        const moreActionsSelector = 'button[aria-label="View more actions"]:not([disabled])';
 
-        // Priority 1: Check for the wide layout's direct "Clear chat" button.
-        const wideClearButtonSelector = 'button[data-test-clear="outside"][aria-label="Clear chat"]';
-        const wideClearButton = document.querySelector(wideClearButtonSelector);
+        let clearButton = document.querySelector(clearButtonSelector);
 
-        // Check if the button exists and is currently visible on the screen.
-        if (wideClearButton && wideClearButton.offsetParent !== null) {
-            wideClearButton.click();
-            actionInitiated = true;
-        }
-
-        // Priority 2: If the wide button wasn't found or visible, check for the narrow layout's "View more actions" button.
-        if (!actionInitiated) {
-            const moreActionsButtonSelector = 'button[aria-label="View more actions"]';
-            const moreActionsButton = document.querySelector(moreActionsButtonSelector);
-
-            if (moreActionsButton && moreActionsButton.offsetParent !== null) {
+        // If the direct clear button isn't visible, try the "more actions" menu.
+        if (!clearButton || clearButton.offsetParent === null) {
+            const moreActionsButton = document.querySelector(moreActionsSelector);
+            if (moreActionsButton) {
                 moreActionsButton.click();
-                
-                // Wait for the "Clear chat" item inside the dropdown menu to appear and then click it.
-                const narrowClearButtonSelector = 'button[data-test-clear="inside"][aria-label="Clear chat"]';
-                const narrowClearButton = await waitForElement(narrowClearButtonSelector, 2000); // Wait for the menu to open.
-                
-                if (narrowClearButton) {
-                    narrowClearButton.click();
-                    actionInitiated = true;
-                }
+                // Wait for the clear button to appear inside the menu.
+                clearButton = await waitForElement(clearButtonSelector, 2000);
             }
         }
 
-        // Final step: Handle the confirmation dialog if any clear action was successful.
-        if (actionInitiated) {
-            // Use a more specific and robust selector for the "Continue" button in the dialog.
-            const continueSelector = 'mat-dialog-container button.ms-button-primary';
-            const continueButton = await waitForElement(continueSelector, 2000); // Wait for the dialog to appear.
+        if (clearButton) {
+            clearButton.click();
+            // Wait for the confirmation dialog and click "Continue".
+            const continueSelector = 'mat-dialog-container button';
+            const continueButton = await waitForElement(continueSelector, 2000);
             
-            // Use a case-insensitive check for the button text for robustness.
             if (continueButton && continueButton.textContent.trim().toLowerCase() === 'continue') {
                 continueButton.click();
             } else {
                 reportInteractionFailure(hostname, 'Could not find "Continue" button in confirmation dialog.');
             }
         } else {
-            // If neither the wide button nor the "more actions" button could be found and clicked.
             reportInteractionFailure(hostname, 'Could not find any actionable "Clear chat" or "More" button.');
         }
     }

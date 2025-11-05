@@ -261,3 +261,24 @@ function sendMessageToIframes(prompt) {
     });
     showGlobalConfirmationMessage(`Prompt sent to ${sentCount} panel(s).`);
 }
+
+/**
+ * Posts a generic message object to all active iframes.
+ * @param {object} message The message object to post, e.g., { action: 'scrollToTop' }.
+ * @returns {number} The number of iframes the message was sent to.
+ */
+function postMessageToAllIframes(message) {
+    const selectedIds = new Set(managedUrls.filter(u => u.selected).map(u => u.id));
+    const activeIframes = Object.entries(iframeCache)
+        .filter(([id, iframe]) => selectedIds.has(id))
+        .map(([id, iframe]) => iframe);
+    
+    let sentCount = 0;
+    activeIframes.forEach(iframe => {
+        if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage(message, '*');
+            sentCount++;
+        }
+    });
+    return sentCount;
+}
