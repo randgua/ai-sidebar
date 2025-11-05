@@ -300,9 +300,9 @@ function initializeSharedUI(elements) {
 
     if (scrollToTopIcon) {
         scrollToTopIcon.addEventListener('click', () => {
-            const sentCount = postMessageToAllIframes({ action: 'scrollToTop' });
+            const sentCount = postMessageToAllIframes({ action: 'selectFirstTurn' });
             if (sentCount > 0) {
-                showGlobalConfirmationMessage('Scrolling to top...');
+                showGlobalConfirmationMessage('Requesting top position...');
             } else {
                 showGlobalConfirmationMessage('No active panels.');
             }
@@ -311,9 +311,9 @@ function initializeSharedUI(elements) {
 
     if (scrollToBottomIcon) {
         scrollToBottomIcon.addEventListener('click', () => {
-            const sentCount = postMessageToAllIframes({ action: 'scrollToBottom' });
+            const sentCount = postMessageToAllIframes({ action: 'selectLastTurn' });
             if (sentCount > 0) {
-                showGlobalConfirmationMessage('Scrolling to bottom...');
+                showGlobalConfirmationMessage('Requesting bottom position...');
             } else {
                 showGlobalConfirmationMessage('No active panels.');
             }

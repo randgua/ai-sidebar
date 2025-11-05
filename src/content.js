@@ -431,6 +431,36 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
+    // Selects the first conversation turn button in AI Studio.
+    async function handleSelectFirstTurnAIStudio() {
+        const hostname = 'aistudio.google.com';
+        const firstTurnButton = await waitForElement('button[id^="scrollbar-item-"]');
+        if (firstTurnButton) {
+            firstTurnButton.click();
+        } else {
+            reportInteractionFailure(hostname, 'Could not find the first conversation turn button.');
+        }
+    }
+
+    // Selects the last conversation turn button in AI Studio.
+    async function handleSelectLastTurnAIStudio() {
+        const hostname = 'aistudio.google.com';
+        const selector = 'button[id^="scrollbar-item-"]';
+        
+        // Wait for at least one button to ensure the list is populated.
+        const firstButton = await waitForElement(selector, 2000);
+
+        if (firstButton) {
+            const allTurnButtons = document.querySelectorAll(selector);
+            if (allTurnButtons.length > 0) {
+                const lastTurnButton = allTurnButtons[allTurnButtons.length - 1];
+                lastTurnButton.click();
+            }
+        } else {
+            reportInteractionFailure(hostname, 'Could not find any conversation turn buttons.');
+        }
+    }
+
     // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -454,11 +484,19 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             case 'clearAIStudio':
                 handleClearAIStudio();
                 break;
-            case 'scrollToTop':
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            case 'selectFirstTurn':
+                if (window.location.hostname === 'aistudio.google.com') {
+                    handleSelectFirstTurnAIStudio();
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
                 break;
-            case 'scrollToBottom':
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            case 'selectLastTurn':
+                if (window.location.hostname === 'aistudio.google.com') {
+                    handleSelectLastTurnAIStudio();
+                } else {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }
                 break;
         }
     });
