@@ -36,7 +36,11 @@ function handleSelectiveAppendAndCopy(iframe, urlEntry) {
             const markdownString = `## ${title}\n${output}`;
             const existingText = promptInput.value.trim();
             promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            
+            // Update UI consistently after changing the prompt input value.
+            updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+            autoResizeTextarea(promptInput, promptContainer);
+
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${title}.`);
             

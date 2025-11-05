@@ -1,7 +1,6 @@
 // Contains generic helper functions for the UI.
 
 let confirmationMessageElement = null;
-let isModalActive = false;
 
 /**
  * Displays a short-lived confirmation message at the bottom of the screen.
@@ -31,13 +30,47 @@ function showGlobalConfirmationMessage(message, duration = 3000) {
 }
 
 /**
- * Automatically resizes the prompt textarea and manages its scrollbar visibility.
+ * Updates the state of prompt action buttons based on the textarea's content.
+ * This is a lightweight function designed for immediate UI feedback.
  * @param {HTMLTextAreaElement} textarea The textarea element.
- * @param {HTMLElement} promptContainer The container for the prompt area.
  * @param {HTMLButtonElement} sendPromptButton The send button.
  * @param {HTMLButtonElement} clearPromptButton The clear button.
  */
-function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPromptButton) {
+function updatePromptButtonsState(textarea, sendPromptButton, clearPromptButton) {
+    if (!textarea) return;
+
+    const hasText = textarea.value.trim() !== '';
+    if (sendPromptButton) sendPromptButton.disabled = !hasText;
+
+    if (clearPromptButton) {
+        clearPromptButton.style.display = hasText ? 'flex' : 'none';
+        const promptInputWrapper = textarea.closest('.prompt-input-wrapper');
+
+        if (hasText && promptInputWrapper) {
+            const styles = getComputedStyle(textarea);
+            const singleLineHeight = parseFloat(styles.lineHeight);
+            const paddingTop = parseFloat(styles.paddingTop);
+            const paddingBottom = parseFloat(styles.paddingBottom);
+            const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
+            // Use a robust threshold to determine if the content is multi-line.
+            const isMultiLine = textContentHeight > (singleLineHeight * 1.5);
+            
+            // Position the clear button absolutely only when it's multi-line.
+            clearPromptButton.classList.toggle('top-right', isMultiLine);
+        } else if (promptInputWrapper) {
+            // Ensure class is removed when there is no text.
+            clearPromptButton.classList.remove('top-right');
+        }
+    }
+}
+
+/**
+ * Automatically resizes the prompt textarea based on its content.
+ * This function can trigger browser reflow and is intended to be debounced.
+ * @param {HTMLTextAreaElement} textarea The textarea element.
+ * @param {HTMLElement} promptContainer The container for the prompt area.
+ */
+function autoResizeTextarea(textarea, promptContainer) {
     if (!textarea || !promptContainer) return;
 
     if (promptContainer.classList.contains('collapsed')) {
@@ -69,31 +102,8 @@ function autoResizeTextarea(textarea, promptContainer, sendPromptButton, clearPr
         textarea.setSelectionRange(selection, selection);
         textarea.scrollTop = textarea.scrollHeight;
     }, 0);
-
-    const hasText = textarea.value.trim() !== '';
-    if (sendPromptButton) sendPromptButton.disabled = !hasText;
-    
-    if (clearPromptButton) {
-        clearPromptButton.style.display = hasText ? 'flex' : 'none';
-        const promptInputWrapper = textarea.closest('.prompt-input-wrapper');
-
-        if (hasText && promptInputWrapper) {
-            const styles = getComputedStyle(textarea);
-            const singleLineHeight = parseFloat(styles.lineHeight);
-            const paddingTop = parseFloat(styles.paddingTop);
-            const paddingBottom = parseFloat(styles.paddingBottom);
-            const textContentHeight = textarea.scrollHeight - paddingTop - paddingBottom;
-            // Use a more robust threshold to determine if the content is multi-line.
-            const isMultiLine = textContentHeight > (singleLineHeight * 1.5);
-            
-            // Position the clear button absolutely only when it's multi-line.
-            clearPromptButton.classList.toggle('top-right', isMultiLine);
-        } else if (promptInputWrapper) {
-            // Ensure class is removed when there is no text.
-            clearPromptButton.classList.remove('top-right');
-        }
-    }
 }
+
 
 /**
  * A utility to delay function execution.

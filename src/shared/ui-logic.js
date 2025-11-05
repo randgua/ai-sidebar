@@ -1,8 +1,6 @@
 // A promise that resolves when the main UI elements are initialized.
-// This is a crucial mechanism to prevent race conditions. For example, a message
-// from a content script ('textSelected') might arrive before the DOM is fully
-// parsed and the listeners are attached. By awaiting this promise, message
-// handlers can ensure the UI is ready to be manipulated.
+// This is a crucial mechanism to prevent race conditions where messages
+// might arrive before the UI is ready to be manipulated.
 let uiReadyResolve;
 const uiReadyPromise = new Promise(resolve => {
     uiReadyResolve = resolve;
@@ -42,13 +40,11 @@ function renderSettingsPopupUrlList() {
         `;
         listContainer.appendChild(itemDiv);
 
-        // Event listener for the checkbox to toggle selection.
         itemDiv.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
             urlEntry.selected = e.target.checked;
             saveUrls();
         });
 
-        // Event listeners for the text input to handle URL edits.
         const urlTextInput = itemDiv.querySelector('input[type="text"]');
         urlTextInput.addEventListener('blur', (e) => {
             const urlToUpdate = managedUrls.find(u => u.id === urlEntry.id);
@@ -64,18 +60,15 @@ function renderSettingsPopupUrlList() {
             }
         });
 
-        // Event listener for the open in new tab button.
         itemDiv.querySelector('.open-url-button').addEventListener('click', () => {
             chrome.tabs.create({ url: urlEntry.url });
         });
 
-        // Event listener for the remove button.
         itemDiv.querySelector('.remove-url-button').addEventListener('click', () => {
             managedUrls = managedUrls.filter(u => u.id !== urlEntry.id);
             saveUrls(); // This will trigger a re-render via the storage listener.
         });
         
-        // Event listeners for drag-and-drop.
         const dragHandle = itemDiv.querySelector('.drag-handle');
         dragHandle.addEventListener('dragstart', handleDragStart);
         dragHandle.addEventListener('dragend', handleDragEnd);
@@ -100,7 +93,6 @@ function handleDragEnd() {
         draggedItem.classList.remove('dragging');
     }
     draggedItem = null;
-    // Clean up the class on the body.
     document.body.classList.remove('is-dragging-url');
 }
 
@@ -159,8 +151,7 @@ function initializeSharedUI(elements) {
     const scrollToTopIcon = document.getElementById('scroll-to-top-icon');
     const scrollToBottomIcon = document.getElementById('scroll-to-bottom-icon');
     
-    // --- START: Get elements and bind events for the Settings Popup ---
-    // This entire block is conditional, as these elements only exist in sidepanel.html
+    // This block is conditional, as these elements may not exist in all contexts (e.g., options page).
     const settingsPopupUrlList = document.getElementById('settings-popup-url-list');
     if (settingsPopupUrlList) {
         const newUrlInputPopup = document.getElementById('new-url-input-popup');
@@ -169,7 +160,6 @@ function initializeSharedUI(elements) {
         const selectAllButtonPopup = document.getElementById('select-all-button-popup');
         const clearSelectionButtonPopup = document.getElementById('clear-selection-button-popup');
 
-        // Bind "Add URL" button functionality.
         addUrlButtonPopup.addEventListener('click', async () => {
             const newUrlValue = newUrlInputPopup.value.trim();
             if (newUrlValue) {
@@ -183,7 +173,6 @@ function initializeSharedUI(elements) {
             }
         });
 
-        // Bind bulk action buttons functionality.
         invertSelectionButtonPopup.addEventListener('click', async () => {
             managedUrls.forEach(u => u.selected = !u.selected);
             await saveUrls();
@@ -197,18 +186,21 @@ function initializeSharedUI(elements) {
             await saveUrls();
         });
     }
-    // --- END: Bind events for Settings Popup ---
 
     initializeSlashCommands(elements);
 
-    // Central logic for sending a prompt, adapting its behavior based on the current UI state.
+    // Create a debounced version of the textarea resize function to optimize performance.
+    const debouncedAutoResize = debounce(() => {
+        autoResizeTextarea(promptInput, promptContainer);
+    }, 100);
+
+    // Central logic for sending a prompt.
     const executeSend = async () => {
         let promptText = promptInput.value.trim();
         const pinned = getPinnedPrompt();
         
-        // 1. If a prompt is pinned, use the input as a variable for that prompt's template.
         if (pinned) {
-            if (!promptText) return; // Don't send if there's no input.
+            if (!promptText) return;
             const { displayLanguage } = await chrome.storage.local.get({ displayLanguage: 'English' });
             const lang = displayLanguage || 'English';
             let promptContent = pinned.content.replace(/\${lang}/g, lang);
@@ -218,35 +210,30 @@ function initializeSharedUI(elements) {
                 : `${promptContent}\n\n"""\n${promptText}\n"""`;
             
             sendMessageToIframes(fullPrompt);
-            // For pinned prompts, we don't clear the input to allow for multi-turn conversations.
-            // Instead, we select the text for easy replacement.
             requestAnimationFrame(() => {
                 promptInput.focus();
                 promptInput.select();
             });
-            return; // Stop further execution.
+            return;
         }
 
-        // 2. If no prompt is pinned, check if there's text selected from the webpage (context).
         const isContextVisible = contextContainer.style.display === 'flex';
         if (isContextVisible) {
             const contextText = contextContainer.querySelector('#context-content').textContent.trim();
             if (contextText) {
-                // Prepend the page context to the user's prompt.
                 const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
                 sendMessageToIframes(finalPrompt);
             }
         } 
-        // 3. If no context, just send the prompt text directly.
         else if (promptText) {
             sendMessageToIframes(promptText);
         }
 
-        // 4. Clean up the UI after sending.
         if (promptText || isContextVisible) {
             promptInput.value = '';
             resetContextualUI();
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+            autoResizeTextarea(promptInput, promptContainer);
             requestAnimationFrame(() => promptInput.focus());
         }
     };
@@ -257,7 +244,8 @@ function initializeSharedUI(elements) {
         if (message.action === 'textSelected' && message.text) {
             if (getPinnedPrompt()) {
                 promptInput.value = message.text;
-                autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+                updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+                autoResizeTextarea(promptInput, promptContainer);
                 promptInput.focus();
                 sendResponse({status: "Text inserted into prompt."});
             } else {
@@ -329,9 +317,7 @@ function initializeSharedUI(elements) {
         showGlobalConfirmationMessage(refreshedCount > 0 ? `Refreshed ${refreshedCount} panel(s).` : 'No active panels to refresh.');
     });
 
-    // Handle click on settings icon to open options page.
     settingsContainer.addEventListener('click', (e) => {
-        // Ensure the click is on the icon itself, not the popup.
         if (e.target.id === 'settings-icon') {
             chrome.tabs.create({ url: 'options.html?section=general' });
         }
@@ -376,7 +362,8 @@ function initializeSharedUI(elements) {
             }).join('\n\n---\n\n');
             const existingText = promptInput.value.trim();
             promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+            autoResizeTextarea(promptInput, promptContainer);
             promptInput.focus();
             showGlobalConfirmationMessage(`Appended and copied output from ${collectedOutputs.size} panel(s).`);
         } else {
@@ -423,18 +410,22 @@ function initializeSharedUI(elements) {
         togglePromptButton.textContent = isCollapsed ? 'expand_less' : 'expand_more';
         togglePromptButton.title = isCollapsed ? 'Expand prompt area' : 'Collapse prompt area';
         if (!isCollapsed) {
-            autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+            autoResizeTextarea(promptInput, promptContainer);
         }
     });
 
     clearPromptButton.addEventListener('click', () => {
         promptInput.value = '';
-        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+        updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+        autoResizeTextarea(promptInput, promptContainer);
         promptInput.focus();
     });
 
     promptInput.addEventListener('input', () => {
-        autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+        // Immediately update button state for responsiveness.
+        updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+        // Defer the expensive resize operation.
+        debouncedAutoResize();
     });
 
     promptInput.addEventListener('keydown', (event) => {
@@ -451,7 +442,6 @@ function initializeSharedUI(elements) {
         if (namespace === 'local' && changes.managedUrls) {
             managedUrls = changes.managedUrls.newValue;
             updateIframes(iframeContainer);
-            // Conditionally render the popup list only if it exists.
             if (settingsPopupUrlList) {
                 renderSettingsPopupUrlList();
             }
@@ -461,19 +451,20 @@ function initializeSharedUI(elements) {
     chrome.storage.local.get('managedUrls', (result) => {
         managedUrls = result.managedUrls ? result.managedUrls : [];
         updateIframes(iframeContainer);
-        // Conditionally render the popup list only if it exists.
         if (settingsPopupUrlList) {
             renderSettingsPopupUrlList();
         }
     });
     
-    // Add drag-and-drop listeners to the popup list container only if it exists.
     if (settingsPopupUrlList) {
         settingsPopupUrlList.addEventListener('dragover', handleDragOver);
         settingsPopupUrlList.addEventListener('drop', handleDrop);
     }
 
-    requestAnimationFrame(() => autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton));
+    requestAnimationFrame(() => {
+        updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+        autoResizeTextarea(promptInput, promptContainer);
+    });
 
     uiReadyResolve();
 }

@@ -56,7 +56,10 @@ function pinPrompt(prompt) {
     const promptContainer = document.getElementById('prompt-container');
     const sendPromptButton = document.getElementById('send-prompt-button');
     const clearPromptButton = document.getElementById('clear-prompt-button');
-    autoResizeTextarea(promptInput, promptContainer, sendPromptButton, clearPromptButton);
+    
+    // Update UI consistently after changing the prompt input value.
+    updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
+    autoResizeTextarea(promptInput, promptContainer);
 }
 
 function updateSlashCommandSelection() {

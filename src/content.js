@@ -182,25 +182,20 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Site-specific handler for chat.deepseek.com.
     async function handleDeepSeek(prompt) {
         const hostname = 'chat.deepseek.com';
-        // UPDATE: Use the placeholder attribute for a more stable selector.
         const inputArea = await waitForElement('textarea[placeholder="Message DeepSeek"]');
         if (!inputArea) {
             reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
 
-        // This site uses a framework (like React) that requires interacting with the textarea's
-        // native value setter to properly trigger state updates.
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
         nativeInputValueSetter.call(inputArea, prompt);
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
 
-        // UPDATE: Adjust the send button selector to match the new input area selector.
         const sendButton = await waitForElement('textarea[placeholder="Message DeepSeek"] ~ button', 100);
         if (sendButton) {
             sendButton.click();
         } else {
-            // Fallback to Enter key press if no button is found.
             await new Promise(resolve => setTimeout(resolve, 100));
             const enterEvent = new KeyboardEvent('keydown', {
                 key: 'Enter',
@@ -239,7 +234,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const hostname = window.location.hostname;
         const inputArea = await waitForElement('textarea, [role="textbox"]');
         if (!inputArea) {
-            // Avoid reporting failures on generic sites where selectors are just a guess.
             console.log(`AI-Sidebar: Could not find a generic input area on ${hostname}.`);
             return;
         }
@@ -253,7 +247,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         if (sendButton) {
             sendButton.click();
         } else {
-            // Fallback to Enter key press for generic sites. This may not always work.
             const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
             inputArea.dispatchEvent(enterEvent);
         }
@@ -293,7 +286,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const assistantMessages = document.querySelectorAll('div[data-message-author-role="assistant"]');
         if (assistantMessages.length > 0) {
             const lastMessage = assistantMessages[assistantMessages.length - 1];
-            // Use a more robust selector to find the content within the message.
             const content = lastMessage.querySelector('.markdown, .prose, [class*="result-streaming"]');
             if (content) {
                 return content.innerText;
@@ -399,25 +391,21 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
         
-        // REFACTOR: Use more robust, combined selectors to find the clear chat buttons.
         const clearButtonSelector = 'button[aria-label="Clear chat"]:not([disabled])';
         const moreActionsSelector = 'button[aria-label="View more actions"]:not([disabled])';
 
         let clearButton = document.querySelector(clearButtonSelector);
 
-        // If the direct clear button isn't visible, try the "more actions" menu.
         if (!clearButton || clearButton.offsetParent === null) {
             const moreActionsButton = document.querySelector(moreActionsSelector);
             if (moreActionsButton) {
                 moreActionsButton.click();
-                // Wait for the clear button to appear inside the menu.
                 clearButton = await waitForElement(clearButtonSelector, 2000);
             }
         }
 
         if (clearButton) {
             clearButton.click();
-            // Wait for the confirmation dialog and click "Continue".
             const continueSelector = 'mat-dialog-container button';
             const continueButton = await waitForElement(continueSelector, 2000);
             
@@ -447,7 +435,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         const hostname = 'aistudio.google.com';
         const selector = 'button[id^="scrollbar-item-"]';
         
-        // Wait for at least one button to ensure the list is populated.
         const firstButton = await waitForElement(selector, 2000);
 
         if (firstButton) {
@@ -539,9 +526,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Debounce the selection handler to avoid excessive firing.
     const debouncedHandleSelection = debounce(handleSelection, 250);
 
-    // Listen for selection changes in the document.
-    // This runs in the top-level frame of a webpage, or inside iframes
-    // that are hosted by this extension's side panel or standalone page.
+    // Listen for selection changes only in the top-level document to prevent
+    // flickering and unwanted behavior from selections inside the side panel's iframes.
     const isTopLevelPage = window.self === window.top;
     
     // A secure way to check if this iframe is hosted by our extension.
