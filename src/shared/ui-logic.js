@@ -246,6 +246,7 @@ function initializeSharedUI(elements) {
                 sendResponse({status: "Context displayed in sidebar"});
             }
         } else if (message.action === 'textDeselected') {
+            // Only reset the UI if it's currently visible to prevent flickering during selection.
             if (contextContainer && contextContainer.style.display !== 'none') {
                 resetContextualUI();
                 sendResponse({status: "Context cleared in sidebar"});
@@ -352,6 +353,11 @@ function initializeSharedUI(elements) {
                 const title = prettyNames[item.source] || item.source;
                 return `## ${title}\n${item.output}`;
             }).join('\n\n---\n\n');
+
+            // Also copy the generated markdown string to the clipboard.
+            navigator.clipboard.writeText(markdownString).catch(err => {
+                console.error('AI-Sidebar: Failed to copy text to clipboard:', err);
+            });
 
             const existingText = promptInput.value.trim();
             promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;

@@ -61,107 +61,129 @@ function createPromptButton(prompt, selectedText, isMoreMenuItem = false) {
 }
 
 /**
- * Renders prompt buttons and sets up responsive resizing using a robust
- * "pre-render -> measure -> precise render" strategy to avoid race conditions.
+ * Dynamically renders prompt buttons based on available width.
+ * This function is responsive and will move buttons into a "more" menu if space is limited.
  * @param {string} selectedText The text that the prompts will act upon.
  * @param {Array} visiblePrompts The list of prompt objects to render.
  */
 function renderResponsivePrompts(selectedText, visiblePrompts) {
     const promptButtonsContainer = document.getElementById('prompt-buttons-container');
     const morePromptsPopup = document.getElementById('more-prompts-popup');
-    if (!promptButtonsContainer || !morePromptsPopup) return;
-    
+
+    if (!promptButtonsContainer || !morePromptsPopup) {
+        return;
+    }
+
+    // Disconnect any previous observer to prevent conflicts and memory leaks.
     if (promptResizeObserver) {
         promptResizeObserver.disconnect();
+        promptResizeObserver = null;
     }
     
-    // --- Cleanup Phase ---
-    promptButtonsContainer.innerHTML = '';
     const morePromptsList = morePromptsPopup.querySelector('#more-prompts-list');
+    if (!morePromptsList) {
+        return;
+    }
+
+    // Reset containers and hide the popup.
+    promptButtonsContainer.innerHTML = '';
     morePromptsList.innerHTML = '';
     morePromptsPopup.style.display = 'none';
+    // Ensure the popup is detached from any old, now-removed wrapper.
     if (morePromptsPopup.parentElement) {
         morePromptsPopup.parentElement.removeChild(morePromptsPopup);
     }
-    if (!visiblePrompts || visiblePrompts.length === 0) return;
 
-    // --- 1. Pre-render Phase ---
-    // Create a wrapper and immediately render ALL buttons into it.
-    // By allowing wrapping, we force the container to expand and acquire a measurable width,
-    // breaking the "chicken-and-egg" paradox of needing content to get a width.
+    if (!visiblePrompts || visiblePrompts.length === 0) {
+        return;
+    }
+
     const mainButtonsWrapper = document.createElement('div');
     mainButtonsWrapper.className = 'main-prompt-buttons';
-    mainButtonsWrapper.style.flexWrap = 'wrap'; // Temporarily allow wrapping
-    const allButtons = visiblePrompts.map(prompt => createPromptButton(prompt, selectedText, false));
-    allButtons.forEach(button => mainButtonsWrapper.appendChild(button));
     promptButtonsContainer.appendChild(mainButtonsWrapper);
 
-    // This function will measure the pre-rendered layout and adjust it precisely.
-    const adjustLayout = () => {
-        const buttonsInContainer = Array.from(mainButtonsWrapper.children);
-        if (buttonsInContainer.length === 0) {
-            mainButtonsWrapper.style.flexWrap = 'nowrap'; // Reset style and exit
-            return;
-        }
+    const allButtons = visiblePrompts.map(prompt => createPromptButton(prompt, selectedText, false));
+    if (allButtons.length === 0) return;
 
-        // --- 2. Measure Phase ---
-        // Find the first button that has wrapped to a new line by checking its vertical position.
-        const firstButtonTop = buttonsInContainer[0].offsetTop;
-        let splitIndex = -1;
-        for (let i = 1; i < buttonsInContainer.length; i++) {
-            if (buttonsInContainer[i].offsetTop > firstButtonTop) {
-                splitIndex = i;
-                break;
-            }
-        }
+    promptResizeObserver = new ResizeObserver(entries => {
+        // Use requestAnimationFrame to avoid "ResizeObserver loop limit exceeded" errors.
+        window.requestAnimationFrame(() => {
+            if (!entries || !entries.length) return;
 
-        // --- 3. Precise Render Phase ---
-        // If a split point was found, move the overflowed buttons to the "more" menu.
-        if (splitIndex !== -1) {
-            const morePromptsWrapper = document.createElement('div');
-            morePromptsWrapper.className = 'more-prompts-wrapper';
-            const moreButton = document.createElement('button');
-            moreButton.className = 'prompt-button more-button';
-            moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
+            const containerWidth = entries[0].contentRect.width;
             
-            morePromptsWrapper.appendChild(moreButton);
-            morePromptsWrapper.appendChild(morePromptsPopup);
-            promptButtonsContainer.appendChild(morePromptsWrapper);
-
-            const promptsToHide = visiblePrompts.slice(splitIndex);
-            promptsToHide.forEach(promptData => {
-                morePromptsList.appendChild(createPromptButton(promptData, selectedText, true));
-            });
-
-            // Remove the now-hidden buttons from the main view.
-            while (mainButtonsWrapper.children.length > splitIndex) {
-                mainButtonsWrapper.removeChild(mainButtonsWrapper.lastChild);
+            mainButtonsWrapper.innerHTML = '';
+            morePromptsList.innerHTML = '';
+            const existingMoreWrapper = promptButtonsContainer.querySelector('.more-prompts-wrapper');
+            if (existingMoreWrapper) {
+                promptButtonsContainer.removeChild(existingMoreWrapper);
             }
 
-            // Add hover logic for the newly created "more" menu.
-            let hidePopupTimeout;
-            const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
-            const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
-            morePromptsWrapper.addEventListener('mouseenter', showPopup);
-            morePromptsWrapper.addEventListener('mouseleave', hidePopup);
-        }
-        
-        // Restore the non-wrapping style for a clean single-line visual presentation.
-        mainButtonsWrapper.style.flexWrap = 'nowrap';
-    };
+            // Create a temporary, off-screen container to measure button widths without affecting the layout.
+            const tempContainer = document.createElement('div');
+            tempContainer.style.visibility = 'hidden';
+            tempContainer.style.position = 'absolute';
+            document.body.appendChild(tempContainer);
 
-    // Schedule the measurement and adjustment to run after the browser has painted the pre-rendered layout.
-    window.requestAnimationFrame(adjustLayout);
+            const moreButtonTemplate = document.createElement('button');
+            moreButtonTemplate.className = 'prompt-button more-button';
+            moreButtonTemplate.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
+            tempContainer.appendChild(moreButtonTemplate);
+            const moreButtonWidth = moreButtonTemplate.offsetWidth;
+            const gap = 4; // The gap between buttons in pixels.
+            
+            let currentWidth = 0;
+            let splitIndex = -1;
 
-    // The observer's role is now to re-run this entire robust process if the user resizes the panel.
-    promptResizeObserver = new ResizeObserver(() => {
-        // A small debounce to prevent excessive re-renders during rapid resizing.
-        let debounceTimeout;
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-            renderResponsivePrompts(selectedText, visiblePrompts);
-        }, 50);
+            // Determine at which index to split the buttons into main view vs. "more" menu.
+            for (let i = 0; i < allButtons.length; i++) {
+                const button = allButtons[i];
+                tempContainer.innerHTML = ''; // Clear and measure one by one.
+                tempContainer.appendChild(button);
+                const buttonWidth = button.offsetWidth;
+                
+                const potentialMoreButtonSpace = (i < allButtons.length - 1) ? (moreButtonWidth + gap) : 0;
+
+                if (currentWidth + buttonWidth + gap + potentialMoreButtonSpace <= containerWidth) {
+                    currentWidth += buttonWidth + gap;
+                } else {
+                    splitIndex = i;
+                    break;
+                }
+            }
+            document.body.removeChild(tempContainer);
+
+            const promptsToShow = (splitIndex === -1) ? allButtons : allButtons.slice(0, splitIndex);
+            const promptsToHide = (splitIndex === -1) ? [] : visiblePrompts.slice(splitIndex);
+
+            promptsToShow.forEach(button => mainButtonsWrapper.appendChild(button));
+
+            if (promptsToHide.length > 0) {
+                const morePromptsWrapper = document.createElement('div');
+                morePromptsWrapper.className = 'more-prompts-wrapper';
+                
+                const moreButton = document.createElement('button');
+                moreButton.className = 'prompt-button more-button';
+                moreButton.innerHTML = '<span class="material-symbols-outlined">more_horiz</span>';
+                
+                morePromptsWrapper.appendChild(moreButton);
+                morePromptsWrapper.appendChild(morePromptsPopup);
+                promptButtonsContainer.appendChild(morePromptsWrapper);
+
+                promptsToHide.forEach(promptData => {
+                    morePromptsList.appendChild(createPromptButton(promptData, selectedText, true));
+                });
+
+                let hidePopupTimeout;
+                const showPopup = () => { clearTimeout(hidePopupTimeout); morePromptsPopup.style.display = 'block'; };
+                const hidePopup = () => { hidePopupTimeout = setTimeout(() => { morePromptsPopup.style.display = 'none'; }, 200); };
+
+                morePromptsWrapper.addEventListener('mouseenter', showPopup);
+                morePromptsWrapper.addEventListener('mouseleave', hidePopup);
+            }
+        });
     });
+
     promptResizeObserver.observe(promptButtonsContainer);
 }
 

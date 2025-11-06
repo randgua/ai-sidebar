@@ -34,6 +34,12 @@ function handleSelectiveAppendAndCopy(iframe, urlEntry) {
             };
             const title = prettyNames[sourceHostname] || sourceHostname;
             const markdownString = `## ${title}\n${output}`;
+            
+            // Also copy the generated markdown string to the clipboard.
+            navigator.clipboard.writeText(markdownString).catch(err => {
+                console.error('AI-Sidebar: Failed to copy text to clipboard:', err);
+            });
+
             const existingText = promptInput.value.trim();
             promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
             
