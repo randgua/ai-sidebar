@@ -1,7 +1,6 @@
 // Check if the runtime is available. If not, this content script is a "zombie"
 // from a previous version of the extension that has been updated or disabled.
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-
     // Waits for an element to appear in the DOM.
     function waitForElement(selector, timeout = 8000) {
         return new Promise(resolve => {
@@ -31,7 +30,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             }, timeout);
         });
     }
-    
+
     // Reports an interaction failure to the user-facing UI.
     function reportInteractionFailure(hostname, message) {
         console.log(`AI-Sidebar interaction failed on ${hostname}: ${message}`);
@@ -187,11 +186,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
-
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
         nativeInputValueSetter.call(inputArea, prompt);
         inputArea.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-
         const sendButton = await waitForElement('textarea[placeholder="Message DeepSeek"] ~ button', 100);
         if (sendButton) {
             sendButton.click();
@@ -256,7 +253,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     async function getAIStudioOutput() {
         const allTurns = document.querySelectorAll('ms-chat-turn');
         const modelTurns = Array.from(allTurns).filter(turn => turn.querySelector('[data-turn-role="Model"]'));
-
         if (modelTurns.length > 0) {
             const lastModelTurn = modelTurns[modelTurns.length - 1];
             const contentContainer = lastModelTurn.querySelector('.turn-content');
@@ -390,12 +386,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Clears the chat content on AI Studio, handling both wide and narrow layouts.
     async function handleClearAIStudio() {
         const hostname = 'aistudio.google.com';
-        
         const clearButtonSelector = 'button[aria-label="Clear chat"]:not([disabled])';
         const moreActionsSelector = 'button[aria-label="View more actions"]:not([disabled])';
-
         let clearButton = document.querySelector(clearButtonSelector);
-
         if (!clearButton || clearButton.offsetParent === null) {
             const moreActionsButton = document.querySelector(moreActionsSelector);
             if (moreActionsButton) {
@@ -403,12 +396,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
                 clearButton = await waitForElement(clearButtonSelector, 2000);
             }
         }
-
         if (clearButton) {
             clearButton.click();
             const continueSelector = 'mat-dialog-container button';
             const continueButton = await waitForElement(continueSelector, 2000);
-            
             if (continueButton && continueButton.textContent.trim().toLowerCase() === 'continue') {
                 continueButton.click();
             } else {
@@ -419,39 +410,56 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
         }
     }
 
-    // Selects the first conversation turn button in AI Studio.
-    async function handleSelectFirstTurnAIStudio() {
+    // Scrolls the main chat container in AI Studio to the top or bottom.
+    // It first attempts a smooth scroll and falls back to clicking a button if needed.
+    async function handleAIStudioScroll(position) { // 'top' or 'bottom'
         const hostname = 'aistudio.google.com';
-        const firstTurnButton = await waitForElement('button[id^="scrollbar-item-"]');
-        if (firstTurnButton) {
-            firstTurnButton.click();
-        } else {
-            reportInteractionFailure(hostname, 'Could not find the first conversation turn button.');
-        }
-    }
-
-    // Selects the last conversation turn button in AI Studio.
-    async function handleSelectLastTurnAIStudio() {
-        const hostname = 'aistudio.google.com';
-        const selector = 'button[id^="scrollbar-item-"]';
         
-        const firstButton = await waitForElement(selector, 2000);
+        // Attempt to find the scrollable container for a smooth scroll effect.
+        const chatTurn = await waitForElement('ms-chat-turn');
+        if (chatTurn) {
+            let container = chatTurn.parentElement;
+            let scrollableContainer = null;
+            // Traverse up the DOM tree to find the actual scrollable parent.
+            while (container) {
+                if (container.scrollHeight > container.clientHeight) {
+                    const style = getComputedStyle(container);
+                    if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                        scrollableContainer = container;
+                        break;
+                    }
+                }
+                container = container.parentElement;
+            }
+            if (scrollableContainer) {
+                scrollableContainer.scrollTo({
+                    top: position === 'top' ? 0 : scrollableContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+                return; // Successfully scrolled.
+            }
+        }
 
+        // Fallback to the button-clicking method if the scrollable container is not found.
+        console.log('AI-Sidebar: Could not find a scrollable container on AI Studio. Falling back to the button-click method.');
+        const selector = 'button[id^="scrollbar-item-"]';
+        const firstButton = await waitForElement(selector, 2000);
         if (firstButton) {
             const allTurnButtons = document.querySelectorAll(selector);
             if (allTurnButtons.length > 0) {
-                const lastTurnButton = allTurnButtons[allTurnButtons.length - 1];
-                lastTurnButton.click();
+                const targetButton = position === 'top'
+                    ? allTurnButtons[0]
+                    : allTurnButtons[allTurnButtons.length - 1];
+                targetButton.click();
             }
         } else {
-            reportInteractionFailure(hostname, 'Could not find any conversation turn buttons.');
+            reportInteractionFailure(hostname, 'Could not find any conversation turn buttons to scroll.');
         }
     }
 
     // This logic runs inside iframes and listens for messages from the sidebar.
     window.addEventListener('message', (event) => {
         if (!event.data) return;
-
         switch (event.data.action) {
             case 'injectPrompt':
                 const prompt = event.data.prompt;
@@ -473,14 +481,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
                 break;
             case 'selectFirstTurn':
                 if (window.location.hostname === 'aistudio.google.com') {
-                    handleSelectFirstTurnAIStudio();
+                    handleAIStudioScroll('top');
                 } else {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
                 break;
             case 'selectLastTurn':
                 if (window.location.hostname === 'aistudio.google.com') {
-                    handleSelectLastTurnAIStudio();
+                    handleAIStudioScroll('bottom');
                 } else {
                     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
                 }
@@ -505,13 +513,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             return;
         }
         const selectedText = window.getSelection().toString().trim();
-        
         try {
             if (selectedText) {
-                // Send the selected text to the side panel.
                 chrome.runtime.sendMessage({ action: 'textSelected', text: selectedText });
             } else {
-                // When text is deselected, send a message to clear the context.
                 chrome.runtime.sendMessage({ action: 'textDeselected' });
             }
         } catch (e) {
@@ -525,13 +530,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
 
     // Debounce the selection handler to avoid excessive firing.
     const debouncedHandleSelection = debounce(handleSelection, 250);
-
-    // Listen for selection changes only in the top-level document to prevent
-    // flickering and unwanted behavior from selections inside the side panel's iframes.
+    
+    // Listen for selection changes only in the top-level document.
     const isTopLevelPage = window.self === window.top;
     
     // A secure way to check if this iframe is hosted by our extension.
-    // It checks the origin of its ancestors, which is allowed by the browser.
     let isHostedByExtension = false;
     if (!isTopLevelPage && window.location.ancestorOrigins) {
         for (let i = 0; i < window.location.ancestorOrigins.length; i++) {
@@ -541,7 +544,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
             }
         }
     }
-
     if (isTopLevelPage || isHostedByExtension) {
         document.addEventListener('selectionchange', debouncedHandleSelection);
     }
