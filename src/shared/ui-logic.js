@@ -1,6 +1,5 @@
 // A promise that resolves when the main UI elements are initialized.
-// This is a crucial mechanism to prevent race conditions where messages
-// might arrive before the UI is ready to be manipulated.
+// This prevents race conditions where messages arrive before the UI is ready.
 let uiReadyResolve;
 const uiReadyPromise = new Promise(resolve => {
     uiReadyResolve = resolve;
@@ -18,7 +17,6 @@ async function saveUrls() {
 
 /**
  * Renders the list of URLs in the settings popup.
- * This function is responsible for creating the interactive list items.
  */
 function renderSettingsPopupUrlList() {
     const listContainer = document.getElementById('settings-popup-url-list');
@@ -78,8 +76,7 @@ function renderSettingsPopupUrlList() {
 // --- Drag & Drop Handlers for Settings Popup ---
 function handleDragStart(e) {
     draggedItem = this.closest('.url-item');
-    // Add a class to the body to indicate a drag is in progress.
-    // This helps prevent the hover-based popup from closing during the drag.
+    // Add a class to the body to prevent the hover-based popup from closing during the drag.
     document.body.classList.add('is-dragging-url');
     setTimeout(() => {
         if (draggedItem) {
@@ -143,7 +140,6 @@ function initializeSharedUI(elements) {
         copyMarkdownButton, promptInput, promptContainer, togglePromptButton, sendPromptButton,
         clearPromptButton
     } = elements;
-
     const contextContainer = document.getElementById('context-container');
     const closeContextButton = document.getElementById('close-context-button');
     const googleSearchToggleIcon = document.getElementById('google-search-toggle-icon');
@@ -172,7 +168,6 @@ function initializeSharedUI(elements) {
                 }
             }
         });
-
         invertSelectionButtonPopup.addEventListener('click', async () => {
             managedUrls.forEach(u => u.selected = !u.selected);
             await saveUrls();
@@ -196,40 +191,38 @@ function initializeSharedUI(elements) {
 
     // Central logic for sending a prompt.
     const executeSend = async () => {
-        let promptText = promptInput.value.trim();
+        const promptText = promptInput.value.trim();
         const pinned = getPinnedPrompt();
-        
-        if (pinned) {
-            if (!promptText) return;
-            const { displayLanguage } = await chrome.storage.local.get({ displayLanguage: 'English' });
-            const lang = displayLanguage || 'English';
-            let promptContent = pinned.content.replace(/\${lang}/g, lang);
-            
-            const fullPrompt = promptContent.includes('${input}')
-                ? promptContent.replace('${input}', promptText)
-                : `${promptContent}\n\n"""\n${promptText}\n"""`;
-            
-            sendMessageToIframes(fullPrompt);
-            requestAnimationFrame(() => {
-                promptInput.focus();
-                promptInput.select();
-            });
-            return;
-        }
-
         const isContextVisible = contextContainer.style.display === 'flex';
-        if (isContextVisible) {
-            const contextText = contextContainer.querySelector('#context-content').textContent.trim();
-            if (contextText) {
-                const finalPrompt = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
-                sendMessageToIframes(finalPrompt);
+        const contextText = isContextVisible ? contextContainer.querySelector('#context-content').textContent.trim() : '';
+
+        let promptToSend = null;
+
+        if (pinned) {
+            // In pinned mode, a prompt is only sent if there is text.
+            if (promptText) {
+                const { displayLanguage } = await chrome.storage.local.get({ displayLanguage: 'English' });
+                const lang = displayLanguage || 'English';
+                let promptContent = pinned.content.replace(/\${lang}/g, lang);
+                
+                promptToSend = promptContent.includes('${input}')
+                    ? promptContent.replace('${input}', promptText)
+                    : `${promptContent}\n\n"""\n${promptText}\n"""`;
             }
-        } 
-        else if (promptText) {
-            sendMessageToIframes(promptText);
+        } else {
+            // In normal mode, a prompt can be just the context, or text, or both.
+            if (contextText) {
+                promptToSend = `Based on the following text:\n\n------\n${contextText}\n------\n\n${promptText}`;
+            } else if (promptText) {
+                promptToSend = promptText;
+            }
         }
 
-        if (promptText || isContextVisible) {
+        // Only send a message and clear the input if there is a valid prompt to send.
+        if (promptToSend !== null) {
+            sendMessageToIframes(promptToSend);
+
+            // Unified UI cleanup for any successful send operation.
             promptInput.value = '';
             resetContextualUI();
             updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
@@ -344,7 +337,6 @@ function initializeSharedUI(elements) {
     let expectedResponses = 0;
     let copyFallbackTimeout = null;
     let collectedOutputs = new Map();
-
     const processCollectedOutputs = () => {
         if (!copyFallbackTimeout) return;
         clearTimeout(copyFallbackTimeout);
@@ -360,6 +352,7 @@ function initializeSharedUI(elements) {
                 const title = prettyNames[item.source] || item.source;
                 return `## ${title}\n${item.output}`;
             }).join('\n\n---\n\n');
+
             const existingText = promptInput.value.trim();
             promptInput.value = existingText ? `${existingText}\n\n${markdownString}` : markdownString;
             updatePromptButtonsState(promptInput, sendPromptButton, clearPromptButton);
@@ -387,7 +380,6 @@ function initializeSharedUI(elements) {
         collectedOutputs.clear();
         const activeIframes = iframeContainer.querySelectorAll('iframe');
         expectedResponses = activeIframes.length;
-
         if (expectedResponses === 0) {
             showGlobalConfirmationMessage('No active panels to copy from.');
             return;
