@@ -85,19 +85,44 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     // Site-specific handler for aistudio.google.com.
     async function handleAiStudio(prompt) {
         const hostname = 'aistudio.google.com';
-        const selector = 'textarea[aria-label="Type something or tab to choose an example prompt"], textarea[aria-label="Start typing a prompt"]';
+        // Updated selector based on ms-prompt-box structure
+        const selector = 'ms-prompt-box textarea';
         const inputArea = await waitForElement(selector);
+        
         if (!inputArea) {
             reportInteractionFailure(hostname, 'Could not find the input area.');
             return;
         }
+
+        // Focus is often required for Material Design components
+        inputArea.focus();
         inputArea.value = prompt;
+        
+        // Dispatch events to trigger Angular change detection
         inputArea.dispatchEvent(new Event('input', { bubbles: true }));
-        const sendButton = await waitForElement('button[aria-label="Run"]:not([disabled])');
+        inputArea.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Wait briefly for UI state updates
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Try to find the Run button
+        const sendButton = document.querySelector('button[aria-label="Run"]:not([disabled])');
+        
         if (sendButton) {
             sendButton.click();
         } else {
-            reportInteractionFailure(hostname, 'Could not find or click the send button.');
+            // Fallback: Try Ctrl+Enter / Cmd+Enter if button is not clickable
+            console.log('AI-Sidebar: Send button not found or disabled, trying keyboard shortcut.');
+            const enterEvent = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                bubbles: true,
+                cancelable: true,
+                ctrlKey: true,
+                metaKey: true
+            });
+            inputArea.dispatchEvent(enterEvent);
         }
     }
 
